@@ -23,7 +23,10 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
-dependencies = []
+dependencies = [
+    "numpy",
+    "zarr",
+]
 dynamic = ["version"]
 
 [project.urls]
@@ -39,6 +42,12 @@ dependencies = [
   "pytest",
   "pytest-cov",
 ]
+
+[project.optional-dependencies]
+dask-image = [
+    "dask-image",
+]
+
 [tool.hatch.envs.default.scripts]
 cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=ngff_zarr --cov=tests"
 no-cov = "cov --no-cov"
@@ -59,3 +68,6 @@ exclude_lines = [
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:",
 ]
+
+[tool.black]
+line-length = 88
