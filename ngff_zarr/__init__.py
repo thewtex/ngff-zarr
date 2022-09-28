@@ -2,10 +2,11 @@
 #
 # SPDX-License-Identifier: MIT
 
-from .to_zarr import to_zarr
+from .to_ngff_zarr import to_ngff_zarr, Methods
 from .__about__ import __version__
 
 __all__ = [
-        "to_zarr"
+        "to_ngff_zarr"
+        "Methods",
         "__version__",
         ]
