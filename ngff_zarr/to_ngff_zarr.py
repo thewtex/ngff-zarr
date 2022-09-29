@@ -6,6 +6,7 @@ from dataclasses import asdict
 
 from zarr.storage import BaseStore
 from zarr.core import Array as ZarrArray
+import zarr
 from numpy.typing import ArrayLike
 import numpy as np
 import dask.array
@@ -33,15 +34,16 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
             Mapping[Any, Union[None, int, Tuple[int, ...]]],
         ]
     ] = None,
-    compute: bool =True,
+    compute: bool = True,
     axes_units: Optional[Union[Mapping[Hashable, str]]] = None,
-    mode: str = "w",
-    encoding=None,
-    **kwargs) -> Tuple[List[DaskArray], Metadata]:
+    overwrite: bool = True,
+    chunk_store: Optional[Union[MutableMapping, str, Path, BaseStore]] = None,
+    **kwargs,
+    ) -> Tuple[List[DaskArray], Metadata]:
     """
     Write an image pixel array and metadata to a Zarr store with the OME-NGFF standard data model.
 
-    store : MutableMapping, str or Path, optional
+    store : MutableMapping, str or Path, zarr.storage.BaseStore
         Store or path to directory in file system
 
     data: ArrayLike, ZarrArray, MutableMapping, str
@@ -76,21 +78,23 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
     chunks : Dask array chunking specification, optional
         Specify the chunking used in each output scale.
 
-    compute: Boolean
+    compute: Boolean, optional
         Compute the result instead of just building the Dask task graph
 
     axes_units: dict of str, optional
         Units to associate with the axes. Should be drawn from UDUNITS-2, enumerated at 
         https://ngff.openmicroscopy.org/latest/#axes-md
 
-    mode : {{"w", "w-", "a", "r+", None}, default: "w"
-        Persistence mode: “w” means create (overwrite if exists); “w-” means create (fail if exists);
-        “a” means override existing variables (create if does not exist); “r+” means modify existing
-        array values only (raise an error if any metadata or shapes would change). The default mode
-        is “a” if append_dim is set. Otherwise, it is “r+” if region is set and w- otherwise.
+    overwrite : bool, optional
+        If True, delete any pre-existing data in `store` before creating groups.
+    
+    chunk_store : MutableMapping, str or Path, zarr.storage.BaseStore, optional
+        Separate storage for chunks. If not provided, `store` will be used
+        for storage of both chunks and metadata.
 
-    kwargs :
-        Additional keyword arguments to be passed to ``datatree.DataTree.to_zarr``
+    **kwargs:
+        Passed to the zarr.creation.create() function, e.g., compression options.
+
 
     Returns
     -------
@@ -153,10 +157,6 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
     # elif method is Methods.DASK_IMAGE_MODE:
     #     data_objects = _downsample_dask_image(current_input, default_chunks, out_chunks, scale_factors, data_objects, image, label='mode')
 
-    if compute:
-        for image in multiscales:
-            image.data = image.data.compute()
-
     axes = []
     for dim in dims:
         unit = None
@@ -189,8 +189,19 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
         dataset = Dataset(path=path, coordinateTransformations=coordinateTransformations)
         datasets.append(dataset)
     metadata = Metadata(axes=axes, datasets=datasets, name=name)
-    from pprint import pprint
-    pprint(asdict(metadata))
 
-    data = [image.data for image in multiscales]
+    root = zarr.group(store, overwrite=overwrite, chunk_store=chunk_store)
+    metadata_dict = asdict(metadata)
+    metadata_dict['@type'] = "ngff:Image"
+    root.attrs['multiscales'] = [metadata_dict]
+
+    data = []
+    for index, dataset in enumerate(datasets):
+        arr = multiscales[index].data
+        path = dataset.path
+        path_group = root.create_group(path)
+        path_group.attrs["_ARRAY_DIMENSIONS"] = ngff_image.dims
+        arr = dask.array.to_zarr(arr, store, component=path, overwrite=overwrite, compute=compute, return_stored=True, **kwargs)
+        data.append(arr)
+
     return data, metadata
