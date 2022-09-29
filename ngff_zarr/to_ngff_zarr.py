@@ -1,8 +1,8 @@
-from dataclasses import dataclass
+from curses import meta
 from typing import Union, Optional, Sequence, Hashable, Mapping, Dict, Tuple, Any, Literal, List
 from collections.abc import MutableMapping
 from pathlib import Path
-from enum import Enum
+from dataclasses import asdict
 
 from zarr.storage import BaseStore
 from zarr.core import Array as ZarrArray
@@ -13,37 +13,8 @@ from dask.array.core import Array as DaskArray
 
 from .methods._dask_image import _downsample_dask_image
 from .methods._support import _spatial_dims, _NgffImage
-
-AllInteger = Union[
-    np.uint8, np.int8, np.uint16, np.int16, np.uint32, np.int32, np.uint64, np.int64
-]
-AllFloat = Union[np.float32, np.float64]
-
-SupportedDims = Union[
-    Literal["c"], Literal["x"], Literal["y"], Literal["z"], Literal["t"]
-]
-SpatialDims = Union[Literal["x"], Literal["y"], Literal["z"]]
-AxesType = Union[Literal["time"], Literal["space"], Literal["channel"]]
-
-_supported_dims = {"c", "x", "y", "z", "t"}
-_spatial_dims = {"x", "y", "z"}
-
-class Methods(Enum):
-    DASK_IMAGE_GAUSSIAN = "dask_image_gaussian"
-    DASK_IMAGE_MODE = "dask_image_mode"
-    DASK_IMAGE_NEAREST = "dask_image_nearest"
-
-@dataclass
-class Axes:
-    name: SupportedDims
-    type: AxesType
-    unit: str
-
-@dataclass
-class Metadata:
-    version: str
-    name: str
-    axes: List[Axes]
+from .methods import Methods
+from .metadata import Metadata, Axis, Translation, Scale, Dataset
 
 def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
     data: Union[ArrayLike, MutableMapping, str, ZarrArray],
@@ -62,11 +33,11 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
             Mapping[Any, Union[None, int, Tuple[int, ...]]],
         ]
     ] = None,
-    axis_units: Optional[Union[Mapping[Hashable, str]]] = None,
+    compute: bool =True,
+    axes_units: Optional[Union[Mapping[Hashable, str]]] = None,
     mode: str = "w",
-    compute=True,
     encoding=None,
-    **kwargs):
+    **kwargs) -> Tuple[List[DaskArray], Metadata]:
     """
     Write an image pixel array and metadata to a Zarr store with the OME-NGFF standard data model.
 
@@ -108,8 +79,9 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
     compute: Boolean
         Compute the result instead of just building the Dask task graph
 
-    axis_names: dict of str, optional
-        Long names for the dim axes, e.g. {'x': 'x-axis'} or {'x': 'anterior-posterior'}
+    axes_units: dict of str, optional
+        Units to associate with the axes. Should be drawn from UDUNITS-2, enumerated at 
+        https://ngff.openmicroscopy.org/latest/#axes-md
 
     mode : {{"w", "w-", "a", "r+", None}, default: "w"
         Persistence mode: “w” means create (overwrite if exists); “w-” means create (fail if exists);
@@ -119,6 +91,12 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
 
     kwargs :
         Additional keyword arguments to be passed to ``datatree.DataTree.to_zarr``
+
+    Returns
+    -------
+
+    (data, metadata): list(dask.Array), Metadata
+        Arrays for each scale and NGFF multiscales metadata
     """
 
     ndim = data.ndim
@@ -132,6 +110,7 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
         else:
             raise ValueError("Unsupported dimension: " + str(ndim))
     else:
+        _supported_dims = {"c", "x", "y", "z", "t"}
         if not set(dims).issubset(_supported_dims):
             raise ValueError("dims not valid") 
 
@@ -178,68 +157,40 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
         for image in multiscales:
             image.data = image.data.compute()
 
+    axes = []
+    for dim in dims:
+        unit = None
+        if axes_units and dim in axes_units:
+            unit = axes_units[dim]
+        if dim in {'x', 'y', 'z'}:
+            axis = Axis(name=dim, type='space', unit=unit)
+        elif dim == 'c':
+            axis = Axis(name=dim, type='channel', unit=unit)
+        elif dim == 't':
+            axis = Axis(name=dim, type='time', unit=unit)
+        axes.append(axis)
+    
+    datasets = []
+    for index, image in enumerate(multiscales):
+        path = f"scale{index}/{name}"
+        scale = []
+        for dim in image.dims:
+            if dim in image.scale:
+                scale.append(image.scale[dim])
+            else:
+                scale.append(1.0)
+        translation = []
+        for dim in image.dims:
+            if dim in image.translation:
+                translation.append(image.translation[dim])
+            else:
+                translation.append(1.0)
+        coordinateTransformations = [Scale(scale), Translation(translation)]
+        dataset = Dataset(path=path, coordinateTransformations=coordinateTransformations)
+        datasets.append(dataset)
+    metadata = Metadata(axes=axes, datasets=datasets, name=name)
+    from pprint import pprint
+    pprint(asdict(metadata))
 
-    # multiscales = []
-    # scale0 = self[self.groups[1]]
-    # for name in scale0.ds.data_vars.keys():
-
-    #     ngff_datasets = []
-    #     for child in self.children:
-    #         image = self[child].ds
-    #         scale_transform = []
-    #         translate_transform = []
-    #         for dim in image.dims:
-    #             if len(image.coords[dim]) > 1 and np.issubdtype(image.coords[dim].dtype, np.number):
-    #                 scale_transform.append(
-    #                     float(image.coords[dim][1] - image.coords[dim][0])
-    #                 )
-    #             else:
-    #                 scale_transform.append(1.0)
-    #             if len(image.coords[dim]) > 0 and np.issubdtype(image.coords[dim].dtype, np.number):
-    #                 translate_transform.append(float(image.coords[dim][0]))
-    #             else:
-    #                 translate_transform.append(0.0)
-
-    #         ngff_datasets.append(
-    #             {
-    #                 "path": f"{self[child].name}/{name}",
-    #                 "coordinateTransformations": [
-    #                     {
-    #                         "type": "scale",
-    #                         "scale": scale_transform,
-    #                     },
-    #                     {
-    #                         "type": "translation",
-    #                         "translation": translate_transform,
-    #                     },
-    #                 ],
-    #             }
-    #         )
-
-    #     image = scale0.ds
-    #     axes = []
-    #     for axis in image.dims:
-    #         if axis == "t":
-    #             axes.append({"name": "t", "type": "time"})
-    #         elif axis == "c":
-    #             axes.append({"name": "c", "type": "channel"})
-    #         else:
-    #             axes.append({"name": axis, "type": "space"})
-    #         if "units" in image.coords[axis].attrs:
-    #             axes[-1]["unit"] = image.coords[axis].attrs["units"]
-
-    #     multiscales.append(
-    #         {
-    #             "@type": "ngff:Image",
-    #             "version": "0.4",
-    #             "name": name,
-    #             "axes": axes,
-    #             "datasets": ngff_datasets,
-    #         }
-    #     )
-
-    # NGFF v0.4 metadata
-    # ngff_metadata = {"multiscales": multiscales, "multiscaleSpatialImageVersion": 1}
-    # self.ds = self.ds.assign_attrs(**ngff_metadata)
-
-    # super().to_zarr(store, **kwargs)
+    data = [image.data for image in multiscales]
+    return data, metadata
