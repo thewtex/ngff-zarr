@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Literal, Union, Optional, List
+from typing import Union, Optional, List
+from typing_extensions import Literal
 
 SupportedDims = Union[
     Literal["c"], Literal["x"], Literal["y"], Literal["z"], Literal["t"]

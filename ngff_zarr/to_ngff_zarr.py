@@ -1,5 +1,6 @@
 from curses import meta
-from typing import Union, Optional, Sequence, Hashable, Mapping, Dict, Tuple, Any, Literal, List
+from typing import Union, Optional, Sequence, Hashable, Mapping, Dict, Tuple, Any, List
+from typing_extensions import Literal
 from collections.abc import MutableMapping
 from pathlib import Path
 from dataclasses import asdict

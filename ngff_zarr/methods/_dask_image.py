@@ -1,5 +1,3 @@
-from spatial_image import to_spatial_image
-from dask.array import map_blocks, map_overlap
 import numpy as np
 
 from ._support import _align_chunks, _dim_scale_factors, _compute_sigma, _NgffImage
