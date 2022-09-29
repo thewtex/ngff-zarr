@@ -1,30 +1,17 @@
 from typing import Union, Optional, Sequence, Hashable, Mapping, Dict, Tuple, Any, List
-from typing_extensions import Literal
-from collections.abc import MutableMapping
-from pathlib import Path
-from dataclasses import asdict
 
-from zarr.storage import BaseStore
 from zarr.core import Array as ZarrArray
-import zarr
 from numpy.typing import ArrayLike
-import dask.array
-from dask.array.core import Array as DaskArray
 
-from .methods._dask_image import _downsample_dask_image
-from .methods._support import _spatial_dims
-from .ngff_image import NgffImage
-from .methods import Methods
-from .zarr_metadata import Metadata, Axis, Translation, Scale, Dataset
+from .to_ngff_image import NgffImage
 
-def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
+def to_ngff_image(
     data: Union[ArrayLike, MutableMapping, str, ZarrArray],
     scale_factors: Sequence[Union[Dict[str, int], int]],
     dims: Optional[Sequence[Union["t", "z", "y", "x", "c"]]] = None,
     scale: Optional[Union[Mapping[Hashable, float]]] = None,
     translation: Optional[Union[Mapping[Hashable, float]]] = None,
     name: str = "image",
-    method: Optional[Methods] = None,
     chunks: Optional[
         Union[
             Literal['auto'],
@@ -34,12 +21,8 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
             Mapping[Any, Union[None, int, Tuple[int, ...]]],
         ]
     ] = None,
-    compute: bool = True,
     axes_units: Optional[Union[Mapping[Hashable, str]]] = None,
-    overwrite: bool = True,
-    chunk_store: Optional[Union[MutableMapping, str, Path, BaseStore]] = None,
-    **kwargs,
-    ) -> Tuple[List[DaskArray], Metadata]:
+    ) -> NgffImage:
     """
     Write an image pixel array and metadata to a Zarr store with the OME-NGFF standard data model.
 

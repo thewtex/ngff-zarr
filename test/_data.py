@@ -6,10 +6,8 @@ from numpy.typing import ArrayLike
 import pytest
 import pooch
 import itk
-from dask.array.core import Array as DaskArray
-import dask.array
 
-from ngff_zarr.methods._support import _NgffImage
+from ngff_zarr import itk_image_to_ngff_image
 
 test_data_ipfs_cid = 'bafybeia73oin2pi7hdbfquvrad5jctvcn3vubk3slvh47fvwtwlvbdxqfm'
 test_data_sha256 = '29695d19bb6bac5b31b95bdbe451ff5535f202bdc9b43731f9a5fc8e0cfa1230'
@@ -25,28 +23,6 @@ test_data = pooch.create(path=test_dir,
     },
     retry_if_failed=5
     )
-
-def itk_image_to_ngff_image(itk_image):
-    image_dict = itk.dict_from_image(itk_image)
-    data = dask.array.from_array(image_dict['data'])
-    ndim = data.ndim
-    if ndim < 4:
-        dims = ("z", "y", "x")[-ndim:]
-    elif ndim < 5:
-        dims = ("z", "y", "x", "c")
-    elif ndim < 6:
-        dims = ("t", "z", "y", "x", "c")
-    all_spatial_dims = {"x", "y", "z"}
-    spatial_dims = [dim for dim in dims if dim in all_spatial_dims]
-
-    spacing = image_dict['spacing']
-    scale = { dim: spacing[::-1][idx] for idx, dim in enumerate(spatial_dims) }
-
-    origin = image_dict['origin']
-    translation = { dim: origin[::-1][idx] for idx, dim in enumerate(spatial_dims) }
-
-    ngff_image = _NgffImage(data, dims, scale, translation)
-    return ngff_image
 
 @pytest.fixture
 def input_images():

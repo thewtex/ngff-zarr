@@ -1,16 +1,4 @@
-from dataclasses import dataclass
-from typing import Sequence, Dict
-
-from dask.array.core import Array as DaskArray
-
 _spatial_dims = {"x", "y", "z"}
-
-@dataclass
-class _NgffImage:
-    data: DaskArray
-    dims: Sequence[str]
-    scale: Dict[str, float]
-    translation: Dict[str, float]
 
 def _dim_scale_factors(dims, scale_factor):
     if isinstance(scale_factor, int):

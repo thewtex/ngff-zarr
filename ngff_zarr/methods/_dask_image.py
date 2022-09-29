@@ -1,6 +1,7 @@
 import numpy as np
 
-from ._support import _align_chunks, _dim_scale_factors, _compute_sigma, _NgffImage
+from ._support import _align_chunks, _dim_scale_factors, _compute_sigma
+from ..ngff_image import NgffImage
 
 def _compute_next_scale(previous_image, dim_factors):
     '''Helper method to manually compute output image spacing.
@@ -22,7 +23,7 @@ def _compute_next_translation(previous_image, dim_factors):
     '''Helper method to manually compute output image physical offset.
         Note that this method does not account for an image direction matrix.
         
-    previous_image: _NgffImage
+    previous_image: NgffImage
         The image for which voxel offsets are input
 
     dim_factors: Dict
@@ -78,7 +79,7 @@ def _get_truncate(previous_image, sigma_values, truncate_start=4.0) -> float:
 
     return truncate
 
-def _downsample_dask_image(ngff_image: _NgffImage, default_chunks, out_chunks, scale_factors, label=False):
+def _downsample_dask_image(ngff_image: NgffImage, default_chunks, out_chunks, scale_factors, label=False):
     import dask_image.ndfilters
     import dask_image.ndinterp
 
@@ -159,7 +160,7 @@ def _downsample_dask_image(ngff_image: _NgffImage, default_chunks, out_chunks, s
                 out_chunks_list.append(1)
         downscaled_array = downscaled_array.rechunk(tuple(out_chunks_list))
         
-        previous_image = _NgffImage(downscaled_array, dims, output_scale, output_translation)
+        previous_image = NgffImage(downscaled_array, dims, output_scale, output_translation)
         multiscales.append(previous_image)
 
     return multiscales
