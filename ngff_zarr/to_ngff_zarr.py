@@ -153,10 +153,10 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
 
     if method is Methods.DASK_IMAGE_GAUSSIAN:
         multiscales = _downsample_dask_image(ngff_image, default_chunks, out_chunks, scale_factors, label=False)
-    # elif method is Methods.DASK_IMAGE_NEAREST:
-    #     data_objects = _downsample_dask_image(current_input, default_chunks, out_chunks, scale_factors, data_objects, image, label='nearest')
-    # elif method is Methods.DASK_IMAGE_MODE:
-    #     data_objects = _downsample_dask_image(current_input, default_chunks, out_chunks, scale_factors, data_objects, image, label='mode')
+    elif method is Methods.DASK_IMAGE_NEAREST:
+        multiscales = _downsample_dask_image(ngff_image, default_chunks, out_chunks, scale_factors, label='nearest')
+    elif method is Methods.DASK_IMAGE_MODE:
+        multiscales = _downsample_dask_image(ngff_image, default_chunks, out_chunks, scale_factors, label='mode')
 
     axes = []
     for dim in dims:
