@@ -9,10 +9,10 @@ from .itk_image_to_ngff_image import itk_image_to_ngff_image
 from .__about__ import __version__
 
 __all__ = [
-        "to_ngff_zarr",
-        "Methods",
-        "NgffImage",
-        "to_ngff_image",
-        "itk_image_to_ngff_image",
-        "__version__",
-        ]
+    "to_ngff_zarr",
+    "Methods",
+    "NgffImage",
+    "to_ngff_image",
+    "itk_image_to_ngff_image",
+    "__version__",
+]

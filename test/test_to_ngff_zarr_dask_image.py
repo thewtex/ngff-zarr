@@ -1,17 +1,21 @@
-from ngff_zarr import Methods, to_ngff_zarr 
+from ngff_zarr import Methods, to_ngff_zarr
 from zarr.storage import MemoryStore
 
 # from ._data import input_images, verify_against_baseline, store_new_image
 from ._data import input_images
+
 
 def test_gaussian_isotropic_scale_factors(input_images):
     dataset_name = "cthead1"
     image = input_images[dataset_name]
     store = MemoryStore()
     baseline_name = "2_4/DASK_IMAGE_GAUSSIAN"
-    multiscale = to_ngff_zarr(store, image.data, [2, 4], method=Methods.DASK_IMAGE_GAUSSIAN)
+    multiscale = to_ngff_zarr(
+        store, image.data, [2, 4], method=Methods.DASK_IMAGE_GAUSSIAN
+    )
     # store_new_image(dataset_name, baseline_name, multiscale)
     # verify_against_baseline(dataset_name, baseline_name, multiscale)
+
 
 #     dataset_name = "cthead1"
 #     image = input_images[dataset_name]

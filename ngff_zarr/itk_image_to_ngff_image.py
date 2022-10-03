@@ -1,11 +1,13 @@
 import dask.array
 from .ngff_image import NgffImage
 
-def itk_image_to_ngff_image(itk_image,
+
+def itk_image_to_ngff_image(
+    itk_image,
     # anatomical_axes: bool = False,
     # axis_names: List[str] = None,
     # axis_units: List[str] = None,
-    ):
+):
     """Convert an itk.Image or an itkwasm.Image to an NgffImage, preserving spatial metadata."""
 
     # Handle anatomical axes
@@ -13,7 +15,7 @@ def itk_image_to_ngff_image(itk_image,
     # axis_names = None
     # if anatomical_axes and (axis_names is None):
     #     axis_names = {"x": "right-left", "y": "anterior-posterior", "z": "inferior-superior"}
-    
+
     # # Orient 3D image so that direction is identity wrt RAI coordinates
     # image_dimension = image.GetImageDimension()
     # input_direction = np.array(image.GetDirection())
@@ -26,6 +28,7 @@ def itk_image_to_ngff_image(itk_image,
 
     try:
         import itk
+
         if isinstance(itk_image, itk.Image):
             image_dict = itk.dict_from_image(itk_image)
     except ImportError:
@@ -33,7 +36,7 @@ def itk_image_to_ngff_image(itk_image,
 
     # try:
 
-    data = dask.array.from_array(image_dict['data'])
+    data = dask.array.from_array(image_dict["data"])
     ndim = data.ndim
     if ndim < 4:
         dims = ("z", "y", "x")[-ndim:]
@@ -44,12 +47,11 @@ def itk_image_to_ngff_image(itk_image,
     all_spatial_dims = {"x", "y", "z"}
     spatial_dims = [dim for dim in dims if dim in all_spatial_dims]
 
-    spacing = image_dict['spacing']
-    scale = { dim: spacing[::-1][idx] for idx, dim in enumerate(spatial_dims) }
+    spacing = image_dict["spacing"]
+    scale = {dim: spacing[::-1][idx] for idx, dim in enumerate(spatial_dims)}
 
-    origin = image_dict['origin']
-    translation = { dim: origin[::-1][idx] for idx, dim in enumerate(spatial_dims) }
-
+    origin = image_dict["origin"]
+    translation = {dim: origin[::-1][idx] for idx, dim in enumerate(spatial_dims)}
 
     ngff_image = NgffImage(data, dims, scale, translation)
     return ngff_image

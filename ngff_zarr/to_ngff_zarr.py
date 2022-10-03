@@ -17,13 +17,15 @@ from .to_ngff_image import to_ngff_image
 from .methods import Methods
 from .zarr_metadata import Metadata, Axis, Translation, Scale, Dataset
 
-def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
+
+def to_ngff_zarr(
+    store: Union[MutableMapping, str, Path, BaseStore],
     data: Union[NgffImage, ArrayLike, MutableMapping, str, ZarrArray],
     scale_factors: Sequence[Union[Dict[str, int], int]],
     method: Optional[Methods] = None,
     chunks: Optional[
         Union[
-            Literal['auto'],
+            Literal["auto"],
             int,
             Tuple[int, ...],
             Tuple[Tuple[int, ...], ...],
@@ -34,7 +36,7 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
     overwrite: bool = True,
     chunk_store: Optional[Union[MutableMapping, str, Path, BaseStore]] = None,
     **kwargs,
-    ) -> Tuple[List[DaskArray], Metadata]:
+) -> Tuple[List[DaskArray], Metadata]:
     """
     Write an image pixel array and metadata to a Zarr store with the OME-NGFF standard data model.
 
@@ -57,7 +59,7 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
 
     overwrite : bool, optional
         If True, delete any pre-existing data in `store` before creating groups.
-    
+
     chunk_store : MutableMapping, str or Path, zarr.storage.BaseStore, optional
         Separate storage for chunks. If not provided, `store` will be used
         for storage of both chunks and metadata.
@@ -101,25 +103,31 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
         method = Methods.DASK_IMAGE_GAUSSIAN
 
     if method is Methods.DASK_IMAGE_GAUSSIAN:
-        multiscales = _downsample_dask_image(ngff_image, default_chunks, out_chunks, scale_factors, label=False)
+        multiscales = _downsample_dask_image(
+            ngff_image, default_chunks, out_chunks, scale_factors, label=False
+        )
     elif method is Methods.DASK_IMAGE_NEAREST:
-        multiscales = _downsample_dask_image(ngff_image, default_chunks, out_chunks, scale_factors, label='nearest')
+        multiscales = _downsample_dask_image(
+            ngff_image, default_chunks, out_chunks, scale_factors, label="nearest"
+        )
     elif method is Methods.DASK_IMAGE_MODE:
-        multiscales = _downsample_dask_image(ngff_image, default_chunks, out_chunks, scale_factors, label='mode')
+        multiscales = _downsample_dask_image(
+            ngff_image, default_chunks, out_chunks, scale_factors, label="mode"
+        )
 
     axes = []
     for dim in ngff_image.dims:
         unit = None
         if ngff_image.axes_units and dim in ngff_image.axes_units:
             unit = axes_units[dim]
-        if dim in {'x', 'y', 'z'}:
-            axis = Axis(name=dim, type='space', unit=unit)
-        elif dim == 'c':
-            axis = Axis(name=dim, type='channel', unit=unit)
-        elif dim == 't':
-            axis = Axis(name=dim, type='time', unit=unit)
+        if dim in {"x", "y", "z"}:
+            axis = Axis(name=dim, type="space", unit=unit)
+        elif dim == "c":
+            axis = Axis(name=dim, type="channel", unit=unit)
+        elif dim == "t":
+            axis = Axis(name=dim, type="time", unit=unit)
         axes.append(axis)
-    
+
     datasets = []
     for index, image in enumerate(multiscales):
         path = f"scale{index}/{ngff_image.name}"
@@ -136,14 +144,16 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
             else:
                 translation.append(1.0)
         coordinateTransformations = [Scale(scale), Translation(translation)]
-        dataset = Dataset(path=path, coordinateTransformations=coordinateTransformations)
+        dataset = Dataset(
+            path=path, coordinateTransformations=coordinateTransformations
+        )
         datasets.append(dataset)
     metadata = Metadata(axes=axes, datasets=datasets, name=ngff_image.name)
 
     root = zarr.group(store, overwrite=overwrite, chunk_store=chunk_store)
     metadata_dict = asdict(metadata)
-    metadata_dict['@type'] = "ngff:Image"
-    root.attrs['multiscales'] = [metadata_dict]
+    metadata_dict["@type"] = "ngff:Image"
+    root.attrs["multiscales"] = [metadata_dict]
 
     data = []
     for index, dataset in enumerate(datasets):
@@ -151,7 +161,15 @@ def to_ngff_zarr(store: Union[MutableMapping, str, Path, BaseStore],
         path = dataset.path
         path_group = root.create_group(path)
         path_group.attrs["_ARRAY_DIMENSIONS"] = ngff_image.dims
-        arr = dask.array.to_zarr(arr, store, component=path, overwrite=overwrite, compute=compute, return_stored=True, **kwargs)
+        arr = dask.array.to_zarr(
+            arr,
+            store,
+            component=path,
+            overwrite=overwrite,
+            compute=compute,
+            return_stored=True,
+            **kwargs,
+        )
         data.append(arr)
 
     return data, metadata

@@ -4,6 +4,7 @@ from typing import Sequence, Dict, Optional, Mapping
 from dask.array.core import Array as DaskArray
 from .zarr_metadata import Units
 
+
 @dataclass
 class NgffImage:
     data: DaskArray
