@@ -1,13 +1,12 @@
 from typing import Sequence, Dict
 from pathlib import Path
-from dataclasses import dataclass
 
-from numpy.typing import ArrayLike
 import pytest
 import pooch
 import itk
+from zarr.storage import DirectoryStore, MemoryStore
 
-from ngff_zarr import itk_image_to_ngff_image
+from ngff_zarr import itk_image_to_ngff_image, to_ngff_zarr
 
 test_data_ipfs_cid = "bafybeia73oin2pi7hdbfquvrad5jctvcn3vubk3slvh47fvwtwlvbdxqfm"
 test_data_sha256 = "29695d19bb6bac5b31b95bdbe451ff5535f202bdc9b43731f9a5fc8e0cfa1230"
@@ -57,20 +56,34 @@ def input_images():
 
     return result
 
+def store_equals(baseline_store, test_store):
+    baseline_keys = set(baseline_store.keys())
+    test_keys = set(test_store.keys())
+    if baseline_keys != test_keys:
+        print('test keys != baseline keys')
+        print('baseline - test:', baseline_keys.difference(test_keys))
+        print('test - baseline:', test_keys.difference(baseline_keys))
+        return False
+    for k in baseline_keys:
+        if baseline_store[k] != test_store[k]:
+            print(f'test value != baseline value for key {k}')
+            print('baseline:', baseline_store[k])
+            print('test:', test_store[k])
+            return False
+    return True
 
-# def verify_against_baseline(dataset_name, baseline_name, multiscale):
-#     store = DirectoryStore(
-#         test_data_dir / f"baseline/{dataset_name}/{baseline_name}", dimension_separator="/"
-#     )
-#     dt = open_datatree(store, engine="zarr", mode="r")
-#     xr.testing.assert_equal(dt.ds, multiscale.ds)
-#     for scale in multiscale.children:
-#         xr.testing.assert_equal(dt[scale].ds, multiscale[scale].ds)
+def verify_against_baseline(dataset_name, baseline_name, multiscales):
+    baseline_store = DirectoryStore(
+        test_data_dir / f"baseline/{dataset_name}/{baseline_name}", dimension_separator="/"
+    )
+    test_store =  MemoryStore(dimension_separator='/')
+    to_ngff_zarr(test_store, multiscales)
+    assert store_equals(baseline_store, test_store)
 
-# def store_new_image(dataset_name, baseline_name, multiscale_image):
-#     '''Helper method for writing output results to disk
-#        for later upload as test baseline'''
-#     store = DirectoryStore(
-#         test_data_dir / f"baseline/{dataset_name}/{baseline_name}", dimension_separator="/",
-#     )
-#     multiscale_image.to_zarr(store)
+def store_new_multiscales(dataset_name, baseline_name, multiscales):
+    '''Helper method for writing output results to disk
+       for later upload as test baseline'''
+    store = DirectoryStore(
+        test_data_dir / f"baseline/{dataset_name}/{baseline_name}", dimension_separator="/",
+    )
+    to_ngff_zarr(store, multiscales)
