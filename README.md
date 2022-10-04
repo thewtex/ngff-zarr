@@ -17,7 +17,7 @@ A lean and kind Open Microscopy Environment (OME) Next Generation File Format (N
 ## Installation
 
 ```console
-pip install ngff-zarr
+pip install 'ngff-zarr[dask-image]'
 ```
 
 ## Features
