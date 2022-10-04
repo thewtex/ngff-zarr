@@ -8,8 +8,8 @@ from zarr.storage import DirectoryStore, MemoryStore
 
 from ngff_zarr import itk_image_to_ngff_image, to_ngff_zarr
 
-test_data_ipfs_cid = "bafybeia73oin2pi7hdbfquvrad5jctvcn3vubk3slvh47fvwtwlvbdxqfm"
-test_data_sha256 = "29695d19bb6bac5b31b95bdbe451ff5535f202bdc9b43731f9a5fc8e0cfa1230"
+test_data_ipfs_cid = "bafybeien6v4bxby7yhl5k7knlabnueu4g2qasjdfztsvlmjzypeyhy5tru"
+test_data_sha256 = "fde157706b02988947bbc90bc2ab3f87544a61d852dccc200b98812fe9f62c92"
 
 
 test_dir = Path(__file__).resolve().parent
@@ -17,7 +17,7 @@ extract_dir = "data"
 test_data_dir = test_dir / extract_dir
 test_data = pooch.create(
     path=test_dir,
-    base_url=f"https://{test_data_ipfs_cid}.ipfs.w3s.link/ipfs/{test_data_ipfs_cid}/",
+    base_url=f"https://{test_data_ipfs_cid}.ipfs.dweb.link/",
     registry={
         "data.tar.gz": f"sha256:{test_data_sha256}",
     },
@@ -27,8 +27,8 @@ test_data = pooch.create(
 
 @pytest.fixture
 def input_images():
-    # untar = pooch.Untar(extract_dir=extract_dir)
-    # test_data.fetch("data.tar.gz", processor=untar)
+    untar = pooch.Untar(extract_dir=extract_dir)
+    test_data.fetch("data.tar.gz", processor=untar)
     result = {}
 
     # store = DirectoryStore(
