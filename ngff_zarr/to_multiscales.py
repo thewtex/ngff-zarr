@@ -53,7 +53,7 @@ def to_multiscales(
             Mapping[Any, Union[None, int, Tuple[int, ...]]],
         ]
     ] = None,
-) -> Tuple[List[DaskArray], Metadata]:
+) -> Multiscales:
     """
     Generate multiple resolution scales for the OME-NGFF standard data model.
 

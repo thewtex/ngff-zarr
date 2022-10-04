@@ -1,5 +1,6 @@
 import dask.array
 from .ngff_image import NgffImage
+from dataclasses import asdict
 
 
 def itk_image_to_ngff_image(
@@ -26,6 +27,8 @@ def itk_image_to_ngff_image(
     # elif anatomical_axes and image_dimension != 3:
     #     raise ValueError(f'Cannot use anatomical axes for input image of size {image_dimension}')
 
+    image_dict = None
+
     try:
         import itk
 
@@ -34,7 +37,16 @@ def itk_image_to_ngff_image(
     except ImportError:
         pass
 
-    # try:
+    try:
+        import itkwasm
+
+        if isinstance(itk_image, itkwasm.Image):
+            image_dict = asdict(itk_image)
+    except ImportError:
+        pass
+
+    if image_dict is None:
+        raise RuntimeError('Could not import itk or itkwasm or input is not itk.Image or itkwasm.Image')
 
     data = dask.array.from_array(image_dict["data"])
     ndim = data.ndim
