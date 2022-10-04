@@ -46,6 +46,7 @@ dask-image = [
 test = [
     "pytest",
     "pooch",
+    "itkwasm",
     "itk-io>=5.3rc3.post3",
 ]
 
