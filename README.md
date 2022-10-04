@@ -10,6 +10,8 @@ A lean and kind Open Microscopy Environment (OME) Next Generation File Format (N
 **Table of Contents**
 
 - [Installation](#installation)
+- [Features](#features)
+- [See also](#see-also)
 - [License](#license)
 
 ## Installation
@@ -17,6 +19,14 @@ A lean and kind Open Microscopy Environment (OME) Next Generation File Format (N
 ```console
 pip install ngff-zarr
 ```
+
+# Features
+
+- Minimal dependencies
+- Work with arbitrary Zarr store types
+- Lazy, parallel, and web ready -- no local filesystem required
+- Process extremely large datasets
+- Multiple downscaling methods
 
 ## See also
 
