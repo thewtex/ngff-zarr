@@ -20,13 +20,14 @@ A lean and kind Open Microscopy Environment (OME) Next Generation File Format (N
 pip install ngff-zarr
 ```
 
-# Features
+## Features
 
 - Minimal dependencies
 - Work with arbitrary Zarr store types
 - Lazy, parallel, and web ready -- no local filesystem required
 - Process extremely large datasets
 - Multiple downscaling methods
+- Supports Python>=3.7
 
 ## See also
 
