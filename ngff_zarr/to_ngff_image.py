@@ -4,6 +4,7 @@ from collections.abc import MutableMapping
 from numpy.typing import ArrayLike
 from zarr.core import Array as ZarrArray
 from dask.array.core import Array as DaskArray
+import dask
 
 from .methods._support import _spatial_dims
 from .ngff_image import NgffImage
