@@ -24,7 +24,9 @@ def _align_chunks(previous_image, default_chunks, dim_factors):
         else:
             aligned_chunks[dim] = default_chunks[dim]
     if rechunk:
-        previous_image.data = previous_image.data.chunk(aligned_chunks)
+        dask_aligned_chunks = { previous_image.dims.index(dim):
+                aligned_chunks[dim] for dim in aligned_chunks.keys() }
+        previous_image.data = previous_image.data.rechunk(dask_aligned_chunks)
 
     return previous_image
 
