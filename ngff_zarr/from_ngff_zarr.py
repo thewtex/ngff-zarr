@@ -73,8 +73,15 @@ def from_ngff_zarr(
 
     metadata.pop("@type", None)
     axes = [Axis(**axis) for axis in metadata["axes"]]
+    coordinateTransformations = None
+    if "coordinateTransformations" in metadata:
+        coordinateTransformations = metadata["coordinateTransformations"]
     metadata = Metadata(
-        axes=axes, datasets=datasets, name=name, version=metadata["version"]
+        axes=axes,
+        datasets=datasets,
+        name=name,
+        version=metadata["version"],
+        coordinateTransformations=coordinateTransformations,
     )
 
     return Multiscales(images, metadata)

@@ -76,6 +76,7 @@ test = [
     "itk-io>=5.3.0",
     "itk-filtering>=5.3.0",
     "tifffile",
+    "jsonschema",
 ]
 
 
