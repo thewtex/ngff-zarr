@@ -24,7 +24,7 @@ def _ngff_image_scale_factors(ngff_image, min_length):
     scale_factors = []
     dims = ngff_image.dims
     previous = { d: 1 for d in { 'x', 'y', 'z' }.intersection(dims) }
-    while (np.array(list(sizes.values())) > min_length).any():
+    while (np.array(list(sizes.values())) > min_length + 1).any():
         max_size = np.array(list(sizes.values())).max()
         to_skip = { d: sizes[d] <= max_size / 2 for d in previous.keys() }
         scale_factor = {}
