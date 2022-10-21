@@ -72,6 +72,10 @@ class Axis:
 
 
 @dataclass
+class Identity:
+    type: str = "identity"
+
+@dataclass
 class Scale:
     scale: List[float]
     type: str = "scale"
@@ -96,6 +100,6 @@ class Dataset:
 class Metadata:
     axes: List[Axis]
     datasets: List[Dataset]
+    coordinateTransformations: List[Transform]
     name: str = "image"
     version: str = "0.4"
-    coordinateTransformations: List[Transform] = field(default_factory=list)

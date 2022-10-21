@@ -11,7 +11,7 @@ import numpy as np
 from .methods._dask_image import _downsample_dask_image
 from .to_ngff_image import to_ngff_image
 from .ngff_image import NgffImage
-from .zarr_metadata import Metadata, Axis, Translation, Scale, Dataset
+from .zarr_metadata import Metadata, Axis, Identity, Translation, Scale, Dataset
 from .methods import Methods
 
 @dataclass
@@ -151,7 +151,7 @@ def to_multiscales(
             path=path, coordinateTransformations=coordinateTransformations
         )
         datasets.append(dataset)
-    metadata = Metadata(axes=axes, datasets=datasets, name=ngff_image.name)
+    metadata = Metadata(axes=axes, datasets=datasets, name=ngff_image.name, coordinateTransformations=[Identity()])
 
     multiscales = Multiscales(images, metadata)
     return multiscales
