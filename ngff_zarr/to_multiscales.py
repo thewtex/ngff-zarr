@@ -24,17 +24,19 @@ def _ngff_image_scale_factors(ngff_image, min_length):
     scale_factors = []
     dims = ngff_image.dims
     previous = { d: 1 for d in { 'x', 'y', 'z' }.intersection(dims) }
-    while (np.array(list(sizes.values())) > min_length + 1).any():
+    sizes_array = np.array(list(sizes.values()))
+    while np.logical_and(sizes_array > min_length + 1, sizes_array > np.array(ngff_image.data.chunksize)*2).any():
         max_size = np.array(list(sizes.values())).max()
         to_skip = { d: sizes[d] <= max_size / 2 for d in previous.keys() }
         scale_factor = {}
-        for dim in previous.keys():
-            if to_skip[dim]:
+        for idx, dim in enumerate(previous.keys()):
+            if to_skip[dim] or sizes[dim] < ngff_image.data.chunksize[idx]:
                 scale_factor[dim] = previous[dim]
                 continue
             scale_factor[dim] = 2 * previous[dim]
 
             sizes[dim] = int(sizes[dim] / 2)
+        sizes_array = np.array(list(sizes.values()))
         previous = scale_factor
         scale_factors.append(scale_factor)
 
@@ -93,11 +95,14 @@ def to_multiscales(
     if out_chunks is None:
         out_chunks = default_chunks
 
+    da_out_chunks = tuple(out_chunks[d] for d in ngff_image.dims)
     if not isinstance(ngff_image.data, DaskArray):
         if isinstance(ngff_image.data, (ZarrArray, str, MutableMapping)):
-            ngff_image.data = dask.array.from_zarr(ngff_image.data, chunks=out_chunks)
+            ngff_image.data = dask.array.from_zarr(ngff_image.data, chunks=da_out_chunks)
         else:
-            ngff_image.data = dask.array.from_array(ngff_image.data, chunks=out_chunks)
+            ngff_image.data = dask.array.from_array(ngff_image.data, chunks=da_out_chunks)
+    else:
+        ngff_image.data = ngff_image.data.rechunk(da_out_chunks)
 
     if isinstance(scale_factors, int):
         scale_factors = _ngff_image_scale_factors(ngff_image, scale_factors)
