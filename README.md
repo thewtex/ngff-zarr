@@ -38,3 +38,14 @@ pip install 'ngff-zarr[dask-image]'
 ## License
 
 `ngff-zarr` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
+
+## Development
+
+Contributions are welcome and appreciated.
+
+To run the unit tests:
+
+```sh
+pip install -e ".[test,dask-image]"
+pytest
+```
