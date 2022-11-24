@@ -50,7 +50,9 @@ def itk_image_to_ngff_image(
 
     data = dask.array.from_array(image_dict["data"])
     ndim = data.ndim
-    if ndim < 4:
+    if ndim == 3 and image_dict['imageType']['components'] > 1:
+        dims = ("y", "x", "c")
+    elif ndim < 4:
         dims = ("z", "y", "x")[-ndim:]
     elif ndim < 5:
         dims = ("z", "y", "x", "c")
