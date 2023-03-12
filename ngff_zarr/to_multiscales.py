@@ -25,12 +25,13 @@ def _ngff_image_scale_factors(ngff_image, min_length):
     dims = ngff_image.dims
     previous = { d: 1 for d in { 'x', 'y', 'z' }.intersection(dims) }
     sizes_array = np.array(list(sizes.values()))
-    while np.logical_and(sizes_array > min_length + 1, sizes_array > np.array(ngff_image.data.chunksize)*2).any():
+    double_chunksize = np.array(ngff_image.data.chunksize)*2
+    while np.logical_and(sizes_array > min_length + 1, sizes_array > double_chunksize).any():
         max_size = np.array(list(sizes.values())).max()
         to_skip = { d: sizes[d] <= max_size / 2 for d in previous.keys() }
         scale_factor = {}
         for idx, dim in enumerate(previous.keys()):
-            if to_skip[dim] or sizes[dim] < ngff_image.data.chunksize[idx]:
+            if to_skip[dim] or sizes[dim] / 2 < ngff_image.data.chunksize[idx]:
                 scale_factor[dim] = previous[dim]
                 continue
             scale_factor[dim] = 2 * previous[dim]
@@ -38,6 +39,9 @@ def _ngff_image_scale_factors(ngff_image, min_length):
             sizes[dim] = int(sizes[dim] / 2)
         sizes_array = np.array(list(sizes.values()))
         previous = scale_factor
+        # There should be sufficient data in the result for statistics, etc.
+        if (np.prod(sizes_array) / min_length) < 2:
+            break
         scale_factors.append(scale_factor)
 
     return scale_factors

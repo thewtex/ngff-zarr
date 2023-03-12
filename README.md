@@ -55,7 +55,7 @@ pytest
 1. Generate new test data tarball
 
 ```
-cd test
+cd test/data
 tar cvf ../data.tar baseline input
 gzip -9 ../data.tar
 ```
