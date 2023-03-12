@@ -1,13 +1,13 @@
 _spatial_dims = {"x", "y", "z"}
 
 
-def _dim_scale_factors(dims, scale_factor):
+def _dim_scale_factors(dims, scale_factor, previous_dim_factors):
     if isinstance(scale_factor, int):
         result_scale_factors = {
-            dim: scale_factor for dim in _spatial_dims.intersection(dims)
+            dim: int(scale_factor / previous_dim_factors[dim]) for dim in _spatial_dims.intersection(dims)
         }
     else:
-        result_scale_factors = scale_factor
+        result_scale_factors = { d:int(scale_factor[d] / previous_dim_factors[d]) for d in scale_factor.keys() }
     return result_scale_factors
 
 
