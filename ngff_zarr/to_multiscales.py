@@ -30,7 +30,7 @@ def _ngff_image_scale_factors(ngff_image, min_length):
         to_skip = { d: sizes[d] <= max_size / 2 for d in previous.keys() }
         scale_factor = {}
         for idx, dim in enumerate(previous.keys()):
-            if to_skip[dim] or sizes[dim] < ngff_image.data.chunksize[idx]:
+            if to_skip[dim] or sizes[dim] / 2 < ngff_image.data.chunksize[idx]:
                 scale_factor[dim] = previous[dim]
                 continue
             scale_factor[dim] = 2 * previous[dim]
