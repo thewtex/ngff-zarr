@@ -32,7 +32,7 @@ def itk_image_to_ngff_image(
     try:
         import itk
 
-        if isinstance(itk_image, itk.Image):
+        if isinstance(itk_image, (itk.Image, itk.VectorImage)):
             image_dict = itk.dict_from_image(itk_image)
     except ImportError:
         pass
