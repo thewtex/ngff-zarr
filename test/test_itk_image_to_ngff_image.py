@@ -23,11 +23,42 @@ def test_2d_rgb_itk_image(input_images):
     itk_image = itk.image_from_array(array, is_vector=True)
     ngff_image = itk_image_to_ngff_image(itk_image)
     assert np.array_equal(np.asarray(itk_image), array)
+    assert np.array_equal(ngff_image.data, array)
     assert ngff_image.dims == ("y", "x", "c")
     assert ngff_image.scale["x"] == 1.0
     assert ngff_image.scale["y"] == 1.0
     assert ngff_image.translation["x"] == 0.0
     assert ngff_image.translation["y"] == 0.0
+    assert ngff_image.name == "image"
+    assert ngff_image.axes_units == None
+
+def test_2d_itk_vector_image(input_images):
+    array = np.random.rand(224, 224, 3).astype(dtype=np.float32)
+    itk_image = itk.image_from_array(array, is_vector=True)
+    ngff_image = itk_image_to_ngff_image(itk_image)
+    assert np.array_equal(itk.array_from_image(itk_image), array)
+    assert np.array_equal(ngff_image.data, array)
+    assert ngff_image.dims == ("y", "x", "c")
+    assert ngff_image.scale["x"] == 1.0
+    assert ngff_image.scale["y"] == 1.0
+    assert ngff_image.translation["x"] == 0.0
+    assert ngff_image.translation["y"] == 0.0
+    assert ngff_image.name == "image"
+    assert ngff_image.axes_units == None
+
+def test_3d_itk_vector_image(input_images):
+    array = np.random.rand(224, 224, 128, 3).astype(dtype=np.float32)
+    itk_image = itk.image_from_array(array, is_vector=True)
+    ngff_image = itk_image_to_ngff_image(itk_image)
+    assert np.array_equal(itk.array_from_image(itk_image), array)
+    assert np.array_equal(ngff_image.data, array)
+    assert ngff_image.dims == ("z", "y", "x", "c")
+    assert ngff_image.scale["x"] == 1.0
+    assert ngff_image.scale["y"] == 1.0
+    assert ngff_image.scale["z"] == 1.0
+    assert ngff_image.translation["x"] == 0.0
+    assert ngff_image.translation["y"] == 0.0
+    assert ngff_image.translation["z"] == 0.0
     assert ngff_image.name == "image"
     assert ngff_image.axes_units == None
 
