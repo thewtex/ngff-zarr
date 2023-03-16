@@ -4,10 +4,10 @@ from ._support import _align_chunks, _dim_scale_factors, _compute_sigma
 from ..ngff_image import NgffImage
 
 
-def _compute_next_scale(previous_image, dim_factors):
+def _compute_next_scale(previous_image: NgffImage, dim_factors):
     """Helper method to manually compute output image spacing.
 
-    previous_image: _NgffImage
+    previous_image: NgffImage
         The image for which voxel spacings are use to compute spacing for the next scale
 
     dim_factors: Dict
