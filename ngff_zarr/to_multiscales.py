@@ -2,11 +2,17 @@ from typing import Union, Optional, Sequence, Mapping, Dict, Tuple, Any, List
 from typing_extensions import Literal
 from collections.abc import MutableMapping
 from dataclasses import dataclass
+import time
+import shutil
+import atexit
+import signal
 
 from zarr.core import Array as ZarrArray
 from numpy.typing import ArrayLike
 from dask.array.core import Array as DaskArray
 import numpy as np
+import zarr
+import dask
 
 from .methods._dask_image import _downsample_dask_image
 from .methods._itk import _downsample_itk_bin_shrink, _downsample_itk_gaussian, _downsample_itk_label
@@ -14,25 +20,97 @@ from .to_ngff_image import to_ngff_image
 from .ngff_image import NgffImage
 from .zarr_metadata import Metadata, Axis, Translation, Scale, Dataset
 from .methods import Methods
+from .config import config
+from .rich_dask_progress import RichDaskProgress
+
+_spatial_dims = {'x', 'y', 'z'}
 
 @dataclass
 class Multiscales:
     images: List[NgffImage]
     metadata: Metadata
+    scale_factors: Optional[Union[int, Sequence[Union[Dict[str, int], int]]]] = None
+    method: Optional[Methods] = None
+    chunks: Optional[
+        Union[
+            Literal["auto"],
+            int,
+            Tuple[int, ...],
+            Tuple[Tuple[int, ...], ...],
+            Mapping[Any, Union[None, int, Tuple[int, ...]]],
+        ]
+    ] = None
 
-def _ngff_image_scale_factors(ngff_image, min_length):
-    sizes = { d: s for d, s in zip(ngff_image.dims, ngff_image.data.shape) }
+def _array_split(ary, indices_or_sections, axis=0):
+    """
+    *** From NumPy, adapted for Dask Array's
+
+    Split an array into multiple sub-arrays.
+
+    Please refer to the ``split`` documentation.  The only difference
+    between these functions is that ``array_split`` allows
+    `indices_or_sections` to be an integer that does *not* equally
+    divide the axis. For an array of length l that should be split
+    into n sections, it returns l % n sub-arrays of size l//n + 1
+    and the rest of size l//n.
+
+    See Also
+    --------
+    split : Split array into multiple sub-arrays of equal size.
+
+    Examples
+    --------
+    >>> x = np.arange(8.0)
+    >>> np.array_split(x, 3)
+    [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
+
+    >>> x = np.arange(9)
+    >>> np.array_split(x, 4)
+    [array([0, 1, 2]), array([3, 4]), array([5, 6]), array([7, 8])]
+
+    """
+    try:
+        Ntotal = ary.shape[axis]
+    except AttributeError:
+        Ntotal = len(ary)
+    try:
+        # handle array case.
+        Nsections = len(indices_or_sections) + 1
+        div_points = [0] + list(indices_or_sections) + [Ntotal]
+    except TypeError:
+        # indices_or_sections is a scalar, not an array.
+        Nsections = int(indices_or_sections)
+        if Nsections <= 0:
+            raise ValueError('number sections must be larger than 0.') from None
+        Neach_section, extras = divmod(Ntotal, Nsections)
+        section_sizes = ([0] +
+                         extras * [Neach_section+1] +
+                         (Nsections-extras) * [Neach_section])
+        div_points = np.array(section_sizes, dtype=np.intp).cumsum()
+
+    sub_arys = []
+    sary = dask.array.swapaxes(ary, axis, 0)
+    for i in range(Nsections):
+        st = div_points[i]
+        end = div_points[i + 1]
+        sub_arys.append(dask.array.swapaxes(sary[st:end], axis, 0))
+
+    return sub_arys
+
+def _ngff_image_scale_factors(ngff_image, min_length, out_chunks):
+    sizes = { d: s for d, s in zip(ngff_image.dims, ngff_image.data.shape) if d in _spatial_dims }
     scale_factors = []
     dims = ngff_image.dims
-    previous = { d: 1 for d in { 'x', 'y', 'z' }.intersection(dims) }
+    previous = { d: 1 for d in _spatial_dims.intersection(dims) }
     sizes_array = np.array(list(sizes.values()))
-    double_chunksize = np.array(ngff_image.data.chunksize)*2
-    while np.logical_and(sizes_array > min_length + 1, sizes_array > double_chunksize).any():
+    sizes = { d: s for d, s in zip(ngff_image.dims, ngff_image.data.shape) if d in _spatial_dims }
+    double_chunks = np.array([2*out_chunks[d] for d in _spatial_dims.intersection(out_chunks)])
+    while (sizes_array > double_chunks).any():
         max_size = np.array(list(sizes.values())).max()
         to_skip = { d: sizes[d] <= max_size / 2 for d in previous.keys() }
         scale_factor = {}
-        for idx, dim in enumerate(previous.keys()):
-            if to_skip[dim] or sizes[dim] / 2 < ngff_image.data.chunksize[idx]:
+        for dim in previous.keys():
+            if to_skip[dim] or sizes[dim] / 2 < out_chunks[dim]:
                 scale_factor[dim] = previous[dim]
                 continue
             scale_factor[dim] = 2 * previous[dim]
@@ -47,6 +125,99 @@ def _ngff_image_scale_factors(ngff_image, min_length):
 
     return scale_factors
 
+def _large_image_serialization(image: NgffImage, progress: Optional[RichDaskProgress]):
+    # TODO: Most definitely needs to be refined
+    limit = int(np.ceil(0.5*config.memory_limit))
+    if "z" in image.dims:
+        optimized_chunks = 512
+    else:
+        optimized_chunks = 1024
+    base_path = f"{image.name}-cache-{time.time()}"
+
+    cache_store = config.cache_store
+    def remove_from_cache_store(sig_id, frame):
+        zarr.storage.rmdir(cache_store, base_path)
+    atexit.register(remove_from_cache_store, None, None)
+    signal.signal(signal.SIGTERM, remove_from_cache_store)
+    signal.signal(signal.SIGINT, remove_from_cache_store)
+    root = zarr.open_group(cache_store, mode='a')
+
+    data = image.data
+
+    dims = list(image.dims)
+    x_index = dims.index('x')
+    y_index = dims.index('y')
+
+    rechunks = {}
+    for index, dim in enumerate(dims):
+        if dim == 't':
+            rechunks[index] = 1
+        elif dim == 'c':
+            rechunks[index] = 1
+        else:
+            rechunks[index] = min(optimized_chunks, data.shape[index])
+
+    if progress:
+        progress.rich.log('Caching optimized chunks')
+
+    data = data.rechunk(rechunks)
+    if 'z' in dims:
+        z_index = dims.index('z')
+        slice_bytes = data.dtype.itemsize * data.shape[x_index] * data.shape[y_index]
+        slab_slices = min(int(np.ceil(limit / slice_bytes)), data.shape[z_index])
+        if optimized_chunks < data.shape[z_index]:
+            slab_slices = max(slab_slices, optimized_chunks)
+        split = _array_split(data, data.shape[z_index]//slab_slices, z_index)
+
+        split_arrays = []
+        split_paths = []
+        for slab_index, slab in enumerate(split):
+            path = base_path + f"/slab/{slab_index}"
+            path_group = root.create_group(path)
+            if progress:
+                progress.add_next_task(f"Caching z-slab {slab_index+1} of {len(split)}")
+            arr = dask.array.to_zarr(
+                slab,
+                cache_store,
+                component=path,
+                overwrite=True,
+                compute=True,
+                return_stored=True,
+            )
+            split_arrays.append(arr)
+        data = dask.array.concatenate(split_arrays)
+        if optimized_chunks < data.shape[z_index] and slab_slices < optimized_chunks:
+            data = data.rechunk(rechunks)
+            path = base_path + f"/optimized_chunks"
+            path_group = root.create_group(path)
+            if progress:
+                progress.add_next_task(f"Caching z rechunk")
+            data = dask.array.to_zarr(
+                data,
+                cache_store,
+                component=path,
+                overwrite=True,
+                compute=True,
+                return_stored=True,
+            )
+    else:
+        # TODO: Do we need to split / concat very large 2D images
+        path = base_path + f"/optimized_chunks"
+        path_group = root.create_group(path)
+        if progress:
+            progress.add_next_task(f"Caching optimized chunks")
+        data = dask.array.to_zarr(
+            data,
+            cache_store,
+            component=path,
+            overwrite=True,
+            compute=True,
+            return_stored=True,
+        )
+
+    image.data = data
+    return image
+
 def to_multiscales(
     data: Union[NgffImage, ArrayLike, MutableMapping, str, ZarrArray],
     scale_factors: Union[int, Sequence[Union[Dict[str, int], int]]] = 64,
@@ -60,6 +231,7 @@ def to_multiscales(
             Mapping[Any, Union[None, int, Tuple[int, ...]]],
         ]
     ] = None,
+    progress: Optional[RichDaskProgress] = None,
 ) -> Multiscales:
     """
     Generate multiple resolution scales for the OME-NGFF standard data model.
@@ -75,6 +247,9 @@ def to_multiscales(
 
     chunks : Dask array chunking specification, optional
         Specify the chunking used in each output scale.
+
+    progress: RichDaskProgress
+        Optional progress logger
 
     Returns
     -------
@@ -103,14 +278,17 @@ def to_multiscales(
     da_out_chunks = tuple(out_chunks[d] for d in ngff_image.dims)
     if not isinstance(ngff_image.data, DaskArray):
         if isinstance(ngff_image.data, (ZarrArray, str, MutableMapping)):
-            ngff_image.data = dask.array.from_zarr(ngff_image.data, chunks=da_out_chunks)
+            ngff_image.data = dask.array.from_zarr(ngff_image.data)
         else:
-            ngff_image.data = dask.array.from_array(ngff_image.data, chunks=da_out_chunks)
-    else:
-        ngff_image.data = ngff_image.data.rechunk(da_out_chunks)
+            ngff_image.data = dask.array.from_array(ngff_image.data)
 
     if isinstance(scale_factors, int):
-        scale_factors = _ngff_image_scale_factors(ngff_image, scale_factors)
+        scale_factors = _ngff_image_scale_factors(ngff_image, scale_factors, out_chunks)
+
+    if ngff_image.data.nbytes > config.memory_limit:
+        ngff_image = _large_image_serialization(ngff_image, progress)
+    else:
+        ngff_image.data = ngff_image.data.rechunk(da_out_chunks)
 
     if method is None:
         method = Methods.DASK_IMAGE_GAUSSIAN
@@ -171,5 +349,5 @@ def to_multiscales(
         datasets.append(dataset)
     metadata = Metadata(axes=axes, datasets=datasets, name=ngff_image.name)
 
-    multiscales = Multiscales(images, metadata)
+    multiscales = Multiscales(images, metadata, scale_factors, method, out_chunks)
     return multiscales

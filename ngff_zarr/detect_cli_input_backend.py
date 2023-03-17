@@ -1,0 +1,57 @@
+from enum import Enum
+from pathlib import Path
+from typing import List
+
+conversion_backends = [("ITK", "itk"),
+        ("TIFFFILE", "tifffile"),
+        ("IMAGEIO", "imageio")]
+conversion_backends_values = [b[1] for b in conversion_backends]
+ConversionBackend = Enum("ConversionBackend", conversion_backends)
+
+def detect_cli_input_backend(input: List[str]) -> ConversionBackend:
+    itk_supported_extensions = (
+            '.bmp',
+            '.dcm',
+            '.gipl',
+            '.hdf5',
+            '.jpg',
+            '.jpeg',
+            '.iwi',
+            '.iwi.cbor',
+            '.lsm',
+            '.mnc',
+            '.mnc.gz',
+            '.mnc2',
+            '.mgh',
+            '.mhz',
+            '.mha',
+            '.mhd',
+            '.mrc',
+            '.nia',
+            '.nii',
+            '.nii.gz',
+            '.hdr',
+            '.nrrd',
+            '.nhdr',
+            '.png',
+            '.pic',
+            '.vtk',
+            '.isq', # Requires pip install itk-ioscanco,
+            '.fdf', # Requires pip install itk-iofdf
+            )
+
+    extension = ''.join(Path(input[0]).suffixes).lower()
+
+    if extension in itk_supported_extensions:
+        return ConversionBackend.ITK
+
+    try:
+        import tifffile
+        tifffile_supported_extensions = [f".{ext}" for ext in tifffile.TIFF.FILE_EXTENSIONS]
+        if extension in tifffile_supported_extensions:
+            return ConversionBackend.TIFFFILE
+    except ImportError:
+        console.log('[red]Please install the [i]tifffile[/i] package')
+
+    return ConversionBackend.IMAGEIO
+
