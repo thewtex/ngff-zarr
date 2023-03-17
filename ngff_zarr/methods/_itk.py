@@ -282,7 +282,6 @@ def _downsample_itk_gaussian(ngff_image: NgffImage, default_chunks, out_chunks, 
           depth={dim: radius for dim, radius in enumerate(np.flip(kernel_radius))}, # overlap is in tzyx
           boundary='nearest',
           trim=False,  # Overlapped region is trimmed in blur_and_downsample to output size
-          allow_rechunk=True,
           chunks=output_chunks,
         )
 
