@@ -40,6 +40,8 @@ def input_images():
     image_ngff = itk_image_to_ngff_image(image)
     result["cthead1"] = image_ngff
 
+    result["lung_series"] = test_data_dir / "input" / "lung_series" / "*"
+
     # store = DirectoryStore(
     #     test_data_dir / "input" / "small_head.zarr", dimension_separator="/"
     # )

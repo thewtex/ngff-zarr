@@ -2,12 +2,71 @@ from typing import Union, Optional
 from collections.abc import MutableMapping
 from pathlib import Path
 from dataclasses import asdict
+from functools import reduce
 
 from zarr.storage import BaseStore
 import zarr
 import dask.array
+import numpy as np
 
 from .to_multiscales import Multiscales
+from .config import config
+
+def _array_split(ary, indices_or_sections, axis=0):
+    """
+    *** Taken from NumPy, adapted for Dask Array's
+
+    Split an array into multiple sub-arrays.
+
+    Please refer to the ``split`` documentation.  The only difference
+    between these functions is that ``array_split`` allows
+    `indices_or_sections` to be an integer that does *not* equally
+    divide the axis. For an array of length l that should be split
+    into n sections, it returns l % n sub-arrays of size l//n + 1
+    and the rest of size l//n.
+
+    See Also
+    --------
+    split : Split array into multiple sub-arrays of equal size.
+
+    Examples
+    --------
+    >>> x = np.arange(8.0)
+    >>> np.array_split(x, 3)
+    [array([0.,  1.,  2.]), array([3.,  4.,  5.]), array([6.,  7.])]
+
+    >>> x = np.arange(9)
+    >>> np.array_split(x, 4)
+    [array([0, 1, 2]), array([3, 4]), array([5, 6]), array([7, 8])]
+
+    """
+    try:
+        Ntotal = ary.shape[axis]
+    except AttributeError:
+        Ntotal = len(ary)
+    try:
+        # handle array case.
+        Nsections = len(indices_or_sections) + 1
+        div_points = [0] + list(indices_or_sections) + [Ntotal]
+    except TypeError:
+        # indices_or_sections is a scalar, not an array.
+        Nsections = int(indices_or_sections)
+        if Nsections <= 0:
+            raise ValueError('number sections must be larger than 0.') from None
+        Neach_section, extras = divmod(Ntotal, Nsections)
+        section_sizes = ([0] +
+                         extras * [Neach_section+1] +
+                         (Nsections-extras) * [Neach_section])
+        div_points = np.array(section_sizes, dtype=np.intp).cumsum()
+
+    sub_arys = []
+    sary = dask.array.swapaxes(ary, axis, 0)
+    for i in range(Nsections):
+        st = div_points[i]
+        end = div_points[i + 1]
+        sub_arys.append(dask.array.swapaxes(sary[st:end], axis, 0))
+
+    return sub_arys
 
 def to_ngff_zarr(
     store: Union[MutableMapping, str, Path, BaseStore],
@@ -44,10 +103,49 @@ def to_ngff_zarr(
     -------
 
     arrays: tuple of dask Arrays
-        
+
     """
 
     root = zarr.group(store, overwrite=overwrite, chunk_store=chunk_store)
+
+    multiscales_bytes = reduce(lambda x,y: x+y.data.nbytes, multiscales.images, 0)
+    large_serialization = False
+    if multiscales_bytes > config.memory_limit:
+        large_serialization = True
+        # TODO: Most definitely needs to be refined
+        limit = int(np.ceil(0.5*config.memory_limit))
+
+        scales_split_arrays = []
+        scales_split_paths = []
+        for index, image in enumerate(multiscales.images):
+            arr = image.data
+            slab_slices = min(int(limit / np.ceil(arr[0, ...].nbytes)), arr.shape[0])
+            slab_slices = max(slab_slices, arr.chunks[0][0])
+            split = _array_split(arr, arr.shape[0]//slab_slices)
+
+            split_arrays = []
+            split_paths = []
+            for slab_index, slab in enumerate(split):
+                path = multiscales.metadata.datasets[index].path + f".tmp.{slab_index}"
+                split_paths.append(path)
+                path_group = root.create_group(path)
+                path_group.attrs["_ARRAY_DIMENSIONS"] = image.dims
+                arr = dask.array.to_zarr(
+                    slab,
+                    store,
+                    component=path,
+                    overwrite=True,
+                    compute=True,
+                    return_stored=True,
+                    **kwargs,
+                )
+                split_arrays.append(arr)
+            scales_split_paths.append(split_paths)
+            scales_split_arrays.append(split_arrays)
+        for index, image in enumerate(multiscales.images):
+            arr = image.data
+            image.data = dask.array.concatenate(scales_split_arrays[index]).rechunk(arr.chunks)
+
     metadata_dict = asdict(multiscales.metadata)
     metadata_dict["@type"] = "ngff:Image"
     root.attrs["multiscales"] = [metadata_dict]
@@ -68,7 +166,13 @@ def to_ngff_zarr(
             **kwargs,
         )
         arrays.append(arr)
-    
+
+    if large_serialization and compute:
+        for index in range(len(multiscales.images)):
+            for path in scales_split_paths[index]:
+                zarr.storage.rmdir(root.store, path)
+                zarr.storage.rmdir(root.chunk_store, path)
+
     zarr.consolidate_metadata(store)
 
     return tuple(arrays)
