@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import numpy as np
 
 from dask.array import map_blocks, map_overlap
@@ -5,13 +7,15 @@ from dask.array import map_blocks, map_overlap
 from ._support import _align_chunks, _dim_scale_factors, _compute_sigma
 from ..ngff_image import NgffImage
 
-def _get_block(current_input, block_index:int):
-    '''Helper method for accessing an enumerated chunk from xarray input'''
-    block_shape = [c[block_index] for c in current_input.chunks]
-    block = current_input[tuple([slice(0, s) for s in block_shape])]
+IMAGE_DIMS: Tuple[str, str, str, str] = ("x", "y", "z", "t")
+
+def _get_block(previous_image: NgffImage, block_index: int):
+    '''Helper method for accessing an enumerated chunk from input'''
+    block_shape = [c[block_index] for c in previous_image.data.chunks]
+    block = previous_image.data[tuple([slice(0, s) for s in block_shape])]
     # For consistency for now, do not utilize direction until there is standardized support for
     # direction cosines / orientation in OME-NGFF
-    block.attrs.pop("direction", None)
+    # block.attrs.pop("direction", None)
     return block
 
 def _compute_itk_gaussian_kernel_radius(input_size, sigma_values, shrink_factors) -> list:
@@ -93,10 +97,9 @@ def _itk_blur_and_downsample(image_data, gaussian_filter_name, interpolator_name
         output_origin=output_origin)
     shrink_filter.Update()
 
-    return shrink_filter.GetOutput()
+    return np.asarray(shrink_filter.GetOutput())
 
 
-# def _downsample_itk_bin_shrink(current_input, default_chunks, out_chunks, scale_factors, data_objects, image):
 def _downsample_itk_bin_shrink(ngff_image: NgffImage, default_chunks, out_chunks, scale_factors):
     import itk
 
@@ -113,11 +116,9 @@ def _downsample_itk_bin_shrink(ngff_image: NgffImage, default_chunks, out_chunks
         previous_dim_factors = dim_factors
         previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
 
-        image_dims: Tuple[str, str, str, str] = ("x", "y", "z", "t")
-        shrink_factors = [dim_factors[sf] for sf in image_dims if sf in dim_factors]
+        shrink_factors = [dim_factors[sf] for sf in IMAGE_DIMS if sf in dim_factors]
 
-        block_0_shape = [c[0] for c in previous_image.data.chunks]
-        block_0 = previous_image.data[tuple([slice(0, s) for s in block_0_shape])]
+        block_0 = _get_block(previous_image, 0)
 
         # For consistency for now, do not utilize direction until there is standardized support for
         # direction cosines / orientation in OME-NGFF
@@ -133,10 +134,10 @@ def _downsample_itk_bin_shrink(ngff_image: NgffImage, default_chunks, out_chunks
         filt.UpdateOutputInformation()
         block_output = filt.GetOutput()
         scale = {
-            image_dims[i]: s for (i, s) in enumerate(block_output.GetSpacing())
+            IMAGE_DIMS[i]: s for (i, s) in enumerate(block_output.GetSpacing())
         }
         translation = {
-            image_dims[i]: s for (i, s) in enumerate(block_output.GetOrigin())
+            IMAGE_DIMS[i]: s for (i, s) in enumerate(block_output.GetOrigin())
         }
         dtype = block_output.dtype
         output_chunks = list(previous_image.data.chunks)
@@ -145,8 +146,7 @@ def _downsample_itk_bin_shrink(ngff_image: NgffImage, default_chunks, out_chunks
                 block_output.shape[i],
             ] * len(c)
 
-        block_neg1_shape = [c[-1] for c in previous_image.data.chunks]
-        block_neg1 = previous_image.data[tuple([slice(0, s) for s in block_neg1_shape])]
+        block_neg1 = _get_block(previous_image, -1)
         # block_neg1.attrs.pop("direction", None)
         block_input = itk.image_view_from_array(block_neg1)
         block_input.SetSpacing(spacing)
@@ -176,11 +176,6 @@ def _downsample_itk_bin_shrink(ngff_image: NgffImage, default_chunks, out_chunks
                 out_chunks_list.append(1)
         downscaled_array = downscaled_array.rechunk(tuple(out_chunks_list))
 
-        output_scale = {dim: spacing[::-1][idx] for idx, dim in enumerate(spatial_dims)}
-        output_translation = {dim: origin[::-1][idx] for idx, dim in enumerate(spatial_dims)}
-
-        print(scale, output_scale, translation, output_translation)
-
         previous_image = NgffImage(
             downscaled_array, dims, scale, translation
         )
@@ -189,7 +184,7 @@ def _downsample_itk_bin_shrink(ngff_image: NgffImage, default_chunks, out_chunks
     return multiscales
 
 
-def _downsample_itk_gaussian(current_input, default_chunks, out_chunks, scale_factors, data_objects, image):
+def _downsample_itk_gaussian(ngff_image: NgffImage, default_chunks, out_chunks, scale_factors):
     import itk
 
     # Optionally run accelerated smoothing with itk-vkfft
@@ -200,23 +195,35 @@ def _downsample_itk_gaussian(current_input, default_chunks, out_chunks, scale_fa
 
     interpolator_name = 'LinearInterpolateImageFunction'
 
-    for factor_index, scale_factor in enumerate(scale_factors):
-        dim_factors = _dim_scale_factors(image.dims, scale_factor)
-        current_input = _align_chunks(current_input, default_chunks, dim_factors)
+    multiscales = [
+        ngff_image,
+    ]
+    previous_image = ngff_image
+    dims = ngff_image.dims
+    previous_dim_factors = {d: 1 for d in dims}
+    all_spatial_dims = {"x", "y", "z"}
+    spatial_dims = [dim for dim in dims if dim in all_spatial_dims]
+    for scale_factor in scale_factors:
+        dim_factors = _dim_scale_factors(dims, scale_factor, previous_dim_factors)
+        previous_dim_factors = dim_factors
+        previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
 
-        image_dims: Tuple[str, str, str, str] = ("x", "y", "z", "t")
-        shrink_factors = [dim_factors[sf] for sf in image_dims if sf in dim_factors]
+        shrink_factors = [dim_factors[sf] for sf in IMAGE_DIMS if sf in dim_factors]
 
         # Compute metadata for region splitting
 
         # Blocks 0, ..., N-2 have the same shape
-        block_0_input = _get_block(current_input,0)
+        block_0_input = _get_block(previous_image, 0)
         # Block N-1 may be smaller than preceding blocks
-        block_neg1_input = _get_block(current_input,-1)
+        block_neg1_input = _get_block(previous_image, -1)
 
         # Compute overlap for Gaussian blurring for all blocks
-        block_0_image = itk.image_from_xarray(block_0_input)
-        input_spacing = itk.spacing(block_0_image)
+        block_0_image = itk.image_view_from_array(block_0_input)
+        input_spacing = [previous_image.scale[d] for d in spatial_dims]
+        block_0_image.SetSpacing(input_spacing)
+        input_origin = [previous_image.translation[d] for d in spatial_dims]
+        block_0_image.SetOrigin(input_origin)
+
         sigma_values = _compute_sigma(input_spacing, shrink_factors)
         kernel_radius = _compute_itk_gaussian_kernel_radius(itk.size(block_0_image), sigma_values, shrink_factors)
 
@@ -229,11 +236,11 @@ def _downsample_itk_gaussian(current_input, default_chunks, out_chunks, scale_fa
         block_0_output_spacing = block_output.GetSpacing()
         block_0_output_origin = block_output.GetOrigin()
 
-        block_0_scale = {
-            image_dims[i]: s for (i, s) in enumerate(block_0_output_spacing)
+        scale = {
+            IMAGE_DIMS[i]: s for (i, s) in enumerate(block_0_output_spacing)
         }
-        block_0_translation = {
-            image_dims[i]: s for (i, s) in enumerate(block_0_output_origin)
+        translation = {
+            IMAGE_DIMS[i]: s for (i, s) in enumerate(block_0_output_origin)
         }
         dtype = block_output.dtype
 
@@ -241,14 +248,16 @@ def _downsample_itk_gaussian(current_input, default_chunks, out_chunks, scale_fa
             for block_len, shrink_factor in zip(itk.size(block_0_image), shrink_factors)]
         assert all([itk.size(block_output)[dim] == computed_size[dim]
                     for dim in range(block_output.ndim)])
-        output_chunks = list(current_input.chunks)
+        output_chunks = list(previous_image.data.chunks)
         for i, c in enumerate(output_chunks):
             output_chunks[i] = [
                 block_output.shape[i],
             ] * len(c)
 
         # Compute output size for block N-1
-        block_neg1_image = itk.image_from_xarray(block_neg1_input)
+        block_neg1_image = itk.image_view_from_array(block_neg1_input)
+        block_neg1_image.SetSpacing(input_spacing)
+        block_neg1_image.SetOrigin(input_origin)
         filt.SetInput(block_neg1_image)
         filt.UpdateOutputInformation()
         block_output = filt.GetOutput()
@@ -263,7 +272,7 @@ def _downsample_itk_gaussian(current_input, default_chunks, out_chunks, scale_fa
 
         downscaled_array = map_overlap(
           _itk_blur_and_downsample,
-          current_input.data,
+          previous_image.data,
           gaussian_filter_name=gaussian_filter_name,
           interpolator_name=interpolator_name,
           shrink_factors=shrink_factors,
@@ -272,30 +281,25 @@ def _downsample_itk_gaussian(current_input, default_chunks, out_chunks, scale_fa
           dtype=dtype,
           depth={dim: radius for dim, radius in enumerate(np.flip(kernel_radius))}, # overlap is in tzyx
           boundary='nearest',
-          trim=False   # Overlapped region is trimmed in blur_and_downsample to output size
-        ).compute()
+          trim=False,  # Overlapped region is trimmed in blur_and_downsample to output size
+          allow_rechunk=True,
+          chunks=output_chunks,
+        )
 
-        downscaled = to_spatial_image(
-            downscaled_array,
-            dims=image.dims,
-            scale=block_0_scale,
-            translation=block_0_translation,
-            name=current_input.name,
-            axis_names={
-                d: image.coords[d].attrs.get("long_name", d) for d in image.dims
-            },
-            axis_units={
-                d: image.coords[d].attrs.get("units", "") for d in image.dims
-            },
-            t_coords=image.coords.get("t", None),
-            c_coords=image.coords.get("c", None),
+        out_chunks_list = []
+        for dim in dims:
+            if dim in out_chunks:
+                out_chunks_list.append(out_chunks[dim])
+            else:
+                out_chunks_list.append(1)
+        downscaled_array = downscaled_array.rechunk(tuple(out_chunks_list))
+
+        previous_image = NgffImage(
+            downscaled_array, dims, scale, translation
         )
-        downscaled = downscaled.chunk(out_chunks)
-        data_objects[f"scale{factor_index+1}"] = downscaled.to_dataset(
-            name=image.name, promote_attrs=True
-        )
-        current_input = downscaled
-    return data_objects
+        multiscales.append(previous_image)
+
+    return multiscales
 
 def _downsample_itk_label(current_input, default_chunks, out_chunks, scale_factors, data_objects, image):
     # Uses the LabelImageGaussianInterpolateImageFunction. More appropriate for integer label images.
@@ -308,8 +312,7 @@ def _downsample_itk_label(current_input, default_chunks, out_chunks, scale_facto
         dim_factors = _dim_scale_factors(image.dims, scale_factor)
         current_input = _align_chunks(current_input, default_chunks, dim_factors)
 
-        image_dims: Tuple[str, str, str, str] = ("x", "y", "z", "t")
-        shrink_factors = [dim_factors[sf] for sf in image_dims if sf in dim_factors]
+        shrink_factors = [dim_factors[sf] for sf in IMAGE_DIMS if sf in dim_factors]
 
         # Compute metadata for region splitting
 
@@ -334,10 +337,10 @@ def _downsample_itk_label(current_input, default_chunks, out_chunks, scale_facto
         block_0_output_origin = block_output.GetOrigin()
 
         block_0_scale = {
-            image_dims[i]: s for (i, s) in enumerate(block_0_output_spacing)
+            IMAGE_DIMS[i]: s for (i, s) in enumerate(block_0_output_spacing)
         }
         block_0_translation = {
-            image_dims[i]: s for (i, s) in enumerate(block_0_output_origin)
+            IMAGE_DIMS[i]: s for (i, s) in enumerate(block_0_output_origin)
         }
         dtype = block_output.dtype
 

@@ -119,6 +119,10 @@ def to_multiscales(
         images = _downsample_itk_bin_shrink(
             ngff_image, default_chunks, out_chunks, scale_factors
         )
+    elif method is Methods.ITK_GAUSSIAN:
+        images = _downsample_itk_gaussian(
+            ngff_image, default_chunks, out_chunks, scale_factors
+        )
     elif method is Methods.DASK_IMAGE_GAUSSIAN:
         images = _downsample_dask_image(
             ngff_image, default_chunks, out_chunks, scale_factors, label=False
