@@ -43,11 +43,15 @@ path = "ngff_zarr/__about__.py"
 dask-image = [
     "dask-image",
 ]
+itk = [
+    "itk-filtering>=5.3.0",
+]
 test = [
     "pytest",
     "pooch",
     "itkwasm",
-    "itk-io>=5.3rc3.post3",
+    "itk-io>=5.3.0",
+    "itk-filtering>=5.3.0",
 ]
 
 [tool.coverage.report]

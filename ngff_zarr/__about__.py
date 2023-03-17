@@ -1,4 +1,4 @@
 # SPDX-FileCopyrightText: 2022-present Matt McCormick <matt.mccormick@kitware.com>
 #
 # SPDX-License-Identifier: MIT
-__version__ = "0.1.5"
+__version__ = "0.2.0"

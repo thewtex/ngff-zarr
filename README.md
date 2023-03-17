@@ -46,7 +46,7 @@ Contributions are welcome and appreciated.
 To run the unit tests:
 
 ```sh
-pip install -e ".[test,dask-image]"
+pip install -e ".[test,dask-image,itk]"
 pytest
 ```
 

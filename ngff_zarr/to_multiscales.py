@@ -9,6 +9,7 @@ from dask.array.core import Array as DaskArray
 import numpy as np
 
 from .methods._dask_image import _downsample_dask_image
+from .methods._itk import _downsample_itk_bin_shrink, _downsample_itk_gaussian, _downsample_itk_label
 from .to_ngff_image import to_ngff_image
 from .ngff_image import NgffImage
 from .zarr_metadata import Metadata, Axis, Translation, Scale, Dataset
@@ -114,7 +115,15 @@ def to_multiscales(
     if method is None:
         method = Methods.DASK_IMAGE_GAUSSIAN
 
-    if method is Methods.DASK_IMAGE_GAUSSIAN:
+    if method is Methods.ITK_BIN_SHRINK:
+        images = _downsample_itk_bin_shrink(
+            ngff_image, default_chunks, out_chunks, scale_factors
+        )
+    elif method is Methods.ITK_GAUSSIAN:
+        images = _downsample_itk_gaussian(
+            ngff_image, default_chunks, out_chunks, scale_factors
+        )
+    elif method is Methods.DASK_IMAGE_GAUSSIAN:
         images = _downsample_dask_image(
             ngff_image, default_chunks, out_chunks, scale_factors, label=False
         )

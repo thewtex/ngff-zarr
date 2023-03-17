@@ -8,8 +8,8 @@ from zarr.storage import DirectoryStore, MemoryStore
 
 from ngff_zarr import itk_image_to_ngff_image, to_ngff_zarr
 
-test_data_ipfs_cid = "bafybeiahnq35amzh6m3l224b732fgmx2du3cwxp4twcnmjzc36mxax2hku"
-test_data_sha256 = "8588b1470a4336b6022b5ccb4961380b1a904436f512badc0d3e477ee1f3181a"
+test_data_ipfs_cid = "bafybeib4lg227wajhpj7bwzm455mx4leo63ss64ag3lccxn3m7632lutlu"
+test_data_sha256 = "f1bd7388a9460ab1711e561b7ba75a60661a1470a2ba2116bcbccca4284c849b"
 
 
 test_dir = Path(__file__).resolve().parent
