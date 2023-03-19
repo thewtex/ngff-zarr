@@ -9,7 +9,7 @@ import zarr
 import dask.array
 import numpy as np
 
-from .to_multiscales import Multiscales
+from .to_multiscales import Multiscales, to_multiscales
 from .config import config
 
 def _array_split(ary, indices_or_sections, axis=0):
@@ -108,18 +108,22 @@ def to_ngff_zarr(
 
     root = zarr.group(store, overwrite=overwrite, chunk_store=chunk_store)
 
+    from rich import print
+
     multiscales_bytes = reduce(lambda x,y: x+y.data.nbytes, multiscales.images, 0)
     large_serialization = False
     if multiscales_bytes > config.memory_limit:
         large_serialization = True
+        if not compute:
+            raise ValueError('Large data requires compute=True')
         # TODO: Most definitely needs to be refined
         limit = int(np.ceil(0.5*config.memory_limit))
 
-        scales_split_arrays = []
         scales_split_paths = []
-        for index, image in enumerate(multiscales.images):
+        for index in range(len(multiscales.images)):
+            image = multiscales.images[index]
             arr = image.data
-            slab_slices = min(int(limit / np.ceil(arr[0, ...].nbytes)), arr.shape[0])
+            slab_slices = min(int(np.ceil(limit / arr[0, ...].nbytes)), arr.shape[0])
             slab_slices = max(slab_slices, arr.chunks[0][0])
             split = _array_split(arr, arr.shape[0]//slab_slices)
 
@@ -141,10 +145,18 @@ def to_ngff_zarr(
                 )
                 split_arrays.append(arr)
             scales_split_paths.append(split_paths)
-            scales_split_arrays.append(split_arrays)
-        for index, image in enumerate(multiscales.images):
-            arr = image.data
-            image.data = dask.array.concatenate(scales_split_arrays[index]).rechunk(arr.chunks)
+
+            print(split_arrays)
+            print(multiscales)
+
+            chunks = image.data.chunks
+            image.data = dask.array.concatenate(split_arrays)
+            if slab_slices < arr.chunks[0][0]:
+                image.data = image.data.rechunk(chunks)
+
+            if index < len(multiscales.images) - 1:
+                next_multiscales = to_multiscales(multiscales.images[0], scale_factors=multiscales.scale_factors, method=multiscales.method, chunks=multiscales.chunks)
+                multiscales.images[index+1] = next_multiscales.images[index+1]
 
     metadata_dict = asdict(multiscales.metadata)
     metadata_dict["@type"] = "ngff:Image"
@@ -167,7 +179,7 @@ def to_ngff_zarr(
         )
         arrays.append(arr)
 
-    if large_serialization and compute:
+    if large_serialization:
         for index in range(len(multiscales.images)):
             for path in scales_split_paths[index]:
                 zarr.storage.rmdir(root.store, path)

@@ -19,6 +19,17 @@ from .methods import Methods
 class Multiscales:
     images: List[NgffImage]
     metadata: Metadata
+    scale_factors: Optional[Union[int, Sequence[Union[Dict[str, int], int]]]] = None
+    method: Optional[Methods] = None
+    chunks: Optional[
+        Union[
+            Literal["auto"],
+            int,
+            Tuple[int, ...],
+            Tuple[Tuple[int, ...], ...],
+            Mapping[Any, Union[None, int, Tuple[int, ...]]],
+        ]
+    ] = None
 
 def _ngff_image_scale_factors(ngff_image, min_length):
     sizes = { d: s for d, s in zip(ngff_image.dims, ngff_image.data.shape) }
@@ -171,5 +182,5 @@ def to_multiscales(
         datasets.append(dataset)
     metadata = Metadata(axes=axes, datasets=datasets, name=ngff_image.name)
 
-    multiscales = Multiscales(images, metadata)
+    multiscales = Multiscales(images, metadata, scale_factors, method, out_chunks)
     return multiscales
