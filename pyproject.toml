@@ -27,6 +27,7 @@ dependencies = [
     "numpy",
     "zarr",
     "dask[array]",
+    "platformdirs",
     "typing_extensions",
 ]
 dynamic = ["version"]
