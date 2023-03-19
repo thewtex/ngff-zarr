@@ -155,7 +155,7 @@ def to_ngff_zarr(
                 image.data = image.data.rechunk(chunks)
 
             if index < len(multiscales.images) - 1:
-                next_multiscales = to_multiscales(multiscales.images[0], scale_factors=multiscales.scale_factors, method=multiscales.method, chunks=multiscales.chunks)
+                next_multiscales = to_multiscales(multiscales.images[index], scale_factors=multiscales.scale_factors[index:], method=multiscales.method, chunks=multiscales.chunks)
                 multiscales.images[index+1] = next_multiscales.images[index+1]
 
     metadata_dict = asdict(multiscales.metadata)
