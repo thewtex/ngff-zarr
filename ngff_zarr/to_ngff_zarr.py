@@ -56,7 +56,8 @@ def to_ngff_zarr(
     root.attrs["multiscales"] = [metadata_dict]
 
     arrays = []
-    for index, image in enumerate(multiscales.images):
+    for index in range(len(multiscales.images)):
+        image = multiscales.images[index]
         arr = image.data
         path = multiscales.metadata.datasets[index].path
         path_group = root.create_group(path)
@@ -71,6 +72,14 @@ def to_ngff_zarr(
             **kwargs,
         )
         arrays.append(arr)
+        image.data = arr
+
+        # Minimize task graph depth
+        if index < len(multiscales.images) - 1 and index > 0 and compute and multiscales.scale_factors and multiscales.method and multiscales.chunks:
+            next_multiscales = to_multiscales(image,
+                    multiscales.scale_factors[index:], multiscales.method,
+                    multiscales.chunks)
+            multiscales.images[index+1] = next_multiscales.images[1]
 
     zarr.consolidate_metadata(store)
 

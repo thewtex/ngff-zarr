@@ -180,12 +180,9 @@ def _large_image_serialization(image: NgffImage):
 
         split_arrays = []
         split_paths = []
-        print(split)
         for slab_index, slab in enumerate(split):
             path = base_path + f"/slab/{slab_index}"
             path_group = root.create_group(path)
-            print(slab_index, slab)
-            import pdb; pdb.set_trace()
             arr = dask.array.to_zarr(
                 slab,
                 cache_store,
@@ -196,8 +193,6 @@ def _large_image_serialization(image: NgffImage):
             )
             split_arrays.append(arr)
         data = dask.array.concatenate(split_arrays)
-        print(data)
-        print(slab_slices)
         if optimized_chunks < data.shape[z_index] and slab_slices < optimized_chunks:
             data = data.rechunk(rechunks)
             path = base_path + f"/optimized_chunks"
@@ -269,7 +264,7 @@ def to_multiscales(
 
     # IPFS and visualization friendly default chunks
     if "z" in ngff_image.dims:
-        default_chunks = 128
+        default_chunks = 64
     else:
         default_chunks = 256
     default_chunks = {d: default_chunks for d in ngff_image.dims}
