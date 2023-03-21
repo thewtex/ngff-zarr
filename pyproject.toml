@@ -38,6 +38,9 @@ Documentation = "https://github.com/thewtex/ngff-zarr#readme"
 Issues = "https://github.com/thewtex/ngff-zarr/issues"
 Source = "https://github.com/thewtex/ngff-zarr"
 
+[project.scripts]
+ngff-zarr = "ngff_zarr.cli:main"
+
 [tool.hatch.version]
 path = "ngff_zarr/__about__.py"
 
