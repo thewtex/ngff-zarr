@@ -29,6 +29,7 @@ dependencies = [
     "dask[array]",
     "platformdirs",
     "typing_extensions",
+    "psutil; sys_platform != \"emscripten\""
 ]
 dynamic = ["version"]
 

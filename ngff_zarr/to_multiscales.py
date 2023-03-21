@@ -130,27 +130,22 @@ def _ngff_image_scale_factors(ngff_image, min_length, out_chunks):
 def _large_image_serialization(image: NgffImage):
     # TODO: Most definitely needs to be refined
     limit = int(np.ceil(0.5*config.memory_limit))
-    store_dir = config.cache_dir / f"{image.name}-{time.time()}.zarr"
     if "z" in image.dims:
         optimized_chunks = 512
     else:
         optimized_chunks = 1024
-    base_path = f"{image.name}-data"
+    base_path = f"{image.name}-cache-{time.time()}"
 
-    cache_store = zarr.storage.DirectoryStore(store_dir,
-            dimension_separator='/')
-    def remove_cache_store(sig_id, frame):
-        if store_dir.exists():
-            shutil.rmtree(store_dir)
-    # atexit.register(remove_cache_store, None, None)
-    # signal.signal(signal.SIGTERM, remove_cache_store)
-    # signal.signal(signal.SIGINT, remove_cache_store)
-                # zarr.storage.rmdir(root.store, path)
-                # zarr.storage.rmdir(root.chunk_store, path)
+    cache_store = config.cache_store
+    def remove_from_cache_store(sig_id, frame):
+        zarr.storage.rmdir(cache_store, base_path)
+    atexit.register(remove_from_cache_store, None, None)
+    signal.signal(signal.SIGTERM, remove_from_cache_store)
+    signal.signal(signal.SIGINT, remove_from_cache_store)
     # TODO: More cleanup?
-    root = zarr.open_group(cache_store, mode='w')
+    root = zarr.open_group(cache_store, mode='a')
 
-    print(store_dir, cache_store, base_path)
+    print(cache_store, base_path)
     print(image.data)
     data = image.data
 
