@@ -16,6 +16,7 @@ from .ngff_image import NgffImage
 from .to_multiscales import to_multiscales
 from .to_ngff_zarr import to_ngff_zarr
 from .cli_input_to_ngff_image import cli_input_to_ngff_image
+from .detect_cli_input_backend import detect_cli_input_backend, conversion_backends_values
 
 class RichDaskProgress(Callback):
     def __init__(self, rich_progress):
@@ -26,7 +27,6 @@ class RichDaskProgress(Callback):
 
     def _start_state(self, dsk, state):
         self.task1 = self.rich.add_task("[red]Downloading...", total=len(state['ready']))
-        print(dir(self.rich))
         pass
 
     def _pretask(self, key, dsk, state):
@@ -47,17 +47,13 @@ def main():
     parser.add_argument('-q', '--quiet', action='store_true', help='Do not display progress information')
     parser.add_argument('--input-backend', choices=conversion_backends_values, help='Input conversion backend')
 
-
     args = parser.parse_args()
-    print(args.input_backend)
-    print(args.input)
 
     if args.input_backend is None:
-        input_backend = detect_input_backend(args.input)
+        input_backend = detect_cli_input_backend(args.input)
     else:
         input_backend = ConversionBackend(args.input_backend)
 
-    print(input_backend)
     output_store = DirectoryStore(args.output, dimension_separator='/')
 
     if args.quiet:
@@ -70,8 +66,6 @@ def main():
             rich_dask_progress.register()
 
         # convert_to_zarr(input_type, args.input)
-
-    print(args.quiet)
 
 if __name__ == '__main__':
     main()
