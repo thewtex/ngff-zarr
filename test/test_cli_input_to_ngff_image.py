@@ -21,10 +21,14 @@ def test_cli_input_to_ngff_image_itk_list(input_images):
     image = cli_input_to_ngff_image(ConversionBackend.ITK, input)
     assert image.dims == ('z', 'y', 'x')
 
-def test_cli_input_to_ngff_image_itk_tifffile(input_images):
+def test_cli_input_to_ngff_image_tifffile(input_images):
     input = [
             test_data_dir / "input" / "bat-cochlea-volume.tif",
             ]
     image = cli_input_to_ngff_image(ConversionBackend.TIFFFILE, input)
-    print(image)
     assert image.dims == ('z', 'y', 'x')
+
+def test_cli_input_to_ngff_image_imageio(input_images):
+    input = [test_data_dir / "input" / "cthead1.png",]
+    image = cli_input_to_ngff_image(ConversionBackend.IMAGEIO, input)
+    assert image.dims == ('y', 'x')

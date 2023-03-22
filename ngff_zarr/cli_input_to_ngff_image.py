@@ -38,7 +38,23 @@ def cli_input_to_ngff_image(backend: ConversionBackend, input) -> NgffImage:
         root = zarr.open(store, mode='r')
         return to_ngff_image(root)
     elif backend is ConversionBackend.IMAGEIO:
-        # TODO
-        pass
+        try:
+            import imageio
+        except ImportError:
+            print('[red]Please install the [i]imageio[/i] package.')
+            sys.exit(1)
+        import imageio.v3 as iio
+        image = iio.imread(str(input[0]))
 
+        ngff_image = to_ngff_image(image)
 
+        props = iio.improps(str(input[0]))
+        if props.spacing is not None:
+            if len(spacing) == 1:
+                scale = {d: spacing for d in ngff_image.dims}
+                ngff_image.scale = scale
+            else:
+                scale = {d: spacing[i] for i, d in enumerate(ngff_image.dims)}
+                ngff_image.scale = scale
+
+        return ngff_image
