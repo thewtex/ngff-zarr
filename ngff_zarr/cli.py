@@ -2,8 +2,6 @@
 
 import sys
 import argparse
-from enum import Enum
-from typing import List
 from pathlib import Path
 
 from dask.callbacks import Callback
@@ -42,63 +40,9 @@ class RichDaskProgress(Callback):
     def _finish(self, dsk, state, errored):
         self._running = False
 
-conversion_backends = [("ITK", "itk"),
-        ("TIFFFILE", "tifffile"),
-        ("IMAGEIO", "imageio")]
-conversion_backends_values = [b[1] for b in conversion_backends]
-ConversionBackend = Enum("ConversionBackend", conversion_backends)
-
 console = Console()
 
-def detect_input_backend(input: List[str]) -> ConversionBackend:
-    itk_supported_extensions = (
-            '.bmp',
-            '.dcm',
-            '.gipl',
-            '.hdf5',
-            '.jpg',
-            '.jpeg',
-            '.iwi',
-            '.iwi.cbor',
-            '.lsm',
-            '.mnc',
-            '.mnc.gz',
-            '.mnc2',
-            '.mgh',
-            '.mhz',
-            '.mha',
-            '.mhd',
-            '.mrc',
-            '.nia',
-            '.nii',
-            '.nii.gz',
-            '.hdr',
-            '.nrrd',
-            '.nhdr',
-            '.png',
-            '.pic',
-            '.vtk',
-            '.isq', # Requires pip install itk-ioscanco,
-            '.fdf', # Requires pip install itk-iofdf
-            )
-
-    extension = ''.join(Path(input[0]).suffixes).lower()
-    print(extension)
-
-    if extension in itk_supported_extensions:
-        return ConversionBackend.ITK
-
-    try:
-        import tifffile
-        tifffile_supported_extensions = tifffile.TIFF.FILE_EXTENSIONS
-        if extension in tifffile_supported_extensions:
-            return ConversionBackend.TIFFFILE
-    except ImportError:
-        console.log('[red]Please install the [i]tifffile[/i] package')
-
-    return ConversionBackend.IMAGEIO
-
-def input_to_ngff_image(backend: ConversionBackend, input) -> NgffImage:
+def cli_input_to_ngff_image(backend: ConversionBackend, input) -> NgffImage:
     if backend is ConversionBackend.ITK:
         import itk
         print(input)
