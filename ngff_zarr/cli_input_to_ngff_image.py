@@ -2,6 +2,7 @@ import sys
 
 from rich import print
 from dask.array.image import imread as daimread
+import zarr
 
 from .detect_cli_input_backend import ConversionBackend
 from .ngff_image import NgffImage
@@ -28,8 +29,14 @@ def cli_input_to_ngff_image(backend: ConversionBackend, input) -> NgffImage:
         image = itk.imread(input)
         return itk_image_to_ngff_image(image)
     elif backend is ConversionBackend.TIFFFILE:
-        # TODO
-        pass
+        try:
+            import tifffile
+        except ImportError:
+            print('[red]Please install the [i]tifffile[/i] package.')
+            sys.exit(1)
+        store = tifffile.imread(input, aszarr=True)
+        root = zarr.open(store, mode='r')
+        return to_ngff_image(root)
     elif backend is ConversionBackend.IMAGEIO:
         # TODO
         pass
