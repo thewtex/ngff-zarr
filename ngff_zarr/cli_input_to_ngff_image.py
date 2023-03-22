@@ -5,6 +5,7 @@ from dask.array.image import imread as daimread
 
 from .detect_cli_input_backend import ConversionBackend
 from .ngff_image import NgffImage
+from .to_ngff_image import to_ngff_image
 from .itk_image_to_ngff_image import itk_image_to_ngff_image
 
 def cli_input_to_ngff_image(backend: ConversionBackend, input) -> NgffImage:
