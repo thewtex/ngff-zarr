@@ -2,12 +2,16 @@ from typing import Union, Optional
 from collections.abc import MutableMapping
 from pathlib import Path
 from dataclasses import asdict
+from functools import reduce
 
 from zarr.storage import BaseStore
 import zarr
 import dask.array
+import numpy as np
 
-from .to_multiscales import Multiscales
+from .to_multiscales import Multiscales, to_multiscales
+from .config import config
+from .rich_dask_progress import RichDaskProgress
 
 def to_ngff_zarr(
     store: Union[MutableMapping, str, Path, BaseStore],
@@ -15,6 +19,7 @@ def to_ngff_zarr(
     compute: bool = True,
     overwrite: bool = True,
     chunk_store: Optional[Union[MutableMapping, str, Path, BaseStore]] = None,
+    progress: Optional[RichDaskProgress] = None,
     **kwargs,
 ) -> None:
     """
@@ -36,6 +41,9 @@ def to_ngff_zarr(
         Separate storage for chunks. If not provided, `store` will be used
         for storage of both chunks and metadata.
 
+    progress: RichDaskProgress
+        Optional progress logger
+
     **kwargs:
         Passed to the zarr.creation.create() function, e.g., compression options.
 
@@ -44,16 +52,23 @@ def to_ngff_zarr(
     -------
 
     arrays: tuple of dask Arrays
-        
+
     """
 
-    root = zarr.group(store, overwrite=overwrite, chunk_store=chunk_store)
+    if progress and compute:
+        progress.rich.log(f'Writing {multiscales.images[0].name} multiscales to zarr')
+
     metadata_dict = asdict(multiscales.metadata)
     metadata_dict["@type"] = "ngff:Image"
+    root = zarr.group(store, overwrite=overwrite, chunk_store=chunk_store)
     root.attrs["multiscales"] = [metadata_dict]
 
     arrays = []
-    for index, image in enumerate(multiscales.images):
+    nscales = len(multiscales.images)
+    for index in range(nscales):
+        if progress and compute:
+            progress.add_next_task(f"Writing scale {index+1} of {nscales}")
+        image = multiscales.images[index]
         arr = image.data
         path = multiscales.metadata.datasets[index].path
         path_group = root.create_group(path)
@@ -68,7 +83,17 @@ def to_ngff_zarr(
             **kwargs,
         )
         arrays.append(arr)
-    
+        image.data = arr
+
+        remaining_bytes = reduce(lambda x,y: x+y.data.nbytes, multiscales.images[index:], 0)
+        # Minimize task graph depth
+        if remaining_bytes > config.memory_limit and index < nscales - 1 and index > 0 and compute and multiscales.scale_factors and multiscales.method and multiscales.chunks:
+            next_multiscales = to_multiscales(image,
+                    multiscales.scale_factors[index:], multiscales.method,
+                    multiscales.chunks,
+                    progress=progress)
+            multiscales.images[index+1] = next_multiscales.images[1]
+
     zarr.consolidate_metadata(store)
 
     return tuple(arrays)

@@ -27,7 +27,10 @@ dependencies = [
     "numpy",
     "zarr",
     "dask[array]",
+    "platformdirs",
+    "rich",
     "typing_extensions",
+    "psutil; sys_platform != \"emscripten\""
 ]
 dynamic = ["version"]
 
@@ -35,6 +38,9 @@ dynamic = ["version"]
 Documentation = "https://github.com/thewtex/ngff-zarr#readme"
 Issues = "https://github.com/thewtex/ngff-zarr/issues"
 Source = "https://github.com/thewtex/ngff-zarr"
+
+[project.scripts]
+ngff-zarr = "ngff_zarr.cli:main"
 
 [tool.hatch.version]
 path = "ngff_zarr/__about__.py"
@@ -52,6 +58,7 @@ test = [
     "itkwasm",
     "itk-io>=5.3.0",
     "itk-filtering>=5.3.0",
+    "tifffile",
 ]
 
 [tool.coverage.report]

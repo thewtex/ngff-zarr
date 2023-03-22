@@ -41,7 +41,7 @@ def to_ngff_image(
         Origin or offset of the center of the first pixel.
 
     name: str, optional
-        Name of the resulting xarray DataArray
+        Name of the resulting image
 
     axes_units: dict of str, optional
         Units to associate with the axes. Should be drawn from UDUNITS-2, enumerated at
