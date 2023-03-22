@@ -5,7 +5,6 @@ import argparse
 from pathlib import Path
 
 from dask.callbacks import Callback
-from dask.array.image import imread as daimread
 from rich.progress import Progress
 from rich.console import Console
 from zarr.storage import DirectoryStore
@@ -13,13 +12,12 @@ from zarr.storage import DirectoryStore
 if __name__ == "__main__" and __package__ is None:
     __package__ = "ngff_zarr"
 
-from .itk_image_to_ngff_image import itk_image_to_ngff_image
 from .ngff_image import NgffImage
 from .to_multiscales import to_multiscales
 from .to_ngff_zarr import to_ngff_zarr
+from .cli_input_to_ngff_image import cli_input_to_ngff_image
 
 class RichDaskProgress(Callback):
-
     def __init__(self, rich_progress):
         self.rich = rich_progress
 
@@ -42,30 +40,6 @@ class RichDaskProgress(Callback):
 
 console = Console()
 
-def cli_input_to_ngff_image(backend: ConversionBackend, input) -> NgffImage:
-    if backend is ConversionBackend.ITK:
-        import itk
-        print(input)
-        if len(input) == 1:
-            if '*' in input[0]:
-                def imread(filename):
-                    image = itk.imread(filename)
-                    return itk.array_from_image(image)
-                da = daimread(input[0], imread=imread)
-                return to_ngff_image(da)
-            else:
-                image = itk.imread(input[0])
-                return itk_image_to_ngff_image(image)
-        image = itk.imread(input)
-        return itk_image_to_ngff_image(input)
-    elif backend is ConversionBackend.TIFFFILE:
-        # TODO
-        pass
-    elif backend is ConversionBackend.IMAGEIO:
-        # TODO
-        pass
-
-
 def main():
     parser = argparse.ArgumentParser(description='Convert datasets to and from the OME-Zarr Next Generation File Format.')
     parser.add_argument('input', nargs='+', help='Input image(s)')
@@ -87,7 +61,7 @@ def main():
     output_store = DirectoryStore(args.output, dimension_separator='/')
 
     if args.quiet:
-        ngff_image = input_to_ngff_image(input_backend, args.input)
+        ngff_image = cli_input_to_ngff_image(input_backend, args.input)
         multiscales = to_multiscales(ngff_image)
         to_ngff_zarr(output_store, multiscales)
     else:
