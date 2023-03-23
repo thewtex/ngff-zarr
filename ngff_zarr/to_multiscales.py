@@ -181,11 +181,14 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[RichDa
         data = data.rechunk(rechunks)
         split = _array_split(data, data.shape[z_index]//slab_slices, z_index)
 
+        if progress:
+            progress.add_next_task(f"[blue]Caching z-slabs", len(split))
         split_arrays = []
         for slab_index, slab in enumerate(split):
             path = base_path + f"/slab/{slab_index}"
             if progress:
                 progress.add_next_task(f"[blue]Caching z-slabs {slab_index+1} of {len(split)}")
+                progress.advance_next_task()
             arr = dask.array.to_zarr(
                 slab,
                 cache_store,

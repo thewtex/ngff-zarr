@@ -65,9 +65,13 @@ def to_ngff_zarr(
 
     arrays = []
     nscales = len(multiscales.images)
+    if progress:
+        progress.add_next_task(f"[green]Writing scales", nscales)
     for index in range(nscales):
-        if progress and compute:
-            progress.add_next_task(f"[green]Writing scale {index+1} of {nscales}")
+        if progress:
+            progress.advance_next_task()
+            if compute:
+                progress.add_next_task(f"[green]Writing scale {index+1} of {nscales}")
         image = multiscales.images[index]
         arr = image.data
         path = multiscales.metadata.datasets[index].path

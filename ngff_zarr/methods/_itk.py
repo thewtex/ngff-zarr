@@ -230,9 +230,6 @@ def _downsample_itk_gaussian(ngff_image: NgffImage, default_chunks, out_chunks, 
         sigma_values = _compute_sigma(input_spacing, shrink_factors)
         kernel_radius = _compute_itk_gaussian_kernel_radius(itk.size(block_0_image), sigma_values, shrink_factors)
 
-        from rich import print
-        print(block_0_input)
-        print(block_0_image)
         # Compute output size and spatial metadata for blocks 0, .., N-2
         filt = itk.BinShrinkImageFilter.New(
             block_0_image, shrink_factors=shrink_factors
