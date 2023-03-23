@@ -51,7 +51,7 @@ def to_ngff_zarr(
     Returns
     -------
 
-    arrays: tuple of dask Arrays
+    None
 
     """
 
@@ -63,7 +63,6 @@ def to_ngff_zarr(
     root = zarr.group(store, overwrite=overwrite, chunk_store=chunk_store)
     root.attrs["multiscales"] = [metadata_dict]
 
-    arrays = []
     nscales = len(multiscales.images)
     if progress:
         progress.add_next_task(f"[green]Writing scales", nscales)
@@ -77,20 +76,20 @@ def to_ngff_zarr(
         path = multiscales.metadata.datasets[index].path
         path_group = root.create_group(path)
         path_group.attrs["_ARRAY_DIMENSIONS"] = image.dims
-        arr = dask.array.to_zarr(
+        dask.array.to_zarr(
             arr,
             store,
             component=path,
             overwrite=overwrite,
             compute=compute,
-            return_stored=True,
+            return_stored=False,
             **kwargs,
         )
-        arrays.append(arr)
 
         remaining_bytes = reduce(lambda x,y: x+y.data.nbytes, multiscales.images[index:], 0)
         # Minimize task graph depth
         if remaining_bytes > config.memory_limit and index < nscales - 1 and index > 0 and compute and multiscales.scale_factors and multiscales.method and multiscales.chunks:
+            arr = dask.array.from_zarr(store, component=path)
             out_chunks_list = []
             for dim in image.dims:
                 if dim in multiscales.chunks:
@@ -106,5 +105,3 @@ def to_ngff_zarr(
             multiscales.images[index+1] = next_multiscales.images[1]
 
     zarr.consolidate_metadata(store)
-
-    return tuple(arrays)

@@ -128,7 +128,7 @@ def _ngff_image_scale_factors(ngff_image, min_length, out_chunks):
 
 def _large_image_serialization(image: NgffImage, progress: Optional[Union[RichDaskProgress, RichDaskDistributedProgress]]):
     # TODO: Most definitely needs to be refined
-    limit = int(np.ceil(0.5*config.memory_limit))
+    limit = int(np.ceil(0.25*config.memory_limit))
     if "z" in image.dims:
         optimized_chunks = 512
     else:
@@ -189,14 +189,15 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[RichDa
                 progress.add_next_task(f"[blue]Caching z-slabs {slab_index+1} of {len(split)}")
                 progress.update_completed((slab_index+1))
             slab = slab.rechunk(rechunks)
-            arr = dask.array.to_zarr(
+            dask.array.to_zarr(
                 slab,
                 cache_store,
                 component=path,
                 overwrite=True,
                 compute=True,
-                return_stored=True,
+                return_stored=False,
             )
+            arr = dask.array.from_zarr(cache_store, component=path)
             split_arrays.append(arr)
         data = dask.array.concatenate(split_arrays)
         if optimized_chunks < data.shape[z_index] and slab_slices < optimized_chunks:
@@ -205,14 +206,15 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[RichDa
             path = base_path + f"/optimized_chunks"
             if progress:
                 progress.add_next_task(f"[blue]Caching z rechunk")
-            data = dask.array.to_zarr(
+            dask.array.to_zarr(
                 data,
                 cache_store,
                 component=path,
                 overwrite=True,
                 compute=True,
-                return_stored=True,
+                return_stored=False,
             )
+            data = dask.array.from_zarr(cache_store, component=path)
         else:
             data = data.rechunk(rechunks)
     else:
@@ -221,14 +223,15 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[RichDa
         path = base_path + f"/optimized_chunks"
         if progress:
             progress.add_next_task(f"[blue]Caching optimized chunks")
-        data = dask.array.to_zarr(
+        dask.array.to_zarr(
             data,
             cache_store,
             component=path,
             overwrite=True,
             compute=True,
-            return_stored=True,
+            return_stored=False,
         )
+        data = dask.array.from_zarr(cache_store, component=path)
 
     image.data = data
     return image
