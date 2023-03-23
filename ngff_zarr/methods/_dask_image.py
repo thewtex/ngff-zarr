@@ -106,10 +106,6 @@ def _downsample_dask_image(
     previous_image = ngff_image
     dims = ngff_image.dims
     previous_dim_factors = {d: 1 for d in dims}
-    from rich import print
-    print(previous_image)
-    print(scale_factors)
-    print(previous_dim_factors)
     for scale_factor in scale_factors:
         dim_factors = _dim_scale_factors(dims, scale_factor, previous_dim_factors)
         previous_dim_factors = dim_factors
@@ -168,8 +164,6 @@ def _downsample_dask_image(
 
         # Construct downsample parameters
         image_dimension = len(dim_factors)
-        print(image_dimension)
-        print(shrink_factors)
         transform = np.eye(image_dimension)
         for dim, shrink_factor in enumerate(shrink_factors):
             transform[dim, dim] = shrink_factor
