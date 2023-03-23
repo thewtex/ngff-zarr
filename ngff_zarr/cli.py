@@ -15,18 +15,39 @@ from .ngff_image import NgffImage
 from .to_multiscales import to_multiscales
 from .to_ngff_zarr import to_ngff_zarr
 from .cli_input_to_ngff_image import cli_input_to_ngff_image
-from .detect_cli_input_backend import detect_cli_input_backend, conversion_backends_values
+from .detect_cli_input_backend import detect_cli_input_backend, ConversionBackend, conversion_backends_values
 from .rich_dask_progress import RichDaskProgress
 from rich import print as rprint
+from .config import config
 
 def main():
     parser = argparse.ArgumentParser(description='Convert datasets to and from the OME-Zarr Next Generation File Format.')
     parser.add_argument('input', nargs='+', help='Input image(s)')
     parser.add_argument('output', help='Output image. Just print information with "info"')
     parser.add_argument('-q', '--quiet', action='store_true', help='Do not display progress information')
+    parser.add_argument('-l', '--local-cluster', action='store_true', help='Use a Dask Distributed LocalCluster')
     parser.add_argument('--input-backend', choices=conversion_backends_values, help='Input conversion backend')
+    parser.add_argument('-d', '--dims', nargs='+', help='Ordered OME-Zarr NGFF dimensions from {"t", "z", "y", "x", "c"}', metavar='DIM')
 
     args = parser.parse_args()
+
+    if args.local_cluster:
+        from dask.distributed import Client, LocalCluster
+
+        n_workers = 4
+        worker_memory_limit = config.memory_limit // n_workers
+        try:
+            import psutil
+            n_workers = psutil.cpu_count(False) // 2
+            worker_memory_limit = config.memory_limit // n_workers
+        except ImportError:
+            pass
+
+        cluster = LocalCluster(n_workers=n_workers, memory_limit=worker_memory_limit, processes=True, threads_per_worker=2)
+        client = Client(cluster)
+
+        if not args.quiet:
+            rprint(f"Dashboard: {client.dashboard_link}")
 
     if args.input_backend is None:
         input_backend = detect_cli_input_backend(args.input)
@@ -36,13 +57,22 @@ def main():
     if args.output != "info":
         output_store = DirectoryStore(args.output, dimension_separator='/')
 
-    if args.quiet:
+    if args.quiet or args.local_cluster:
         ngff_image = cli_input_to_ngff_image(input_backend, args.input)
+        if args.dims:
+            if len(args.dims) != len(ngff_image.dims):
+                rprint(f"Provided number of dims do not match expected: {len(ngff_image.dims)}")
+                sys.exit(1)
+            ngff_image.dims = args.dims
         multiscales = to_multiscales(ngff_image)
         if args.output == "info":
             rprint(multiscales)
+            if args.local_cluster:
+                client.close()
             return
         to_ngff_zarr(output_store, multiscales)
+        if args.local_cluster:
+            client.close()
     else:
         console = Console()
 
@@ -53,6 +83,11 @@ def main():
             rich_dask_progress.register()
 
             ngff_image = cli_input_to_ngff_image(input_backend, args.input)
+            if args.dims:
+                if len(args.dims) != len(ngff_image.dims):
+                    rprint(f"Provided number of dims do not match expected: {len(ngff_image.dims)}")
+                    sys.exit(1)
+                ngff_image.dims = args.dims
             multiscales = to_multiscales(ngff_image, progress=rich_dask_progress)
             if args.output == "info":
                 console.log(multiscales)
@@ -60,4 +95,4 @@ def main():
             to_ngff_zarr(output_store, multiscales, progress=rich_dask_progress)
 
 if __name__ == '__main__':
-    main()
+  main()

@@ -4,8 +4,12 @@ from pathlib import Path
 from platformdirs import user_cache_dir
 from zarr.storage import StoreLike
 import zarr
+import dask.config
 
-_store_dir = Path(user_cache_dir('ngff-zarr'))
+if dask.config.get('temporary-directory') is not None:
+    _store_dir = dask.config.get('temporary-directory')
+else:
+    _store_dir = Path(user_cache_dir('ngff-zarr'))
 default_cache_store = zarr.storage.DirectoryStore(_store_dir,
             dimension_separator='/')
 
