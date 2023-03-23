@@ -26,9 +26,12 @@ from .config import config
 
 def main():
     parser = argparse.ArgumentParser(description='Convert datasets to and from the OME-Zarr Next Generation File Format.')
-    parser.add_argument('input', nargs='+', help='Input image(s)')
-    parser.add_argument('output', help='Output image. Just print information with "info"')
+    parser.add_argument('-i', '--input', nargs='+', help='Input image(s)', required=True)
+    parser.add_argument('-o', '--output', help='Output image. If not specified just print information about the input.')
     parser.add_argument('-d', '--dims', nargs='+', help='Ordered OME-Zarr NGFF dimensions from {"t", "z", "y", "x", "c"}', metavar='DIM')
+    parser.add_argument('-s', '--scale', nargs='+', help='Override scale / spacing for each dimension, e.g. z 4.0 y 1.0 x 1.0', metavar='SCALE')
+    parser.add_argument('-t', '--translation', nargs='+', help='Override translation / origin for each dimension, e.g. z 0.0 y 50.0 x 40.0', metavar='SCALE')
+    parser.add_argument('-n', '--name', help="Image name")
     parser.add_argument('-m', '--method', default="dask_image_gaussian", choices=methods_values, help="Downsampling method")
     parser.add_argument('-q', '--quiet', action='store_true', help='Do not display progress information')
     parser.add_argument('-l', '--local-cluster', action='store_true', help='Create a Dask Distributed LocalCluster. Better for large datasets.')
@@ -90,7 +93,7 @@ def main():
         else:
             method = Methods(args.method)
 
-        if args.output != "info":
+        if args.output:
             output_store = DirectoryStore(args.output, dimension_separator='/')
 
         # Generate NgffImage
@@ -100,10 +103,30 @@ def main():
                 rprint(f"[red]Provided number of dims do not match expected: {len(ngff_image.dims)}")
                 sys.exit(1)
             ngff_image.dims = args.dims
+        if args.scale:
+            if len(args.scale) % 2 != 0:
+                rprint(f"[red]Provided scales are expected to be dim value pairs")
+                sys.exit(1)
+            n_scale_args = len(args.scale) // 2
+            for scale in range(n_scale_args):
+                dim = args.scale[scale*2]
+                value = float(args.scale[scale*2+1])
+                ngff_image.scale[dim] = value
+        if args.translation:
+            if len(args.translation) % 2 != 0:
+                rprint(f"[red]Provided translations are expected to be dim value pairs")
+                sys.exit(1)
+            n_translation_args = len(args.translation) // 2
+            for translation in range(n_translation_args):
+                dim = args.translation[translation*2]
+                value = float(args.translation[translation*2+1])
+                ngff_image.translation[dim] = value
+        if args.name:
+            ngff_image.name = args.name
 
         # Generate Multiscales
         multiscales = to_multiscales(ngff_image, method=method, progress=rich_dask_progress)
-        if args.output == "info":
+        if not args.output:
             rprint(multiscales)
             return
         to_ngff_zarr(output_store, multiscales, progress=rich_dask_progress)

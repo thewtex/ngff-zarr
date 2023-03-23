@@ -32,7 +32,7 @@ def to_ngff_zarr(
         Multiscales OME-NGFF image pixel data and metadata. Can be generated with ngff_zarr.to_multiscales.
 
     compute: Boolean, optional
-        Compute the result instead of just building the Dask task graph.
+        Compute the result instead of just building the Dask task graph. Recommended for large data.
 
     overwrite : bool, optional
         If True, delete any pre-existing data in `store` before creating groups.
