@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+if __name__ == "__main__" and __package__ is None:
+    __package__ = "ngff_zarr"
+
 import sys
 import argparse
 from pathlib import Path
@@ -7,9 +10,7 @@ from pathlib import Path
 from rich.progress import Progress as RichProgress, SpinnerColumn, TimeElapsedColumn
 from rich.console import Console
 from zarr.storage import DirectoryStore
-
-if __name__ == "__main__" and __package__ is None:
-    __package__ = "ngff_zarr"
+import dask.utils
 
 from .ngff_image import NgffImage
 from .to_multiscales import to_multiscales
@@ -27,11 +28,15 @@ def main():
     parser.add_argument('-q', '--quiet', action='store_true', help='Do not display progress information')
     parser.add_argument('--no-local-cluster', action='store_true', help='Do not create a Dask Distributed LocalCluster')
     parser.add_argument('--input-backend', choices=conversion_backends_values, help='Input conversion backend')
+    parser.add_argument('--memory-limit', help='Memory limit, e.g. 4GB')
     parser.add_argument('-d', '--dims', nargs='+', help='Ordered OME-Zarr NGFF dimensions from {"t", "z", "y", "x", "c"}', metavar='DIM')
 
     args = parser.parse_args()
 
     console = Console()
+
+    if args.memory_limit:
+        config.memory_limit = dask.utils.parse_bytes(args.memory_limit)
 
     with RichProgress(SpinnerColumn(), *RichProgress.get_default_columns(),
             TimeElapsedColumn(), console=console, transient=False,
@@ -94,4 +99,4 @@ def main():
             client.shutdown()
 
 if __name__ == '__main__':
-  main()
+    main()
