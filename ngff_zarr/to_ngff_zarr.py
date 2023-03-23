@@ -87,11 +87,18 @@ def to_ngff_zarr(
             **kwargs,
         )
         arrays.append(arr)
-        image.data = arr
 
         remaining_bytes = reduce(lambda x,y: x+y.data.nbytes, multiscales.images[index:], 0)
         # Minimize task graph depth
         if remaining_bytes > config.memory_limit and index < nscales - 1 and index > 0 and compute and multiscales.scale_factors and multiscales.method and multiscales.chunks:
+            out_chunks_list = []
+            for dim in image.dims:
+                if dim in multiscales.chunks:
+                    out_chunks_list.append(multiscales.chunks[dim])
+                else:
+                    out_chunks_list.append(1)
+            image.data = arr.rechunk(tuple(out_chunks_list))
+
             next_multiscales = to_multiscales(image,
                     multiscales.scale_factors[index:], multiscales.method,
                     multiscales.chunks,
