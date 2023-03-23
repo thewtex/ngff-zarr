@@ -177,8 +177,6 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[RichDa
         if optimized_chunks < data.shape[z_index]:
             slab_slices = min(slab_slices, optimized_chunks)
 
-        rechunks[z_index] = slab_slices
-        data = data.rechunk(rechunks)
         split = _array_split(data, data.shape[z_index]//slab_slices, z_index)
 
         if progress:
@@ -188,7 +186,7 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[RichDa
             path = base_path + f"/slab/{slab_index}"
             if progress:
                 progress.add_next_task(f"[blue]Caching z-slabs {slab_index+1} of {len(split)}")
-                progress.advance_next_task()
+                progress.update_completed((slab_index+1))
             arr = dask.array.to_zarr(
                 slab,
                 cache_store,
@@ -213,6 +211,9 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[RichDa
                 compute=True,
                 return_stored=True,
             )
+        else:
+            rechunks[z_index] = slab_slices
+            data = data.rechunk(rechunks)
     else:
         data = data.rechunk(rechunks)
         # TODO: Do we need to split / concat very large 2D images

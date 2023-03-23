@@ -19,6 +19,9 @@ class RichDaskProgress(Callback):
     def advance_next_task(self, amount: float = 1):
         self.rich.update(self.next_task_coarse, advance=amount, refresh=True)
 
+    def update_completed(self, completed: int):
+        self.rich.update(self.next_task_coarse, completed=completed, refresh=True)
+
     def _start(self, dsk):
         description = self.next_task
         dsk['ngff_zarr_task'] = description
@@ -55,3 +58,6 @@ class RichDaskDistributedProgress:
 
     def advance_next_task(self, amount: float = 1):
         self.rich.update(self.next_task_coarse, advance=amount, refresh=True)
+
+    def update_completed(self, completed: int):
+        self.rich.update(self.next_task_coarse, completed=completed, refresh=True)

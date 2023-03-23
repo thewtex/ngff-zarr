@@ -69,7 +69,7 @@ def to_ngff_zarr(
         progress.add_next_task(f"[green]Writing scales", nscales)
     for index in range(nscales):
         if progress:
-            progress.advance_next_task()
+            progress.update_completed((index+1))
             if compute:
                 progress.add_next_task(f"[green]Writing scale {index+1} of {nscales}")
         image = multiscales.images[index]
