@@ -3,6 +3,8 @@ from typing_extensions import Literal
 from collections.abc import MutableMapping
 from dataclasses import dataclass
 import time
+import shutil
+from pathlib import Path
 import atexit
 import signal
 
@@ -138,7 +140,12 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[RichDa
     def remove_from_cache_store(sig_id, frame):
         nonlocal base_path_removed
         if not base_path_removed:
-            zarr.storage.rmdir(cache_store, base_path)
+            if isinstance(cache_store, zarr.storage.DirectoryStore):
+                full_path = Path(cache_store.dir_path()) / base_path
+                if full_path.exists():
+                    shutil.rmtree(full_path, ignore_errors=True)
+            else:
+                zarr.storage.rmdir(cache_store, base_path)
             base_path_removed = True
     atexit.register(remove_from_cache_store, None, None)
     signal.signal(signal.SIGTERM, remove_from_cache_store)

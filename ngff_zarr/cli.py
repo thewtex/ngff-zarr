@@ -17,6 +17,7 @@ from .to_multiscales import to_multiscales
 from .to_ngff_zarr import to_ngff_zarr
 from .cli_input_to_ngff_image import cli_input_to_ngff_image
 from .detect_cli_input_backend import detect_cli_input_backend, ConversionBackend, conversion_backends_values
+from .methods import Methods, methods_values
 from .rich_dask_progress import RichDaskProgress, RichDaskDistributedProgress
 from rich import print as rprint
 from .config import config
@@ -25,11 +26,12 @@ def main():
     parser = argparse.ArgumentParser(description='Convert datasets to and from the OME-Zarr Next Generation File Format.')
     parser.add_argument('input', nargs='+', help='Input image(s)')
     parser.add_argument('output', help='Output image. Just print information with "info"')
+    parser.add_argument('-d', '--dims', nargs='+', help='Ordered OME-Zarr NGFF dimensions from {"t", "z", "y", "x", "c"}', metavar='DIM')
+    parser.add_argument('-m', '--method', default="dask_image_gaussian", choices=methods_values, help="Downsampling method")
     parser.add_argument('-q', '--quiet', action='store_true', help='Do not display progress information')
     parser.add_argument('--no-local-cluster', action='store_true', help='Do not create a Dask Distributed LocalCluster')
     parser.add_argument('--input-backend', choices=conversion_backends_values, help='Input conversion backend')
     parser.add_argument('--memory-limit', help='Memory limit, e.g. 4GB')
-    parser.add_argument('-d', '--dims', nargs='+', help='Ordered OME-Zarr NGFF dimensions from {"t", "z", "y", "x", "c"}', metavar='DIM')
 
     args = parser.parse_args()
 
@@ -61,7 +63,7 @@ def main():
             client = Client(cluster)
 
             if not args.quiet:
-                console.log(f"Dashboard: {client.dashboard_link}")
+                console.log(f"[green]Dashboard: {client.dashboard_link}")
 
             if not args.quiet:
                 rich_dask_progress = RichDaskDistributedProgress(progress)
@@ -70,10 +72,15 @@ def main():
                 rich_dask_progress = RichDaskProgress(progress)
                 rich_dask_progress.register()
 
+        # Parse conversion options
         if args.input_backend is None:
             input_backend = detect_cli_input_backend(args.input)
         else:
             input_backend = ConversionBackend(args.input_backend)
+        if args.method is None:
+            method = Methods.ITK_GAUSSIAN
+        else:
+            method = Methods(args.method)
 
         if args.output != "info":
             output_store = DirectoryStore(args.output, dimension_separator='/')
@@ -87,7 +94,7 @@ def main():
             ngff_image.dims = args.dims
 
         # Generate Multiscales
-        multiscales = to_multiscales(ngff_image, progress=rich_dask_progress)
+        multiscales = to_multiscales(ngff_image, method=method, progress=rich_dask_progress)
         if args.output == "info":
             rprint(multiscales)
             if not args.no_local_cluster:

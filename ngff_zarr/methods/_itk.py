@@ -127,7 +127,7 @@ def _downsample_itk_bin_shrink(ngff_image: NgffImage, default_chunks, out_chunks
         # For consistency for now, do not utilize direction until there is standardized support for
         # direction cosines / orientation in OME-NGFF
         # block_0.attrs.pop("direction", None)
-        block_input = itk.image_view_from_array(np.empty_like(block_0))
+        block_input = itk.image_from_array(np.ones_like(block_0))
         spacing = [previous_image.scale[d] for d in spatial_dims]
         block_input.SetSpacing(spacing)
         origin = [previous_image.translation[d] for d in spatial_dims]
@@ -152,7 +152,7 @@ def _downsample_itk_bin_shrink(ngff_image: NgffImage, default_chunks, out_chunks
 
         block_neg1 = _get_block(previous_image, -1)
         # block_neg1.attrs.pop("direction", None)
-        block_input = itk.image_view_from_array(np.empty_like(block_neg1))
+        block_input = itk.image_from_array(np.ones_like(block_neg1))
         block_input.SetSpacing(spacing)
         block_input.SetOrigin(origin)
         filt = itk.BinShrinkImageFilter.New(
@@ -221,7 +221,7 @@ def _downsample_itk_gaussian(ngff_image: NgffImage, default_chunks, out_chunks, 
         block_neg1_input = _get_block(previous_image, -1)
 
         # Compute overlap for Gaussian blurring for all blocks
-        block_0_image = itk.image_view_from_array(np.empty_like(block_0_input))
+        block_0_image = itk.image_from_array(np.ones_like(block_0_input))
         input_spacing = [previous_image.scale[d] for d in spatial_dims]
         block_0_image.SetSpacing(input_spacing)
         input_origin = [previous_image.translation[d] for d in spatial_dims]
@@ -261,7 +261,7 @@ def _downsample_itk_gaussian(ngff_image: NgffImage, default_chunks, out_chunks, 
                 block_output.shape[i],
             ] * len(c)
         # Compute output size for block N-1
-        block_neg1_image = itk.image_view_from_array(np.empty_like(block_neg1_input))
+        block_neg1_image = itk.image_from_array(np.ones_like(block_neg1_input))
         block_neg1_image.SetSpacing(input_spacing)
         block_neg1_image.SetOrigin(input_origin)
         filt.SetInput(block_neg1_image)
