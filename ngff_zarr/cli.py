@@ -6,8 +6,10 @@ if __name__ == "__main__" and __package__ is None:
 import sys
 import argparse
 from pathlib import Path
+import atexit
+import signal
 
-from rich.progress import Progress as RichProgress, SpinnerColumn, TimeElapsedColumn
+from rich.progress import Progress as RichProgress, SpinnerColumn, TimeElapsedColumn, MofNCompleteColumn
 from rich.console import Console
 from zarr.storage import DirectoryStore
 import dask.utils
@@ -41,7 +43,7 @@ def main():
         config.memory_limit = dask.utils.parse_bytes(args.memory_limit)
 
     with RichProgress(SpinnerColumn(), *RichProgress.get_default_columns(),
-            TimeElapsedColumn(), console=console, transient=False,
+            MofNCompleteColumn(), TimeElapsedColumn(), console=console, transient=False,
             redirect_stdout=True, redirect_stderr=True) as progress:
 
         rich_dask_progress = None
@@ -61,6 +63,12 @@ def main():
 
             cluster = LocalCluster(n_workers=n_workers, memory_limit=worker_memory_limit, processes=True, threads_per_worker=2)
             client = Client(cluster)
+
+            def shutdown_client(sig_id, frame):
+                client.shutdown()
+            atexit.register(shutdown_client, None, None)
+            signal.signal(signal.SIGTERM, shutdown_client)
+            signal.signal(signal.SIGINT, shutdown_client)
 
             if not args.quiet:
                 console.log(f"[yellow]Dashboard: [cyan]{client.dashboard_link}")
@@ -97,13 +105,8 @@ def main():
         multiscales = to_multiscales(ngff_image, method=method, progress=rich_dask_progress)
         if args.output == "info":
             rprint(multiscales)
-            if not args.no_local_cluster:
-                client.shutdown()
             return
         to_ngff_zarr(output_store, multiscales, progress=rich_dask_progress)
-
-        if args.no_local_cluster:
-            client.shutdown()
 
 if __name__ == '__main__':
     main()
