@@ -31,7 +31,7 @@ def main():
     parser.add_argument('-d', '--dims', nargs='+', help='Ordered OME-Zarr NGFF dimensions from {"t", "z", "y", "x", "c"}', metavar='DIM')
     parser.add_argument('-m', '--method', default="dask_image_gaussian", choices=methods_values, help="Downsampling method")
     parser.add_argument('-q', '--quiet', action='store_true', help='Do not display progress information')
-    parser.add_argument('--no-local-cluster', action='store_true', help='Do not create a Dask Distributed LocalCluster')
+    parser.add_argument('-l', '--local-cluster', action='store_true', help='Create a Dask Distributed LocalCluster. Better for large datasets.')
     parser.add_argument('--input-backend', choices=conversion_backends_values, help='Input conversion backend')
     parser.add_argument('--memory-limit', help='Memory limit, e.g. 4GB')
 
@@ -49,7 +49,7 @@ def main():
         rich_dask_progress = None
 
         # Setup LocalCluster
-        if not args.no_local_cluster:
+        if args.local_cluster:
             from dask.distributed import Client, LocalCluster
 
             n_workers = 4
