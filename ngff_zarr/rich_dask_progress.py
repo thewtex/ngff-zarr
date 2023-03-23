@@ -35,3 +35,10 @@ class RichDaskProgress(Callback):
         task = self.tasks[description]
         if not errored:
             self.rich.update(task, total=1.0, completed=1.0)
+
+class RichDaskDistributedProgress:
+    def __init__(self, rich_progress):
+        self.rich = rich_progress
+
+    def add_next_task(self, description: str):
+        self.rich.log(description)
