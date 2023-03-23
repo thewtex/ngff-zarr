@@ -12,13 +12,14 @@ A lean and kind Open Microscopy Environment (OME) Next Generation File Format (N
 
 - [Installation](#installation)
 - [Features](#features)
+- [Usage](#usage)
 - [See also](#see-also)
 - [License](#license)
 
 ## Installation
 
 ```console
-pip install 'ngff-zarr[dask-image]'
+pip install 'ngff-zarr[cli]'
 ```
 
 ## Features
@@ -29,6 +30,33 @@ pip install 'ngff-zarr[dask-image]'
 - Process extremely large datasets
 - Multiple downscaling methods
 - Supports Python>=3.7
+
+
+## Usage
+
+Convert an image file:
+
+```console
+ngff-zarr -i any-image-format.png -o ome-ngff.zarr
+```
+
+Convert an image file series (note the quotes):
+
+```console
+ngff-zarr -i "series/*.tif" -o ome-ngff.zarr
+```
+
+Print information about generated multiscales:
+
+```console
+ngff-zarr -i "series/*.tif"
+```
+
+More options:
+
+```console
+ngff-zarr --help
+```
 
 ## See also
 
