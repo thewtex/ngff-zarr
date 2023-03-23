@@ -56,7 +56,7 @@ def to_ngff_zarr(
     """
 
     if progress and compute:
-        progress.rich.log(f'Writing {multiscales.images[0].name} multiscales to zarr')
+        progress.rich.log(f'[green]Writing {multiscales.images[0].name} multiscales to zarr')
 
     metadata_dict = asdict(multiscales.metadata)
     metadata_dict["@type"] = "ngff:Image"
@@ -67,7 +67,7 @@ def to_ngff_zarr(
     nscales = len(multiscales.images)
     for index in range(nscales):
         if progress and compute:
-            progress.add_next_task(f"Writing scale {index+1} of {nscales}")
+            progress.add_next_task(f"[green]Writing scale {index+1} of {nscales}")
         image = multiscales.images[index]
         arr = image.data
         path = multiscales.metadata.datasets[index].path

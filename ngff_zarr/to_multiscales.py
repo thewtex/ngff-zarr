@@ -298,8 +298,8 @@ def to_multiscales(
 
     if ngff_image.data.nbytes > config.memory_limit:
         ngff_image = _large_image_serialization(ngff_image, progress)
-    else:
-        ngff_image.data = ngff_image.data.rechunk(da_out_chunks)
+
+    ngff_image.data = ngff_image.data.rechunk(da_out_chunks)
 
     if method is None:
         method = Methods.DASK_IMAGE_GAUSSIAN

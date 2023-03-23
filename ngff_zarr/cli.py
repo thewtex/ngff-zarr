@@ -63,7 +63,7 @@ def main():
             client = Client(cluster)
 
             if not args.quiet:
-                console.log(f"[green]Dashboard: {client.dashboard_link}")
+                console.log(f"[yellow]Dashboard: [cyan]{client.dashboard_link}")
 
             if not args.quiet:
                 rich_dask_progress = RichDaskDistributedProgress(progress)
@@ -100,7 +100,7 @@ def main():
             if not args.no_local_cluster:
                 client.shutdown()
             return
-        to_ngff_zarr(output_store, multiscale, progress=rich_dask_progress)
+        to_ngff_zarr(output_store, multiscales, progress=rich_dask_progress)
 
         if args.no_local_cluster:
             client.shutdown()
