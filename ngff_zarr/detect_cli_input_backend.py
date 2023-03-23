@@ -2,13 +2,22 @@ from enum import Enum
 from pathlib import Path
 from typing import List
 
-conversion_backends = [("ITK", "itk"),
+conversion_backends = [("NGFF_ZARR", "ngff_zarr"),
+        ("ITK", "itk"),
         ("TIFFFILE", "tifffile"),
         ("IMAGEIO", "imageio")]
 conversion_backends_values = [b[1] for b in conversion_backends]
 ConversionBackend = Enum("ConversionBackend", conversion_backends)
 
 def detect_cli_input_backend(input: List[str]) -> ConversionBackend:
+    extension = ''.join(Path(input[0]).suffixes).lower()
+
+    ngff_zarr_supported_extensions = (
+        '.zarr',
+        )
+    if extension in ngff_zarr_supported_extensions:
+        return ConversionBackend.NGFF_ZARR
+
     itk_supported_extensions = (
             '.bmp',
             '.dcm',
@@ -39,8 +48,6 @@ def detect_cli_input_backend(input: List[str]) -> ConversionBackend:
             '.isq', # Requires pip install itk-ioscanco,
             '.fdf', # Requires pip install itk-iofdf
             )
-
-    extension = ''.join(Path(input[0]).suffixes).lower()
 
     if extension in itk_supported_extensions:
         return ConversionBackend.ITK

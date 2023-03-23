@@ -54,7 +54,9 @@ itk = [
 ]
 cli = [
     "dask-image",
+    "dask[distributed]",
     "itk-filtering>=5.3.0",
+    "itk-io>=5.3.0",
     "imageio",
     "tifffile",
 ]

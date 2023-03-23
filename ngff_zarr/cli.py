@@ -12,11 +12,13 @@ import signal
 from rich.progress import Progress as RichProgress, SpinnerColumn, TimeElapsedColumn, MofNCompleteColumn
 from rich.console import Console
 from zarr.storage import DirectoryStore
+import zarr
 import dask.utils
 
 from .ngff_image import NgffImage
 from .to_multiscales import to_multiscales
 from .to_ngff_zarr import to_ngff_zarr
+from .from_ngff_zarr import from_ngff_zarr
 from .cli_input_to_ngff_image import cli_input_to_ngff_image
 from .detect_cli_input_backend import detect_cli_input_backend, ConversionBackend, conversion_backends_values
 from .methods import Methods, methods_values
@@ -96,36 +98,41 @@ def main():
         if args.output:
             output_store = DirectoryStore(args.output, dimension_separator='/')
 
-        # Generate NgffImage
-        ngff_image = cli_input_to_ngff_image(input_backend, args.input)
-        if args.dims:
-            if len(args.dims) != len(ngff_image.dims):
-                rprint(f"[red]Provided number of dims do not match expected: {len(ngff_image.dims)}")
-                sys.exit(1)
-            ngff_image.dims = args.dims
-        if args.scale:
-            if len(args.scale) % 2 != 0:
-                rprint(f"[red]Provided scales are expected to be dim value pairs")
-                sys.exit(1)
-            n_scale_args = len(args.scale) // 2
-            for scale in range(n_scale_args):
-                dim = args.scale[scale*2]
-                value = float(args.scale[scale*2+1])
-                ngff_image.scale[dim] = value
-        if args.translation:
-            if len(args.translation) % 2 != 0:
-                rprint(f"[red]Provided translations are expected to be dim value pairs")
-                sys.exit(1)
-            n_translation_args = len(args.translation) // 2
-            for translation in range(n_translation_args):
-                dim = args.translation[translation*2]
-                value = float(args.translation[translation*2+1])
-                ngff_image.translation[dim] = value
-        if args.name:
-            ngff_image.name = args.name
+        if input_backend is ConversionBackend.NGFF_ZARR:
+            store = zarr.storage.DirectoryStore(args.input[0])
+            multiscales = from_ngff_zarr(store)
+        else:
+            # Generate NgffImage
+            ngff_image = cli_input_to_ngff_image(input_backend, args.input)
+            if args.dims:
+                if len(args.dims) != len(ngff_image.dims):
+                    rprint(f"[red]Provided number of dims do not match expected: {len(ngff_image.dims)}")
+                    sys.exit(1)
+                ngff_image.dims = args.dims
+            if args.scale:
+                if len(args.scale) % 2 != 0:
+                    rprint(f"[red]Provided scales are expected to be dim value pairs")
+                    sys.exit(1)
+                n_scale_args = len(args.scale) // 2
+                for scale in range(n_scale_args):
+                    dim = args.scale[scale*2]
+                    value = float(args.scale[scale*2+1])
+                    ngff_image.scale[dim] = value
+            if args.translation:
+                if len(args.translation) % 2 != 0:
+                    rprint(f"[red]Provided translations are expected to be dim value pairs")
+                    sys.exit(1)
+                n_translation_args = len(args.translation) // 2
+                for translation in range(n_translation_args):
+                    dim = args.translation[translation*2]
+                    value = float(args.translation[translation*2+1])
+                    ngff_image.translation[dim] = value
+            if args.name:
+                ngff_image.name = args.name
 
-        # Generate Multiscales
-        multiscales = to_multiscales(ngff_image, method=method, progress=rich_dask_progress)
+            # Generate Multiscales
+            multiscales = to_multiscales(ngff_image, method=method, progress=rich_dask_progress)
+
         if not args.output:
             rprint(multiscales)
             return
