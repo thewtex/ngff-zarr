@@ -32,7 +32,7 @@ def to_ngff_zarr(
         Multiscales OME-NGFF image pixel data and metadata. Can be generated with ngff_zarr.to_multiscales.
 
     compute: Boolean, optional
-        Compute the result instead of just building the Dask task graph.
+        Compute the result instead of just building the Dask task graph. Recommended for large data.
 
     overwrite : bool, optional
         If True, delete any pre-existing data in `store` before creating groups.
@@ -51,43 +51,53 @@ def to_ngff_zarr(
     Returns
     -------
 
-    arrays: tuple of dask Arrays
+    None
 
     """
 
     if progress and compute:
-        progress.rich.log(f'Writing {multiscales.images[0].name} multiscales to zarr')
+        progress.rich.log(f'[green]Writing {multiscales.images[0].name} multiscales to zarr')
 
     metadata_dict = asdict(multiscales.metadata)
     metadata_dict["@type"] = "ngff:Image"
     root = zarr.group(store, overwrite=overwrite, chunk_store=chunk_store)
     root.attrs["multiscales"] = [metadata_dict]
 
-    arrays = []
     nscales = len(multiscales.images)
+    if progress:
+        progress.add_next_task(f"[green]Writing scales", nscales)
     for index in range(nscales):
-        if progress and compute:
-            progress.add_next_task(f"Writing scale {index+1} of {nscales}")
+        if progress:
+            progress.update_completed((index+1))
+            if compute:
+                progress.add_next_task(f"[green]Writing scale {index+1} of {nscales}")
         image = multiscales.images[index]
         arr = image.data
         path = multiscales.metadata.datasets[index].path
         path_group = root.create_group(path)
         path_group.attrs["_ARRAY_DIMENSIONS"] = image.dims
-        arr = dask.array.to_zarr(
+        dask.array.to_zarr(
             arr,
             store,
             component=path,
             overwrite=overwrite,
             compute=compute,
-            return_stored=True,
+            return_stored=False,
             **kwargs,
         )
-        arrays.append(arr)
-        image.data = arr
 
         remaining_bytes = reduce(lambda x,y: x+y.data.nbytes, multiscales.images[index:], 0)
         # Minimize task graph depth
         if remaining_bytes > config.memory_limit and index < nscales - 1 and index > 0 and compute and multiscales.scale_factors and multiscales.method and multiscales.chunks:
+            arr = dask.array.from_zarr(store, component=path)
+            out_chunks_list = []
+            for dim in image.dims:
+                if dim in multiscales.chunks:
+                    out_chunks_list.append(multiscales.chunks[dim])
+                else:
+                    out_chunks_list.append(1)
+            image.data = arr.rechunk(tuple(out_chunks_list))
+
             next_multiscales = to_multiscales(image,
                     multiscales.scale_factors[index:], multiscales.method,
                     multiscales.chunks,
@@ -95,5 +105,3 @@ def to_ngff_zarr(
             multiscales.images[index+1] = next_multiscales.images[1]
 
     zarr.consolidate_metadata(store)
-
-    return tuple(arrays)

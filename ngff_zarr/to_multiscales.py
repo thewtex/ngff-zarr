@@ -4,6 +4,7 @@ from collections.abc import MutableMapping
 from dataclasses import dataclass
 import time
 import shutil
+from pathlib import Path
 import atexit
 import signal
 
@@ -21,7 +22,7 @@ from .ngff_image import NgffImage
 from .zarr_metadata import Metadata, Axis, Translation, Scale, Dataset
 from .methods import Methods
 from .config import config
-from .rich_dask_progress import RichDaskProgress
+from .rich_dask_progress import RichDaskProgress, RichDaskDistributedProgress
 
 _spatial_dims = {'x', 'y', 'z'}
 
@@ -125,9 +126,9 @@ def _ngff_image_scale_factors(ngff_image, min_length, out_chunks):
 
     return scale_factors
 
-def _large_image_serialization(image: NgffImage, progress: Optional[RichDaskProgress]):
+def _large_image_serialization(image: NgffImage, progress: Optional[Union[RichDaskProgress, RichDaskDistributedProgress]]):
     # TODO: Most definitely needs to be refined
-    limit = int(np.ceil(0.5*config.memory_limit))
+    limit = int(np.ceil(0.25*config.memory_limit))
     if "z" in image.dims:
         optimized_chunks = 512
     else:
@@ -135,12 +136,20 @@ def _large_image_serialization(image: NgffImage, progress: Optional[RichDaskProg
     base_path = f"{image.name}-cache-{time.time()}"
 
     cache_store = config.cache_store
+    base_path_removed = False
     def remove_from_cache_store(sig_id, frame):
-        zarr.storage.rmdir(cache_store, base_path)
+        nonlocal base_path_removed
+        if not base_path_removed:
+            if isinstance(cache_store, zarr.storage.DirectoryStore):
+                full_path = Path(cache_store.dir_path()) / base_path
+                if full_path.exists():
+                    shutil.rmtree(full_path, ignore_errors=True)
+            else:
+                zarr.storage.rmdir(cache_store, base_path)
+            base_path_removed = True
     atexit.register(remove_from_cache_store, None, None)
     signal.signal(signal.SIGTERM, remove_from_cache_store)
     signal.signal(signal.SIGINT, remove_from_cache_store)
-    root = zarr.open_group(cache_store, mode='a')
 
     data = image.data
 
@@ -158,69 +167,78 @@ def _large_image_serialization(image: NgffImage, progress: Optional[RichDaskProg
             rechunks[index] = min(optimized_chunks, data.shape[index])
 
     if progress:
-        progress.rich.log('Caching optimized chunks')
+        progress.rich.log('[blue]Caching optimized chunks')
 
-    data = data.rechunk(rechunks)
     if 'z' in dims:
         z_index = dims.index('z')
         slice_bytes = data.dtype.itemsize * data.shape[x_index] * data.shape[y_index]
+
         slab_slices = min(int(np.ceil(limit / slice_bytes)), data.shape[z_index])
         if optimized_chunks < data.shape[z_index]:
-            slab_slices = max(slab_slices, optimized_chunks)
+            slab_slices = min(slab_slices, optimized_chunks)
+        rechunks[z_index] = slab_slices
+
         split = _array_split(data, data.shape[z_index]//slab_slices, z_index)
 
+        if progress:
+            progress.add_next_task(f"[blue]Caching z-slabs", len(split))
         split_arrays = []
-        split_paths = []
         for slab_index, slab in enumerate(split):
             path = base_path + f"/slab/{slab_index}"
-            path_group = root.create_group(path)
             if progress:
-                progress.add_next_task(f"Caching z-slab {slab_index+1} of {len(split)}")
-            arr = dask.array.to_zarr(
+                progress.add_next_task(f"[blue]Caching z-slabs {slab_index+1} of {len(split)}")
+                progress.update_completed((slab_index+1))
+            slab = slab.rechunk(rechunks)
+            dask.array.to_zarr(
                 slab,
                 cache_store,
                 component=path,
                 overwrite=True,
                 compute=True,
-                return_stored=True,
+                return_stored=False,
             )
+            arr = dask.array.from_zarr(cache_store, component=path)
             split_arrays.append(arr)
         data = dask.array.concatenate(split_arrays)
         if optimized_chunks < data.shape[z_index] and slab_slices < optimized_chunks:
+            rechunks[z_index] = optimized_chunks
             data = data.rechunk(rechunks)
             path = base_path + f"/optimized_chunks"
-            path_group = root.create_group(path)
             if progress:
-                progress.add_next_task(f"Caching z rechunk")
-            data = dask.array.to_zarr(
+                progress.add_next_task(f"[blue]Caching z rechunk")
+            dask.array.to_zarr(
                 data,
                 cache_store,
                 component=path,
                 overwrite=True,
                 compute=True,
-                return_stored=True,
+                return_stored=False,
             )
+            data = dask.array.from_zarr(cache_store, component=path)
+        else:
+            data = data.rechunk(rechunks)
     else:
+        data = data.rechunk(rechunks)
         # TODO: Do we need to split / concat very large 2D images
         path = base_path + f"/optimized_chunks"
-        path_group = root.create_group(path)
         if progress:
-            progress.add_next_task(f"Caching optimized chunks")
-        data = dask.array.to_zarr(
+            progress.add_next_task(f"[blue]Caching optimized chunks")
+        dask.array.to_zarr(
             data,
             cache_store,
             component=path,
             overwrite=True,
             compute=True,
-            return_stored=True,
+            return_stored=False,
         )
+        data = dask.array.from_zarr(cache_store, component=path)
 
     image.data = data
     return image
 
 def to_multiscales(
     data: Union[NgffImage, ArrayLike, MutableMapping, str, ZarrArray],
-    scale_factors: Union[int, Sequence[Union[Dict[str, int], int]]] = 64,
+    scale_factors: Union[int, Sequence[Union[Dict[str, int], int]]] = 128,
     method: Optional[Methods] = None,
     chunks: Optional[
         Union[
@@ -231,7 +249,7 @@ def to_multiscales(
             Mapping[Any, Union[None, int, Tuple[int, ...]]],
         ]
     ] = None,
-    progress: Optional[RichDaskProgress] = None,
+    progress: Optional[Union[RichDaskProgress, RichDaskDistributedProgress]] = None,
 ) -> Multiscales:
     """
     Generate multiple resolution scales for the OME-NGFF standard data model.
@@ -248,7 +266,7 @@ def to_multiscales(
     chunks : Dask array chunking specification, optional
         Specify the chunking used in each output scale.
 
-    progress: RichDaskProgress
+    progress:
         Optional progress logger
 
     Returns
@@ -265,7 +283,7 @@ def to_multiscales(
 
     # IPFS and visualization friendly default chunks
     if "z" in ngff_image.dims:
-        default_chunks = 64
+        default_chunks = 128
     else:
         default_chunks = 256
     default_chunks = {d: default_chunks for d in ngff_image.dims}
@@ -287,8 +305,8 @@ def to_multiscales(
 
     if ngff_image.data.nbytes > config.memory_limit:
         ngff_image = _large_image_serialization(ngff_image, progress)
-    else:
-        ngff_image.data = ngff_image.data.rechunk(da_out_chunks)
+
+    ngff_image.data = ngff_image.data.rechunk(da_out_chunks)
 
     if method is None:
         method = Methods.DASK_IMAGE_GAUSSIAN

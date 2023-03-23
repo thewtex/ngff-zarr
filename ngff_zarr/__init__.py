@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 from .to_ngff_image import to_ngff_image
+from .from_ngff_zarr import from_ngff_zarr
 from .itk_image_to_ngff_image import itk_image_to_ngff_image
 from .detect_cli_input_backend import detect_cli_input_backend, ConversionBackend
 from .cli_input_to_ngff_image import cli_input_to_ngff_image
@@ -18,6 +19,7 @@ __all__ = [
     "config",
     "NgffImage",
     "to_ngff_image",
+    "from_ngff_image",
     "itk_image_to_ngff_image",
     "to_multiscales",
     "Multiscales",

@@ -8,10 +8,19 @@ class RichDaskProgress(Callback):
         self.rich = rich_progress
         self.tasks: Dict[str, Optional[TaskId]] = {}
 
-    def add_next_task(self, description: str):
+    def add_next_task(self, description: str, total: Optional[int] = None):
         """Next task to be started with .compute(), .persist()"""
-        self.next_task = description
-        self.tasks[description] = self.rich.add_task(description)
+        if total is not None:
+            self.next_task_coarse = self.rich.add_task(description, total=total)
+        else:
+            self.next_task = description
+            self.tasks[self.next_task] = self.rich.add_task(self.next_task)
+
+    def advance_next_task(self, amount: float = 1):
+        self.rich.update(self.next_task_coarse, advance=amount, refresh=True)
+
+    def update_completed(self, completed: int):
+        self.rich.update(self.next_task_coarse, completed=completed, refresh=True)
 
     def _start(self, dsk):
         description = self.next_task
@@ -34,4 +43,21 @@ class RichDaskProgress(Callback):
         description = dsk['ngff_zarr_task']
         task = self.tasks[description]
         if not errored:
-            self.rich.update(task, total=1.0, completed=1.0)
+            ndone = len(state["finished"])
+            ntasks = sum(len(state[k]) for k in ["ready", "waiting", "running"]) + ndone
+            self.rich.update(task, total=ntasks, completed=ndone)
+            # self.rich.update(task, total=1.0, completed=1.0)
+
+class RichDaskDistributedProgress:
+    def __init__(self, rich_progress):
+        self.rich = rich_progress
+
+    def add_next_task(self, description: str, total: Optional[int] = None):
+        if total is not None:
+            self.next_task_coarse = self.rich.add_task(description, total=total)
+
+    def advance_next_task(self, amount: float = 1):
+        self.rich.update(self.next_task_coarse, advance=amount, refresh=True)
+
+    def update_completed(self, completed: int):
+        self.rich.update(self.next_task_coarse, completed=completed, refresh=True)

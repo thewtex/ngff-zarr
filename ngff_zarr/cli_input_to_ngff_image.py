@@ -8,9 +8,15 @@ from .detect_cli_input_backend import ConversionBackend
 from .ngff_image import NgffImage
 from .to_ngff_image import to_ngff_image
 from .itk_image_to_ngff_image import itk_image_to_ngff_image
+from .from_ngff_zarr import from_ngff_zarr
 
 def cli_input_to_ngff_image(backend: ConversionBackend, input) -> NgffImage:
-    if backend is ConversionBackend.ITK:
+    if backend is ConversionBackend.NGFF_ZARR:
+        store = zarr.storage.DirectoryStore(input[0])
+        multiscales = from_ngff_zarr(store)
+        return multiscales[0]
+
+    elif backend is ConversionBackend.ITK:
         try:
             import itk
         except ImportError:
@@ -34,7 +40,10 @@ def cli_input_to_ngff_image(backend: ConversionBackend, input) -> NgffImage:
         except ImportError:
             print('[red]Please install the [i]tifffile[/i] package.')
             sys.exit(1)
-        store = tifffile.imread(input, aszarr=True)
+        if len(input) == 1:
+            store = tifffile.imread(input[0], aszarr=True)
+        else:
+            store = tifffile.imread(input, aszarr=True)
         root = zarr.open(store, mode='r')
         return to_ngff_image(root)
     elif backend is ConversionBackend.IMAGEIO:
