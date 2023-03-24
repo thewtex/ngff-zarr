@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from pathlib import Path
 from platformdirs import user_cache_dir
@@ -10,8 +10,8 @@ if dask.config.get('temporary-directory') is not None:
     _store_dir = dask.config.get('temporary-directory')
 else:
     _store_dir = Path(user_cache_dir('ngff-zarr'))
-default_cache_store = zarr.storage.DirectoryStore(_store_dir,
-            dimension_separator='/')
+def default_store_factory():
+    return zarr.storage.DirectoryStore(_store_dir, dimension_separator='/')
 
 try:
     import psutil
@@ -24,6 +24,6 @@ except ImportError:
 class NgffZarrConfig:
     # Rough memory limit in bytes
     memory_limit: int = default_memory_limit
-    cache_store: StoreLike = default_cache_store
+    cache_store: StoreLike = field(default_factory=default_store_factory)
 
 config = NgffZarrConfig()
