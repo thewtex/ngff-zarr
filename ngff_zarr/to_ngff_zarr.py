@@ -11,7 +11,7 @@ import numpy as np
 
 from .to_multiscales import Multiscales, to_multiscales
 from .config import config
-from .rich_dask_progress import RichDaskProgress
+from .rich_dask_progress import NgffProgress, NgffProgressCallback
 
 def to_ngff_zarr(
     store: Union[MutableMapping, str, Path, BaseStore],
@@ -19,7 +19,7 @@ def to_ngff_zarr(
     compute: bool = True,
     overwrite: bool = True,
     chunk_store: Optional[Union[MutableMapping, str, Path, BaseStore]] = None,
-    progress: Optional[RichDaskProgress] = None,
+    progress: Optional[NgffProgress] = None,
     **kwargs,
 ) -> None:
     """
@@ -65,12 +65,12 @@ def to_ngff_zarr(
 
     nscales = len(multiscales.images)
     if progress:
-        progress.add_next_task(f"[green]Writing scales", nscales)
+        progress.add_multiscales_task(f"[green]Writing scales", nscales)
     for index in range(nscales):
         if progress:
-            progress.update_completed((index+1))
-            if compute:
-                progress.add_next_task(f"[green]Writing scale {index+1} of {nscales}")
+            progress.update_multiscales_task_completed((index+1))
+            if compute and isinstance(progress, NgffProgressCallback):
+                progress.add_multiscales_callback_task(f"[green]Wring scale {index+1} of {nscales}")
         image = multiscales.images[index]
         arr = image.data
         path = multiscales.metadata.datasets[index].path

@@ -22,7 +22,7 @@ from .from_ngff_zarr import from_ngff_zarr
 from .cli_input_to_ngff_image import cli_input_to_ngff_image
 from .detect_cli_input_backend import detect_cli_input_backend, ConversionBackend, conversion_backends_values
 from .methods import Methods, methods_values
-from .rich_dask_progress import RichDaskProgress, RichDaskDistributedProgress
+from .rich_dask_progress import NgffProgress, NgffProgressCallback
 from rich import print as rprint
 from .config import config
 
@@ -79,10 +79,10 @@ def main():
                 console.log(f"[yellow]Dashboard: [cyan]{client.dashboard_link}")
 
             if not args.quiet:
-                rich_dask_progress = RichDaskDistributedProgress(progress)
+                rich_dask_progress = NgffProgress(progress)
         else:
             if not args.quiet:
-                rich_dask_progress = RichDaskProgress(progress)
+                rich_dask_progress = NgffProgressCallback(progress)
                 rich_dask_progress.register()
 
         # Parse conversion options
@@ -133,7 +133,7 @@ def main():
             # Generate Multiscales
             cache = None
             if not args.output:
-                cache = False
+                cache = True
             multiscales = to_multiscales(ngff_image, method=method, progress=rich_dask_progress, cache=cache)
 
         if not args.output:
