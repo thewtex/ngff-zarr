@@ -131,7 +131,10 @@ def main():
                 ngff_image.name = args.name
 
             # Generate Multiscales
-            multiscales = to_multiscales(ngff_image, method=method, progress=rich_dask_progress)
+            cache = None
+            if not args.output:
+                cache = False
+            multiscales = to_multiscales(ngff_image, method=method, progress=rich_dask_progress, cache=cache)
 
         if not args.output:
             rprint(multiscales)

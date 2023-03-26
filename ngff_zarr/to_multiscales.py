@@ -250,6 +250,7 @@ def to_multiscales(
         ]
     ] = None,
     progress: Optional[Union[RichDaskProgress, RichDaskDistributedProgress]] = None,
+    cache: Optional[bool] = None,
 ) -> Multiscales:
     """
     Generate multiple resolution scales for the OME-NGFF standard data model.
@@ -265,6 +266,9 @@ def to_multiscales(
 
     chunks : Dask array chunking specification, optional
         Specify the chunking used in each output scale.
+
+    cache : bool, optional
+        Cache intermediate results to disk to limit memory consumption. If None, the default, determine based on ngff_zarr.config.memory_limit.
 
     progress:
         Optional progress logger
@@ -303,7 +307,7 @@ def to_multiscales(
     if isinstance(scale_factors, int):
         scale_factors = _ngff_image_scale_factors(ngff_image, scale_factors, out_chunks)
 
-    if ngff_image.data.nbytes > config.memory_limit:
+    if cache is None and ngff_image.data.nbytes > config.memory_limit or cache:
         ngff_image = _large_image_serialization(ngff_image, progress)
 
     ngff_image.data = ngff_image.data.rechunk(da_out_chunks)
