@@ -22,7 +22,7 @@ from .ngff_image import NgffImage
 from .zarr_metadata import Metadata, Axis, Translation, Scale, Dataset
 from .methods import Methods
 from .config import config
-from .rich_dask_progress import RichDaskProgress, RichDaskDistributedProgress
+from .rich_dask_progress import NgffProgress, NgffProgressCallback
 
 _spatial_dims = {'x', 'y', 'z'}
 
@@ -126,7 +126,7 @@ def _ngff_image_scale_factors(ngff_image, min_length, out_chunks):
 
     return scale_factors
 
-def _large_image_serialization(image: NgffImage, progress: Optional[Union[RichDaskProgress, RichDaskDistributedProgress]]):
+def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffProgress, NgffProgressCallback]]):
     # TODO: Most definitely needs to be refined
     limit = int(np.ceil(0.25*config.memory_limit))
     if "z" in image.dims:
@@ -166,9 +166,6 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[RichDa
         else:
             rechunks[index] = min(optimized_chunks, data.shape[index])
 
-    if progress:
-        progress.rich.log('[blue]Caching optimized chunks')
-
     if 'z' in dims:
         z_index = dims.index('z')
         slice_bytes = data.dtype.itemsize * data.shape[x_index] * data.shape[y_index]
@@ -181,13 +178,13 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[RichDa
         split = _array_split(data, data.shape[z_index]//slab_slices, z_index)
 
         if progress:
-            progress.add_next_task(f"[blue]Caching z-slabs", len(split))
+            progress.add_cache_task(f"[blue]Caching z-slabs", len(split))
         split_arrays = []
         for slab_index, slab in enumerate(split):
             path = base_path + f"/slab/{slab_index}"
             if progress:
-                progress.add_next_task(f"[blue]Caching z-slabs {slab_index+1} of {len(split)}")
-                progress.update_completed((slab_index+1))
+                progress.add_cache_callback_task(f"[blue]Caching z-slabs {slab_index+1} of {len(split)}")
+                progress.update_cache_task_completed((slab_index+1))
             slab = slab.rechunk(rechunks)
             dask.array.to_zarr(
                 slab,
@@ -205,7 +202,7 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[RichDa
             data = data.rechunk(rechunks)
             path = base_path + f"/optimized_chunks"
             if progress:
-                progress.add_next_task(f"[blue]Caching z rechunk")
+                progress.add_cache_callback_task(f"[blue]Caching z rechunk")
             dask.array.to_zarr(
                 data,
                 cache_store,
@@ -222,7 +219,7 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[RichDa
         # TODO: Do we need to split / concat very large 2D images
         path = base_path + f"/optimized_chunks"
         if progress:
-            progress.add_next_task(f"[blue]Caching optimized chunks")
+            progress.add_cache_callback_task(f"[blue]Caching optimized chunks")
         dask.array.to_zarr(
             data,
             cache_store,
@@ -249,7 +246,8 @@ def to_multiscales(
             Mapping[Any, Union[None, int, Tuple[int, ...]]],
         ]
     ] = None,
-    progress: Optional[Union[RichDaskProgress, RichDaskDistributedProgress]] = None,
+    progress: Optional[Union[NgffProgress, NgffProgressCallback]] = None,
+    cache: Optional[bool] = None,
 ) -> Multiscales:
     """
     Generate multiple resolution scales for the OME-NGFF standard data model.
@@ -265,6 +263,9 @@ def to_multiscales(
 
     chunks : Dask array chunking specification, optional
         Specify the chunking used in each output scale.
+
+    cache : bool, optional
+        Cache intermediate results to disk to limit memory consumption. If None, the default, determine based on ngff_zarr.config.memory_limit.
 
     progress:
         Optional progress logger
@@ -303,7 +304,7 @@ def to_multiscales(
     if isinstance(scale_factors, int):
         scale_factors = _ngff_image_scale_factors(ngff_image, scale_factors, out_chunks)
 
-    if ngff_image.data.nbytes > config.memory_limit:
+    if cache is None and ngff_image.data.nbytes > config.memory_limit or cache:
         ngff_image = _large_image_serialization(ngff_image, progress)
 
     ngff_image.data = ngff_image.data.rechunk(da_out_chunks)
