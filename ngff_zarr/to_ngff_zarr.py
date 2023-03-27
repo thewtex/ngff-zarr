@@ -55,9 +55,6 @@ def to_ngff_zarr(
 
     """
 
-    if progress and compute:
-        progress.rich.log(f'[green]Writing {multiscales.images[0].name} multiscales to zarr')
-
     metadata_dict = asdict(multiscales.metadata)
     metadata_dict["@type"] = "ngff:Image"
     root = zarr.group(store, overwrite=overwrite, chunk_store=chunk_store)

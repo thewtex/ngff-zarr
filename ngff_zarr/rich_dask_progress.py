@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, Set
 
 from rich.progress import TaskID
 from dask.callbacks import Callback
@@ -23,14 +23,17 @@ class NgffProgressCallback(Callback, NgffProgress):
     def __init__(self, rich_progress):
         self.rich = rich_progress
         self.tasks: Dict[str, Optional[TaskId]] = {}
+        self.hide_after_finished: Set[str] = set()
 
     def add_multiscales_callback_task(self, description: str):
         self.next_task = description
         self.tasks[self.next_task] = self.rich.add_task(self.next_task)
+        self.hide_after_finished.add(self.next_task)
 
     def add_cache_callback_task(self, description: str):
         self.next_task = description
         self.tasks[self.next_task] = self.rich.add_task(self.next_task)
+        self.hide_after_finished.add(self.next_task)
 
     def _start(self, dsk):
         description = self.next_task
@@ -56,4 +59,7 @@ class NgffProgressCallback(Callback, NgffProgress):
             ndone = len(state["finished"])
             ntasks = sum(len(state[k]) for k in ["ready", "waiting", "running"]) + ndone
             self.rich.update(task, total=ntasks, completed=ndone)
+            if description in self.hide_after_finished:
+                self.rich.update(task, visible=False)
+
             # self.rich.update(task, total=1.0, completed=1.0)

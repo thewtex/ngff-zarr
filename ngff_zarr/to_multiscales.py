@@ -166,9 +166,6 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
         else:
             rechunks[index] = min(optimized_chunks, data.shape[index])
 
-    if progress:
-        progress.rich.log('[blue]Caching optimized chunks')
-
     if 'z' in dims:
         z_index = dims.index('z')
         slice_bytes = data.dtype.itemsize * data.shape[x_index] * data.shape[y_index]
