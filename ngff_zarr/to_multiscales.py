@@ -34,7 +34,6 @@ class Multiscales:
     method: Optional[Methods] = None
     chunks: Optional[
         Union[
-            Literal["auto"],
             int,
             Tuple[int, ...],
             Tuple[Tuple[int, ...], ...],
@@ -240,7 +239,6 @@ def to_multiscales(
     method: Optional[Methods] = None,
     chunks: Optional[
         Union[
-            Literal["auto"],
             int,
             Tuple[int, ...],
             Tuple[Tuple[int, ...], ...],
@@ -294,6 +292,10 @@ def to_multiscales(
     out_chunks = chunks
     if out_chunks is None:
         out_chunks = default_chunks
+    elif isinstance(out_chunks, int):
+        out_chunks = {d: chunks for d in ngff_image.dims}
+    elif isinstance(out_chunks, tuple):
+        out_chunks = {d: chunks[i] for i, d in enumerate(ngff_image.dims)}
 
     da_out_chunks = tuple(out_chunks[d] for d in ngff_image.dims)
     if not isinstance(ngff_image.data, DaskArray):

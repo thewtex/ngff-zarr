@@ -37,6 +37,7 @@ def main():
     parser.add_argument('-d', '--dims', nargs='+', help='Ordered OME-Zarr NGFF dimensions from {"t", "z", "y", "x", "c"}', metavar='DIM')
     parser.add_argument('-s', '--scale', nargs='+', help='Override scale / spacing for each dimension, e.g. z 4.0 y 1.0 x 1.0', metavar='SCALE')
     parser.add_argument('-t', '--translation', nargs='+', help='Override translation / origin for each dimension, e.g. z 0.0 y 50.0 x 40.0', metavar='SCALE')
+    parser.add_argument('-c', '--chunks', nargs='+', type=int, help='Dask array chunking specification, either a single integer or integer per dimension, e.g. 64 or 8 16 32', metavar='CHUNKS')
     parser.add_argument('-n', '--name', help="Image name")
     parser.add_argument('-m', '--method', default="dask_image_gaussian", choices=methods_values, help="Downsampling method")
     parser.add_argument('-q', '--quiet', action='store_true', help='Do not display progress information')
@@ -144,7 +145,13 @@ def main():
                 cache = False
             if not args.quiet:
                 live.update(Panel(progress, title="[red]NGFF OME-Zarr", subtitle=subtitle, style="magenta"))
-            multiscales = to_multiscales(ngff_image, method=method, progress=rich_dask_progress, cache=cache)
+            chunks = args.chunks
+            if chunks is not None:
+                if len(chunks) == 1:
+                    chunks = chunks[0]
+                else:
+                    chunks = tuple(chunks)
+            multiscales = to_multiscales(ngff_image, method=method, progress=rich_dask_progress, chunks=chunks, cache=cache)
 
         if not args.output:
             if args.quiet:
