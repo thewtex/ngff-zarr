@@ -183,7 +183,8 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
         for slab_index, slab in enumerate(split):
             path = base_path + f"/slab/{slab_index}"
             if progress:
-                progress.add_cache_callback_task(f"[blue]Caching z-slabs {slab_index+1} of {len(split)}")
+                if isinstance(progress, NgffProgressCallback):
+                    progress.add_cache_callback_task(f"[blue]Caching z-slabs {slab_index+1} of {len(split)}")
                 progress.update_cache_task_completed((slab_index+1))
             slab = slab.rechunk(rechunks)
             dask.array.to_zarr(
@@ -201,7 +202,7 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
             rechunks[z_index] = optimized_chunks
             data = data.rechunk(rechunks)
             path = base_path + f"/optimized_chunks"
-            if progress:
+            if progress and isinstance(progress, NgffProgressCallback):
                 progress.add_cache_callback_task(f"[blue]Caching z rechunk")
             dask.array.to_zarr(
                 data,
