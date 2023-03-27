@@ -18,6 +18,8 @@ A lean and kind Open Microscopy Environment (OME) Next Generation File Format (N
 
 ## Installation
 
+To install the command line interface (CLI):
+
 ```console
 pip install 'ngff-zarr[cli]'
 ```
@@ -34,10 +36,14 @@ pip install 'ngff-zarr[cli]'
 
 ## Usage
 
-Convert an image file:
+### Convert an image file
+
+Convert any scientific image file format supported by either [itk](https://wasm.itk.org/docs/image_formats), [tifffile](https://pypi.org/project/tifffile/), or [imageio](https://imageio.readthedocs.io/en/stable/formats/index.html).
+
+Example:
 
 ```console
-ngff-zarr -i any-image-format.png -o ome-ngff.zarr
+ngff-zarr -i ./MR-head.nrrd -o ./MR-head.zarr
 ```
 
 Convert an image file series (note the quotes):
