@@ -46,19 +46,54 @@ Example:
 ngff-zarr -i ./MR-head.nrrd -o ./MR-head.zarr
 ```
 
-Convert an image file series (note the quotes):
+![ngff-zarr convert](https://i.imgur.com/I7gTG52.png)
+
+### Convert an image volume slice series
+
+Note the quotes:
 
 ```console
 ngff-zarr -i "series/*.tif" -o ome-ngff.zarr
 ```
 
-Print information about generated multiscales:
+### Print information about generated multiscales
+
+To print information about the input, omit the output argument.
 
 ```console
-ngff-zarr -i "series/*.tif"
+ngff-zarr -i ./MR-head.nrrd
 ```
 
-More options:
+![ngff-zarr information](https://i.imgur.com/25RhzG2.png)
+
+### Specify output chunks
+
+```console
+ngff-zarr -c 64 -i ./MR-head.nrrd
+```
+
+![ngff-zarr output chunks](https://i.imgur.com/OGHyGQe.png)
+
+### Specify metadata
+
+```console
+ngff-zarr --dims "z" "y" "x" --scale x 1.4 y 1.4 z 2.5 --translation x 6.24 y 360.0 z 332.5 --name LIDC2 -i "series/*.tif"
+```
+
+![ngff-zarr metadata](https://i.imgur.com/AecFANr.png)
+
+
+### Limit memory consumption
+
+Limit memory consumption by passing a rough memory limit in human-readable units, e.g. *8GB* with the `--memory-limit` option.
+
+```console
+ngff-zarr --memory-limit 50M -i ./LIDCFull.vtk -o ./LIDCFull.zarr
+```
+
+![ngff-zarr memory-limit](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZmQ2NzVmMzU0NDA5ZDcyNzczNTU3MWE2YjczZjY5YmJkNWE4OTRhZSZjdD1n/ODobGeUYQr9wrE9J2s/giphy.gif)
+
+### More options
 
 ```console
 ngff-zarr --help
