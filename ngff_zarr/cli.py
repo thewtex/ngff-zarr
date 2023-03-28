@@ -33,16 +33,21 @@ from .config import config
 def main():
     parser = argparse.ArgumentParser(description='Convert datasets to and from the OME-Zarr Next Generation File Format.')
     parser.add_argument('-i', '--input', nargs='+', help='Input image(s)', required=True)
-    parser.add_argument('-o', '--output', help='Output image. If not specified just print information about the input.')
-    parser.add_argument('-d', '--dims', nargs='+', help='Ordered OME-Zarr NGFF dimensions from {"t", "z", "y", "x", "c"}', metavar='DIM')
-    parser.add_argument('-s', '--scale', nargs='+', help='Override scale / spacing for each dimension, e.g. z 4.0 y 1.0 x 1.0', metavar='SCALE')
-    parser.add_argument('-t', '--translation', nargs='+', help='Override translation / origin for each dimension, e.g. z 0.0 y 50.0 x 40.0', metavar='SCALE')
-    parser.add_argument('-n', '--name', help="Image name")
-    parser.add_argument('-m', '--method', default="dask_image_gaussian", choices=methods_values, help="Downsampling method")
-    parser.add_argument('-q', '--quiet', action='store_true', help='Do not display progress information')
-    parser.add_argument('-l', '--local-cluster', action='store_true', help='Create a Dask Distributed LocalCluster. Better for large datasets.')
-    parser.add_argument('--input-backend', choices=conversion_backends_values, help='Input conversion backend')
-    parser.add_argument('--memory-limit', help='Memory limit, e.g. 4GB')
+    parser.add_argument('-o', '--output', help='Output image. If not specified just print information to stdout.')
+
+    metadata_group = parser.add_argument_group("metadata", "Specify output metadata")
+    metadata_group.add_argument('-d', '--dims', nargs='+', help='Ordered OME-Zarr NGFF dimensions from {"t", "z", "y", "x", "c"}', metavar='DIM')
+    metadata_group.add_argument('-s', '--scale', nargs='+', help='Override scale / spacing for each dimension, e.g. z 4.0 y 1.0 x 1.0', metavar='SCALE')
+    metadata_group.add_argument('-t', '--translation', nargs='+', help='Override translation / origin for each dimension, e.g. z 0.0 y 50.0 x 40.0', metavar='TRANSLATION')
+    metadata_group.add_argument('-n', '--name', help="Image name")
+
+    processing_group = parser.add_argument_group("processing", "Processing options")
+    processing_group.add_argument('-c', '--chunks', nargs='+', type=int, help='Dask array chunking specification, either a single integer or integer per dimension, e.g. 64 or 8 16 32', metavar='CHUNKS')
+    processing_group.add_argument('-m', '--method', default="dask_image_gaussian", choices=methods_values, help="Downsampling method")
+    processing_group.add_argument('-q', '--quiet', action='store_true', help='Do not display progress information')
+    processing_group.add_argument('-l', '--local-cluster', action='store_true', help='Create a Dask Distributed LocalCluster. Better for large datasets.')
+    processing_group.add_argument('--input-backend', choices=conversion_backends_values, help='Input conversion backend')
+    processing_group.add_argument('--memory-limit', help='Memory limit, e.g. 4GB')
 
     args = parser.parse_args()
 
@@ -105,7 +110,6 @@ def main():
     if args.quiet:
         initial = None
     with Live(initial, console=console) as live:
-
         if input_backend is ConversionBackend.NGFF_ZARR:
             store = zarr.storage.DirectoryStore(args.input[0])
             multiscales = from_ngff_zarr(store)
@@ -144,7 +148,13 @@ def main():
                 cache = False
             if not args.quiet:
                 live.update(Panel(progress, title="[red]NGFF OME-Zarr", subtitle=subtitle, style="magenta"))
-            multiscales = to_multiscales(ngff_image, method=method, progress=rich_dask_progress, cache=cache)
+            chunks = args.chunks
+            if chunks is not None:
+                if len(chunks) == 1:
+                    chunks = chunks[0]
+                else:
+                    chunks = tuple(chunks)
+            multiscales = to_multiscales(ngff_image, method=method, progress=rich_dask_progress, chunks=chunks, cache=cache)
 
         if not args.output:
             if args.quiet:
