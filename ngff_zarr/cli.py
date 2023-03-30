@@ -22,6 +22,7 @@ import dask.utils
 
 from .ngff_image import NgffImage
 from .to_multiscales import to_multiscales
+from .to_ngff_image import to_ngff_image
 from .to_ngff_zarr import to_ngff_zarr
 from .from_ngff_zarr import from_ngff_zarr
 from .cli_input_to_ngff_image import cli_input_to_ngff_image
@@ -29,6 +30,59 @@ from .detect_cli_input_backend import detect_cli_input_backend, ConversionBacken
 from .methods import Methods, methods_values
 from .rich_dask_progress import NgffProgress, NgffProgressCallback
 from .config import config
+
+def _multiscales_to_ngff_zarr(live, args, output_store, rich_dask_progress, multiscales):
+    if not args.output:
+        if args.quiet:
+            live.update(Pretty(multiscales))
+        else:
+            live.update(Panel(Pretty(multiscales), title="[red]NGFF OME-Zarr", subtitle="[red]information", style="magenta"))
+        return
+    to_ngff_zarr(output_store, multiscales, progress=rich_dask_progress)
+
+def _ngff_image_to_multiscales(live, ngff_image, args, progress, rich_dask_progress, subtitle, method):
+    data = ngff_image.data
+    if args.dims:
+        if len(args.dims) != len(ngff_image.dims):
+            rprint(f"[red]Provided number of dims do not match expected: {len(ngff_image.dims)}")
+            sys.exit(1)
+        ngff_image.dims = args.dims
+    if args.scale:
+        if len(args.scale) % 2 != 0:
+            rprint(f"[red]Provided scales are expected to be dim value pairs")
+            sys.exit(1)
+        n_scale_args = len(args.scale) // 2
+        for scale in range(n_scale_args):
+            dim = args.scale[scale*2]
+            value = float(args.scale[scale*2+1])
+            ngff_image.scale[dim] = value
+    if args.translation:
+        if len(args.translation) % 2 != 0:
+            rprint(f"[red]Provided translations are expected to be dim value pairs")
+            sys.exit(1)
+        n_translation_args = len(args.translation) // 2
+        for translation in range(n_translation_args):
+            dim = args.translation[translation*2]
+            value = float(args.translation[translation*2+1])
+            ngff_image.translation[dim] = value
+    if args.name:
+        ngff_image.name = args.name
+
+    # Generate Multiscales
+    cache = data.nbytes > config.memory_limit
+    if not args.output:
+        cache = False
+    if not args.quiet:
+        live.update(Panel(progress, title="[red]NGFF OME-Zarr", subtitle=subtitle, style="magenta"))
+    chunks = args.chunks
+    if chunks is not None:
+        if len(chunks) == 1:
+            chunks = chunks[0]
+        else:
+            chunks = tuple(chunks)
+    multiscales = to_multiscales(ngff_image, method=method, progress=rich_dask_progress, chunks=chunks, cache=cache)
+    return multiscales
+
 
 def main():
     parser = argparse.ArgumentParser(description='Convert datasets to and from the OME-Zarr Next Generation File Format.')
@@ -113,56 +167,28 @@ def main():
         if input_backend is ConversionBackend.NGFF_ZARR:
             store = zarr.storage.DirectoryStore(args.input[0])
             multiscales = from_ngff_zarr(store)
+            _multiscales_to_ngff_zarr(live, args, output_store, rich_dask_progress, multiscales)
+        elif input_backend is ConversionBackend.TIFFFILE:
+            try:
+                import tifffile
+                if len(args.input) == 1:
+                    files = args.input[0]
+                else:
+                    files = args.input
+                with tifffile.imread(files, aszarr=True) as store:
+                    root = zarr.open(store, mode='r')
+                    ngff_image = to_ngff_image(root)
+                    multiscales = _ngff_image_to_multiscales(live, ngff_image, args, progress, rich_dask_progress, subtitle, method)
+                    _multiscales_to_ngff_zarr(live, args, output_store, rich_dask_progress, multiscales)
+            except ImportError:
+                print('[red]Please install the [i]tifffile[/i] package.')
+                sys.exit(1)
         else:
             # Generate NgffImage
             ngff_image = cli_input_to_ngff_image(input_backend, args.input)
-            if args.dims:
-                if len(args.dims) != len(ngff_image.dims):
-                    rprint(f"[red]Provided number of dims do not match expected: {len(ngff_image.dims)}")
-                    sys.exit(1)
-                ngff_image.dims = args.dims
-            if args.scale:
-                if len(args.scale) % 2 != 0:
-                    rprint(f"[red]Provided scales are expected to be dim value pairs")
-                    sys.exit(1)
-                n_scale_args = len(args.scale) // 2
-                for scale in range(n_scale_args):
-                    dim = args.scale[scale*2]
-                    value = float(args.scale[scale*2+1])
-                    ngff_image.scale[dim] = value
-            if args.translation:
-                if len(args.translation) % 2 != 0:
-                    rprint(f"[red]Provided translations are expected to be dim value pairs")
-                    sys.exit(1)
-                n_translation_args = len(args.translation) // 2
-                for translation in range(n_translation_args):
-                    dim = args.translation[translation*2]
-                    value = float(args.translation[translation*2+1])
-                    ngff_image.translation[dim] = value
-            if args.name:
-                ngff_image.name = args.name
-
-            # Generate Multiscales
-            cache = None
-            if not args.output:
-                cache = False
-            if not args.quiet:
-                live.update(Panel(progress, title="[red]NGFF OME-Zarr", subtitle=subtitle, style="magenta"))
-            chunks = args.chunks
-            if chunks is not None:
-                if len(chunks) == 1:
-                    chunks = chunks[0]
-                else:
-                    chunks = tuple(chunks)
-            multiscales = to_multiscales(ngff_image, method=method, progress=rich_dask_progress, chunks=chunks, cache=cache)
-
-        if not args.output:
-            if args.quiet:
-                live.update(Pretty(multiscales))
-            else:
-                live.update(Panel(Pretty(multiscales), title="[red]NGFF OME-Zarr", subtitle="[red]information", style="magenta"))
-            return
-        to_ngff_zarr(output_store, multiscales, progress=rich_dask_progress)
+            multiscales = _ngff_image_to_multiscales(live, ngff_image, args,
+                    progress, rich_dask_progress, subtitle, method)
+            _multiscales_to_ngff_zarr(live, args, output_store, rich_dask_progress, multiscales)
 
 if __name__ == '__main__':
     main()
