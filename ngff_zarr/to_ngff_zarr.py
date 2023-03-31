@@ -19,7 +19,7 @@ def to_ngff_zarr(
     compute: bool = True,
     overwrite: bool = True,
     chunk_store: Optional[Union[MutableMapping, str, Path, BaseStore]] = None,
-    progress: Optional[NgffProgress] = None,
+    progress: Optional[Union[NgffProgress, NgffProgressCallback]] = None,
     **kwargs,
 ) -> None:
     """
@@ -66,22 +66,68 @@ def to_ngff_zarr(
     for index in range(nscales):
         if progress:
             progress.update_multiscales_task_completed((index+1))
-            if compute and isinstance(progress, NgffProgressCallback):
-                progress.add_multiscales_callback_task(f"[green]Wring scale {index+1} of {nscales}")
         image = multiscales.images[index]
         arr = image.data
         path = multiscales.metadata.datasets[index].path
         path_group = root.create_group(path)
         path_group.attrs["_ARRAY_DIMENSIONS"] = image.dims
-        dask.array.to_zarr(
-            arr,
-            store,
-            component=path,
-            overwrite=overwrite,
-            compute=compute,
-            return_stored=False,
-            **kwargs,
-        )
+
+        if arr.nbytes > config.memory_limit:
+            # TODO: Most definitely needs to be refined
+            limit = int(np.ceil(0.25*config.memory_limit))
+            dims = list(image.dims)
+            x_index = dims.index('x')
+            y_index = dims.index('y')
+            if 'z' in dims:
+                z_index = dims.index('z')
+                # Assume c, t, 1-d chunks
+                slice_bytes = arr.dtype.itemsize * arr.shape[x_index] * arr.shape[y_index]
+                slab_slices = min(int(np.ceil(limit / slice_bytes)), arr.shape[z_index])
+                chunks = tuple([c[0] for c in arr.chunks])
+                z_chunks = chunks[z_index]
+                slab_slices = max(slab_slices, z_chunks)
+                if slab_slices > arr.shape[z_index]:
+                    slab_slices = arr.shape[z_index]
+                slab_slices = int(slab_slices / z_chunks) * z_chunks
+                zarr_array = zarr.create(
+                    shape=arr.shape,
+                    chunks=chunks,
+                    dtype=arr.dtype,
+                    store=store,
+                    path=path,
+                    overwrite=overwrite,
+                )
+                regions = []
+                for slab_index in range(int(np.ceil(arr.shape[z_index]/slab_slices))):
+                    region = [slice(arr.shape[i]) for i in range(arr.ndim)]
+                    region[z_index] = slice(slab_index*z_chunks, min((slab_index+1)*z_chunks, arr.shape[z_index]))
+                    regions.append(tuple(region))
+                regions = tuple(regions)
+                for region_index, region in enumerate(regions):
+                    if compute and isinstance(progress, NgffProgressCallback):
+                        progress.add_multiscales_callback_task(f"[green]Writng scale {index+1} of {nscales}, z-slab {region_index+1} of {len(regions)}")
+                    dask.array.to_zarr(
+                        arr[region],
+                        zarr_array,
+                        region=region,
+                        component=path,
+                        overwrite=overwrite,
+                        compute=compute,
+                        return_stored=False,
+                        **kwargs,
+                    )
+        else:
+            if compute and isinstance(progress, NgffProgressCallback):
+                progress.add_multiscales_callback_task(f"[green]Wring scale {index+1} of {nscales}")
+            dask.array.to_zarr(
+                arr,
+                store,
+                component=path,
+                overwrite=overwrite,
+                compute=compute,
+                return_stored=False,
+                **kwargs,
+            )
 
         remaining_bytes = reduce(lambda x,y: x+y.data.nbytes, multiscales.images[index:], 0)
         # Minimize task graph depth
