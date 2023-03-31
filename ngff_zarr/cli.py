@@ -8,6 +8,7 @@ import argparse
 from pathlib import Path
 import atexit
 import signal
+import os
 
 from rich.progress import Progress as RichProgress, SpinnerColumn, TimeElapsedColumn, MofNCompleteColumn
 from rich.console import Console
@@ -102,11 +103,19 @@ def main():
     processing_group.add_argument('-l', '--local-cluster', action='store_true', help='Create a Dask Distributed LocalCluster. Better for large datasets.')
     processing_group.add_argument('--input-backend', choices=conversion_backends_values, help='Input conversion backend')
     processing_group.add_argument('--memory-limit', help='Memory limit, e.g. 4GB')
+    processing_group.add_argument('--cache-dir', help='Directory to use for caching with large datasets')
 
     args = parser.parse_args()
 
     if args.memory_limit:
         config.memory_limit = dask.utils.parse_bytes(args.memory_limit)
+
+    if args.cache_dir:
+        cache_dir = Path(args.cache_dir).resolve()
+        if not cache_dir.exists():
+            os.makedirs(cache_dir)
+        config.cache_store = zarr.storage.DirectoryStore(cache_dir,
+                dimension_separator='/')
 
     console = Console()
     progress = RichProgress(SpinnerColumn(), MofNCompleteColumn(), TimeElapsedColumn(), *RichProgress.get_default_columns(), transient=False, console=console)
