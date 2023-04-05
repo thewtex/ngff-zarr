@@ -15,15 +15,16 @@ def default_store_factory():
 
 try:
     import psutil
-    default_memory_limit = int(psutil.virtual_memory().available*0.5)
+    default_memory_target = int(psutil.virtual_memory().available*0.5)
 except ImportError:
-    default_memory_limit = int(1e9)
+    default_memory_target = int(1e9)
 
 
 @dataclass
 class NgffZarrConfig:
-    # Rough memory limit in bytes
-    memory_limit: int = default_memory_limit
+    # Rough memory target in bytes
+    memory_target: int = default_memory_target
+    task_target: int = 50000
     cache_store: StoreLike = field(default_factory=default_store_factory)
 
 config = NgffZarrConfig()

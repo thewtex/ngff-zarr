@@ -2,7 +2,7 @@ import dask.array
 import numpy as np
 import zarr
 
-from ngff_zarr import memory_usage, NgffImage, to_ngff_image, to_multiscales, to_ngff_zarr, from_ngff_zarr
+from ngff_zarr import NgffImage, to_ngff_image, to_multiscales, to_ngff_zarr, from_ngff_zarr, task_count
 
 def test_memory_usage():
     arr = np.random.randint(0, 255, size=(4,4,4), dtype=np.uint8)
@@ -15,16 +15,16 @@ def test_memory_usage():
 
     image = multiscales.images[0]
     arr = image.data
-    assert arr.nbytes == 64
-    usage = memory_usage(image)
-    assert usage == 72
-    usage = memory_usage(image, {'z'})
-    assert usage == 36
+    assert len(arr.dask) == 9
+    count = task_count(image)
+    assert count == 9
+    count = task_count(image, {'z'})
+    assert count == 13
 
     arr1 = arr + 1
-    assert arr1.nbytes == 64
+    assert len(arr1.dask) == 17
     image.data = arr1
-    usage = memory_usage(image)
-    assert usage == 136
-    usage = memory_usage(image, {'z'})
-    assert usage == 68
+    count = task_count(image)
+    assert count == 17
+    count = task_count(image, {'z'})
+    assert count == 21

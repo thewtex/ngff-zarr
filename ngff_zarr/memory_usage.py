@@ -1,8 +1,6 @@
 from typing import Set
 from .ngff_image import NgffImage
 
-from rich import print
-
 def memory_usage(image: NgffImage, constrained_dims: Set[str] = set()) -> int:
     """Approximate array partition task graph memory usage in bytes.
 

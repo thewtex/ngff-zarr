@@ -165,19 +165,14 @@ def _downsample_dask_image(
         # Construct downsample parameters
         image_dimension = len(dim_factors)
         transform = np.eye(image_dimension)
-        for dim, shrink_factor in enumerate(shrink_factors):
-            transform[dim, dim] = shrink_factor
         if label:
             order = 0
         else:
             order = 1
-
-        downscaled_array = dask_image.ndinterp.affine_transform(
-            blurred_array,
-            matrix=transform,
-            order=order,
-            output_shape=output_shape,  # tzyx order
-        )
+        depth = [1,]*blurred_array.ndim
+        for dim, shrink_factor in enumerate(shrink_factors):
+            transform[dim, dim] = shrink_factor
+            depth[dim] = shrink_factor + 1 + order
 
         out_chunks_list = []
         for dim in dims:
@@ -185,7 +180,35 @@ def _downsample_dask_image(
                 out_chunks_list.append(out_chunks[dim])
             else:
                 out_chunks_list.append(1)
-        downscaled_array = downscaled_array.rechunk(tuple(out_chunks_list))
+        output_chunks=tuple(out_chunks_list)
+
+        # from dask_image.dispatch._dispatch_ndinterp import dispatch_affine_transform
+        # affine_transform_method = dispatch_affine_transform(blurred_array)
+        # downscaled_array = blurred_array.map_overlap(affine_transform_method,
+            # meta=blurred_array._meta,
+            # # chunks=output_chunks,
+            # depth=tuple(depth),
+            # dtype=blurred_array.dtype,
+            # trim=True,
+            # allow_rechunk=True,
+            # boundary='nearest',
+            # order=order,
+            # matrix=transform)
+        downscaled_array = dask_image.ndinterp.affine_transform(
+            blurred_array,
+            matrix=transform,
+            order=order,
+            output_shape=output_shape,  # tzyx order
+            output_chunks=tuple(out_chunks_list)
+        )
+
+        # out_chunks_list = []
+        # for dim in dims:
+            # if dim in out_chunks:
+                # out_chunks_list.append(out_chunks[dim])
+            # else:
+                # out_chunks_list.append(1)
+        # downscaled_array = downscaled_array.rechunk(tuple(out_chunks_list))
 
         previous_image = NgffImage(
             downscaled_array, dims, output_scale, output_translation

@@ -70,7 +70,7 @@ def _ngff_image_to_multiscales(live, ngff_image, args, progress, rich_dask_progr
         ngff_image.name = args.name
 
     # Generate Multiscales
-    cache = data.nbytes > config.memory_limit
+    cache = data.nbytes > config.memory_target
     if not args.output:
         cache = False
     if not args.quiet:
@@ -102,13 +102,13 @@ def main():
     processing_group.add_argument('-q', '--quiet', action='store_true', help='Do not display progress information')
     processing_group.add_argument('-l', '--local-cluster', action='store_true', help='Create a Dask Distributed LocalCluster. Better for large datasets.')
     processing_group.add_argument('--input-backend', choices=conversion_backends_values, help='Input conversion backend')
-    processing_group.add_argument('--memory-limit', help='Memory limit, e.g. 4GB')
+    processing_group.add_argument('--memory-target', help='Memory limit, e.g. 4GB')
     processing_group.add_argument('--cache-dir', help='Directory to use for caching with large datasets')
 
     args = parser.parse_args()
 
-    if args.memory_limit:
-        config.memory_limit = dask.utils.parse_bytes(args.memory_limit)
+    if args.memory_target:
+        config.memory_target = dask.utils.parse_bytes(args.memory_target)
 
     if args.cache_dir:
         cache_dir = Path(args.cache_dir).resolve()
@@ -126,15 +126,15 @@ def main():
         from dask.distributed import Client, LocalCluster
 
         n_workers = 4
-        worker_memory_limit = config.memory_limit // n_workers
+        worker_memory_target = config.memory_target // n_workers
         try:
             import psutil
             n_workers = psutil.cpu_count(False) // 2
-            worker_memory_limit = config.memory_limit // n_workers
+            worker_memory_target = config.memory_target // n_workers
         except ImportError:
             pass
 
-        cluster = LocalCluster(n_workers=n_workers, memory_limit=worker_memory_limit, processes=True, threads_per_worker=2)
+        cluster = LocalCluster(n_workers=n_workers, memory_target=worker_memory_target, processes=True, threads_per_worker=2)
         client = Client(cluster)
 
         def shutdown_client(sig_id, frame):

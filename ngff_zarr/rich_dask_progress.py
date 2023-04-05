@@ -25,12 +25,7 @@ class NgffProgressCallback(Callback, NgffProgress):
         self.tasks: Dict[str, Optional[TaskId]] = {}
         self.hide_after_finished: Set[str] = set()
 
-    def add_multiscales_callback_task(self, description: str):
-        self.next_task = description
-        self.tasks[self.next_task] = self.rich.add_task(self.next_task)
-        self.hide_after_finished.add(self.next_task)
-
-    def add_cache_callback_task(self, description: str):
+    def add_callback_task(self, description: str):
         self.next_task = description
         self.tasks[self.next_task] = self.rich.add_task(self.next_task)
         self.hide_after_finished.add(self.next_task)

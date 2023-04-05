@@ -85,13 +85,13 @@ ngff-zarr --dims "z" "y" "x" --scale x 1.4 y 1.4 z 2.5 --translation x 6.24 y 36
 
 ### Limit memory consumption
 
-Limit memory consumption by passing a rough memory limit in human-readable units, e.g. *8GB* with the `--memory-limit` option.
+Limit memory consumption by passing a rough memory limit in human-readable units, e.g. *8GB* with the `--memory-target` option.
 
 ```console
-ngff-zarr --memory-limit 50M -i ./LIDCFull.vtk -o ./LIDCFull.zarr
+ngff-zarr --memory-target 50M -i ./LIDCFull.vtk -o ./LIDCFull.zarr
 ```
 
-![ngff-zarr memory-limit](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZmQ2NzVmMzU0NDA5ZDcyNzczNTU3MWE2YjczZjY5YmJkNWE4OTRhZSZjdD1n/ODobGeUYQr9wrE9J2s/giphy.gif)
+![ngff-zarr memory-target](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZmQ2NzVmMzU0NDA5ZDcyNzczNTU3MWE2YjczZjY5YmJkNWE4OTRhZSZjdD1n/ODobGeUYQr9wrE9J2s/giphy.gif)
 
 ### More options
 
