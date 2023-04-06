@@ -9,7 +9,7 @@ from .methods import Methods
 class Multiscales:
     images: List[NgffImage]
     metadata: Metadata
-    scale_factors: Optional[Union[int, Sequence[Union[Dict[str, int], int]]]] = None
+    scale_factors: Optional[Sequence[Union[Dict[str, int], int]]] = None
     method: Optional[Methods] = None
     chunks: Optional[
         Union[
