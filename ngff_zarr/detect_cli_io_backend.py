@@ -10,7 +10,7 @@ conversion_backends = [("NGFF_ZARR", "ngff_zarr"),
 conversion_backends_values = [b[1] for b in conversion_backends]
 ConversionBackend = Enum("ConversionBackend", conversion_backends)
 
-def detect_cli_input_backend(input: List[str]) -> ConversionBackend:
+def detect_cli_io_backend(input: List[str]) -> ConversionBackend:
     if (Path(input[0]) / '.zarray').exists():
         return ConversionBackend.ZARR_ARRAY
 

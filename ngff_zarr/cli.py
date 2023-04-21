@@ -27,7 +27,7 @@ from .to_ngff_image import to_ngff_image
 from .to_ngff_zarr import to_ngff_zarr
 from .from_ngff_zarr import from_ngff_zarr
 from .cli_input_to_ngff_image import cli_input_to_ngff_image
-from .detect_cli_input_backend import detect_cli_input_backend, ConversionBackend, conversion_backends_values
+from .detect_cli_io_backend import detect_cli_io_backend, ConversionBackend, conversion_backends_values
 from .methods import Methods, methods_values
 from .rich_dask_progress import NgffProgress, NgffProgressCallback
 from .config import config
@@ -95,6 +95,7 @@ def main():
     metadata_group.add_argument('-s', '--scale', nargs='+', help='Override scale / spacing for each dimension, e.g. z 4.0 y 1.0 x 1.0', metavar='SCALE')
     metadata_group.add_argument('-t', '--translation', nargs='+', help='Override translation / origin for each dimension, e.g. z 0.0 y 50.0 x 40.0', metavar='TRANSLATION')
     metadata_group.add_argument('-n', '--name', help="Image name")
+    metadata_group.add_argument('--output-scale', help="Scale to pick from multiscale input for a single-scale output format", type=int, default=0)
 
     processing_group = parser.add_argument_group("processing", "Processing options")
     processing_group.add_argument('-c', '--chunks', nargs='+', type=int, help='Dask array chunking specification, either a single integer or integer per dimension, e.g. 64 or 8 16 32', metavar='CHUNKS')
@@ -155,7 +156,7 @@ def main():
 
     # Parse conversion options
     if args.input_backend is None:
-        input_backend = detect_cli_input_backend(args.input)
+        input_backend = detect_cli_io_backend(args.input)
     else:
         input_backend = ConversionBackend(args.input_backend)
     if args.method is None:
