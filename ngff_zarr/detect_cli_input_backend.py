@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import List
 
 conversion_backends = [("NGFF_ZARR", "ngff_zarr"),
+        ("ZARR_ARRAY", "zarr"),
         ("ITK", "itk"),
         ("TIFFFILE", "tifffile"),
         ("IMAGEIO", "imageio")]
@@ -10,6 +11,10 @@ conversion_backends_values = [b[1] for b in conversion_backends]
 ConversionBackend = Enum("ConversionBackend", conversion_backends)
 
 def detect_cli_input_backend(input: List[str]) -> ConversionBackend:
+    if (Path(input[0]) / '.zarray').exists():
+        return ConversionBackend.ZARR_ARRAY
+
+
     extension = ''.join(Path(input[0]).suffixes).lower()
 
     ngff_zarr_supported_extensions = (

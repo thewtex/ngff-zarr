@@ -163,6 +163,7 @@ def main():
     else:
         method = Methods(args.method)
 
+    output_store = None
     if args.output:
         output_store = DirectoryStore(args.output, dimension_separator='/')
 

@@ -15,7 +15,9 @@ def cli_input_to_ngff_image(backend: ConversionBackend, input) -> NgffImage:
         store = zarr.storage.DirectoryStore(input[0])
         multiscales = from_ngff_zarr(store)
         return multiscales[0]
-
+    elif backend is ConversionBackend.ZARR_ARRAY:
+        arr = zarr.open_array(input[0], mode='r')
+        return to_ngff_image(arr)
     elif backend is ConversionBackend.ITK:
         try:
             import itk
