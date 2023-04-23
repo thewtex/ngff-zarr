@@ -14,7 +14,7 @@ def cli_input_to_ngff_image(backend: ConversionBackend, input, output_scale: int
     if backend is ConversionBackend.NGFF_ZARR:
         store = zarr.storage.DirectoryStore(input[0])
         multiscales = from_ngff_zarr(store)
-        return multiscales[0]
+        return multiscales.images[output_scale]
     elif backend is ConversionBackend.ZARR_ARRAY:
         arr = zarr.open_array(input[0], mode='r')
         return to_ngff_image(arr)

@@ -14,7 +14,6 @@ def detect_cli_io_backend(input: List[str]) -> ConversionBackend:
     if (Path(input[0]) / '.zarray').exists():
         return ConversionBackend.ZARR_ARRAY
 
-
     extension = ''.join(Path(input[0]).suffixes).lower()
 
     ngff_zarr_supported_extensions = (

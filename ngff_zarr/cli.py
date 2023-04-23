@@ -27,6 +27,7 @@ from .to_ngff_image import to_ngff_image
 from .to_ngff_zarr import to_ngff_zarr
 from .from_ngff_zarr import from_ngff_zarr
 from .cli_input_to_ngff_image import cli_input_to_ngff_image
+from .ngff_image_to_itk_image import ngff_image_to_itk_image
 from .detect_cli_io_backend import detect_cli_io_backend, ConversionBackend, conversion_backends_values
 from .methods import Methods, methods_values
 from .rich_dask_progress import NgffProgress, NgffProgressCallback
@@ -164,8 +165,10 @@ def main():
     else:
         method = Methods(args.method)
 
-    output_store = None
     if args.output:
+        output_backend = detect_cli_io_backend([args.output,])
+    output_store = None
+    if args.output and output_backend is ConversionBackend.NGFF_ZARR:
         output_store = DirectoryStore(args.output, dimension_separator='/')
 
     subtitle = "[red]generation"
@@ -175,6 +178,16 @@ def main():
     if args.quiet:
         initial = None
     with Live(initial, console=console) as live:
+        if args.output:
+            if output_backend is ConversionBackend.ITK:
+                import itk
+                ngff_image = cli_input_to_ngff_image(input_backend, args.input, args.output_scale)
+                if isinstance(rich_dask_progress, NgffProgressCallback):
+                    rich_dask_progress.add_callback_task(f"[green]Converting Zarr Array to NumPy Array")
+                itk_image = ngff_image_to_itk_image(ngff_image, wasm=False)
+                itk.imwrite(itk_image, args.output)
+                return
+
         if input_backend is ConversionBackend.NGFF_ZARR:
             store = zarr.storage.DirectoryStore(args.input[0])
             multiscales = from_ngff_zarr(store)
