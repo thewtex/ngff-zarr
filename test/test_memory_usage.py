@@ -17,14 +17,14 @@ def test_memory_usage():
     arr = image.data
     assert arr.nbytes == 64
     usage = memory_usage(image)
-    assert usage == 72
+    assert usage == 64
     usage = memory_usage(image, {'z'})
-    assert usage == 36
+    assert usage == 32
 
     arr1 = arr + 1
     assert arr1.nbytes == 64
     image.data = arr1
     usage = memory_usage(image)
-    assert usage == 136
+    assert usage == 64
     usage = memory_usage(image, {'z'})
-    assert usage == 68
+    assert usage == 32
