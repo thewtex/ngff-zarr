@@ -8,8 +8,8 @@ from zarr.storage import DirectoryStore, MemoryStore
 
 from ngff_zarr import itk_image_to_ngff_image, to_ngff_zarr
 
-test_data_ipfs_cid = "bafybeiaxp77oqyazo5wdkkezgtx5xpnbq5jdgllni5vdn42ecikl5etjtq"
-test_data_sha256 = "2795b587830baad1bf463498f61ed8a34dece3169c86d50d9ed46a05212201aa"
+test_data_ipfs_cid = "bafybeibqc32fkkkowsyae3l3h5sl3dpy6nfca5vffelo6id6f6mxix25ye"
+test_data_sha256 = "093ffa9369eff4a736687f7ef9c08243ef55ed525dc6eee14cac696536fff4b7"
 
 
 test_dir = Path(__file__).resolve().parent
@@ -41,6 +41,10 @@ def input_images():
     result["cthead1"] = image_ngff
 
     result["lung_series"] = test_data_dir / "input" / "lung_series" / "*"
+
+    image = itk.imread(test_data_dir / "input" / "brain_two_components.nrrd", itk.VariableLengthVector[itk.SS])
+    image_ngff = itk_image_to_ngff_image(image)
+    result["brain_two_components"] = image_ngff
 
     # store = DirectoryStore(
     #     test_data_dir / "input" / "small_head.zarr", dimension_separator="/"

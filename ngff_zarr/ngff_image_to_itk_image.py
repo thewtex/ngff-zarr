@@ -32,7 +32,7 @@ def ngff_image_to_itk_image(
     wasm: bool = True,
     ):
 
-    from itkwasm import IntTypes, FloatTypes, PixelTypes
+    from itkwasm import IntTypes, PixelTypes
 
     dims = ngff_image.dims
     if 'z' in dims:

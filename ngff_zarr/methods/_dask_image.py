@@ -3,11 +3,12 @@ from collections import OrderedDict
 import numpy as np
 import dask.array
 
-from ._support import _align_chunks, _dim_scale_factors, _compute_sigma
+from ._support import _align_chunks, _dim_scale_factors, _compute_sigma, _spatial_dims
 from ..ngff_image import NgffImage
 from ..config import config
 from ..memory_usage import memory_usage
 from .._array_split import _array_split
+
 
 def _compute_next_scale(previous_image: NgffImage, dim_factors):
     """Helper method to manually compute output image spacing.
@@ -23,7 +24,7 @@ def _compute_next_scale(previous_image: NgffImage, dim_factors):
         Example {'x': 2.0, 'y': 1.0}
     """
     input_scale = previous_image.scale
-    return {dim: input_scale[dim] * dim_factors[dim] for dim in previous_image.dims}
+    return {dim: input_scale[dim] * dim_factors[dim] for dim in previous_image.dims if dim in _spatial_dims}
 
 
 def _compute_next_translation(previous_image, dim_factors):
@@ -168,7 +169,7 @@ def _downsample_dask_image(
             )
 
         # Construct downsample parameters
-        image_dimension = len(dim_factors)
+        image_dimension = len(shrink_factors)
         transform = np.eye(image_dimension)
         if label:
             order = 0
