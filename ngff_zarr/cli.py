@@ -16,7 +16,6 @@ from rich.panel import Panel
 from rich.live import Live
 from rich.pretty import Pretty
 from rich.spinner import Spinner
-from rich import print as rprint
 from zarr.storage import DirectoryStore
 import zarr
 import dask.utils
@@ -31,6 +30,7 @@ from .ngff_image_to_itk_image import ngff_image_to_itk_image
 from .detect_cli_io_backend import detect_cli_io_backend, ConversionBackend, conversion_backends_values
 from .methods import Methods, methods_values
 from .rich_dask_progress import NgffProgress, NgffProgressCallback
+from .zarr_metadata import is_dimension_supported, is_unit_supported
 from .config import config
 
 def _multiscales_to_ngff_zarr(live, args, output_store, rich_dask_progress, multiscales):
@@ -46,12 +46,12 @@ def _ngff_image_to_multiscales(live, ngff_image, args, progress, rich_dask_progr
     data = ngff_image.data
     if args.dims:
         if len(args.dims) != len(ngff_image.dims):
-            rprint(f"[red]Provided number of dims do not match expected: {len(ngff_image.dims)}")
+            live.console.print(f"[red]Provided number of dims do not match expected: {len(ngff_image.dims)}")
             sys.exit(1)
         ngff_image.dims = args.dims
     if args.scale:
         if len(args.scale) % 2 != 0:
-            rprint(f"[red]Provided scales are expected to be dim value pairs")
+            live.console.print(f"[red]Provided scales are expected to be dim value pairs")
             sys.exit(1)
         n_scale_args = len(args.scale) // 2
         for scale in range(n_scale_args):
@@ -60,13 +60,24 @@ def _ngff_image_to_multiscales(live, ngff_image, args, progress, rich_dask_progr
             ngff_image.scale[dim] = value
     if args.translation:
         if len(args.translation) % 2 != 0:
-            rprint(f"[red]Provided translations are expected to be dim value pairs")
+            live.console.print(f"[red]Provided translations are expected to be dim value pairs")
             sys.exit(1)
         n_translation_args = len(args.translation) // 2
         for translation in range(n_translation_args):
             dim = args.translation[translation*2]
             value = float(args.translation[translation*2+1])
-            ngff_image.translation[dim] = value
+            ngff_image.translation[dim] = value    
+    if args.units:
+        if len(args.units) % 2 != 0:
+            live.console.print(f"[red]Provided units are expected to be dim value pairs, i.e. \"x\" \"meter\" ...")
+            sys.exit(1)
+        unit_pairs = {str(args.units[unit*2]).lower(): str(args.units[unit*2+1]).lower()
+                        for unit in range(len(args.units) // 2)}
+        unsupported_units = [value for value in unit_pairs.values() if not is_unit_supported(value)]
+        if any(unsupported_units):
+            live.console.print(f"[red]The following unit(s) were requested but are not supported: {unsupported_units}")
+            sys.exit(1)
+        ngff_image.axes_units.update(unit_pairs)
     if args.name:
         ngff_image.name = args.name
 
@@ -93,6 +104,7 @@ def main():
 
     metadata_group = parser.add_argument_group("metadata", "Specify output metadata")
     metadata_group.add_argument('-d', '--dims', nargs='+', help='Ordered OME-Zarr NGFF dimensions from {"t", "z", "y", "x", "c"}', metavar='DIM')
+    metadata_group.add_argument('-u', '--units', nargs='+', help='Ordered OME-Zarr NGFF axes spatial or temporal units', metavar='UNITS')
     metadata_group.add_argument('-s', '--scale', nargs='+', help='Override scale / spacing for each dimension, e.g. z 4.0 y 1.0 x 1.0', metavar='SCALE')
     metadata_group.add_argument('-t', '--translation', nargs='+', help='Override translation / origin for each dimension, e.g. z 0.0 y 50.0 x 40.0', metavar='TRANSLATION')
     metadata_group.add_argument('-n', '--name', help="Image name")
