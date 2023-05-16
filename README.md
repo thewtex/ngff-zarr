@@ -32,7 +32,8 @@ pip install 'ngff-zarr[cli]'
 - Process extremely large datasets
 - Multiple downscaling methods
 - Supports Python>=3.7
-
+- Implements version 0.4 of the [OME-Zarr
+NGFF specification](https://github.com/ome/ngff)
 
 ## Usage
 
