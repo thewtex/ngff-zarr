@@ -4,18 +4,20 @@ from rich import print
 from dask.array.image import imread as daimread
 import zarr
 
-from .detect_cli_input_backend import ConversionBackend
+from .detect_cli_io_backend import ConversionBackend
 from .ngff_image import NgffImage
 from .to_ngff_image import to_ngff_image
 from .itk_image_to_ngff_image import itk_image_to_ngff_image
 from .from_ngff_zarr import from_ngff_zarr
 
-def cli_input_to_ngff_image(backend: ConversionBackend, input) -> NgffImage:
+def cli_input_to_ngff_image(backend: ConversionBackend, input, output_scale: int=0) -> NgffImage:
     if backend is ConversionBackend.NGFF_ZARR:
         store = zarr.storage.DirectoryStore(input[0])
         multiscales = from_ngff_zarr(store)
-        return multiscales[0]
-
+        return multiscales.images[output_scale]
+    elif backend is ConversionBackend.ZARR_ARRAY:
+        arr = zarr.open_array(input[0], mode='r')
+        return to_ngff_image(arr)
     elif backend is ConversionBackend.ITK:
         try:
             import itk
