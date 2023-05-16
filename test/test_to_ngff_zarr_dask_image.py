@@ -16,6 +16,11 @@ def test_gaussian_isotropic_scale_factors(input_images):
     multiscales = to_multiscales(image, method=Methods.DASK_IMAGE_GAUSSIAN)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
+    dataset_name = "brain_two_components"
+    image = input_images[dataset_name]
+    baseline_name = "2_4/DASK_IMAGE_GAUSSIAN.zarr"
+    multiscales = to_multiscales(image, [2, 4], method=Methods.DASK_IMAGE_GAUSSIAN)
+    verify_against_baseline(dataset_name, baseline_name, multiscales)
 
 #     dataset_name = "cthead1"
 #     image = input_images[dataset_name]

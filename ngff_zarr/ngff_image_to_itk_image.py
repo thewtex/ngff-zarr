@@ -1,6 +1,8 @@
 from .ngff_image import NgffImage
 import numpy as np
 
+from .methods._support import _spatial_dims
+
 def _dtype_to_component_type(dtype):
     from itkwasm import IntTypes, FloatTypes
     if dtype == np.uint8:
@@ -30,7 +32,7 @@ def ngff_image_to_itk_image(
     wasm: bool = True,
     ):
 
-    from itkwasm import IntTypes, FloatTypes, PixelTypes
+    from itkwasm import IntTypes, PixelTypes
 
     dims = ngff_image.dims
     if 'z' in dims:
@@ -55,8 +57,7 @@ def ngff_image_to_itk_image(
         'components': components
         }
 
-    all_spatial_dims = {"x", "y", "z"}
-    spatial_dims = [dim for dim in dims if dim in all_spatial_dims]
+    spatial_dims = [dim for dim in dims if dim in _spatial_dims]
     spatial_dims.sort()
     spacing = [ngff_image.scale[dim] for dim in spatial_dims]
     origin = [ngff_image.translation[dim] for dim in spatial_dims]

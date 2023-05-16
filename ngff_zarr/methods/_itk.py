@@ -4,10 +4,9 @@ import numpy as np
 
 from dask.array import map_blocks, map_overlap, take, concatenate, expand_dims
 
-from ._support import _align_chunks, _dim_scale_factors, _compute_sigma
+from ._support import _align_chunks, _dim_scale_factors, _compute_sigma, _spatial_dims
 from ..ngff_image import NgffImage
 
-_all_spatial_dims = {"x", "y", "z"}
 _image_dims: Tuple[str, str, str, str] = ("x", "y", "z", "t")
 
 def _get_block(previous_image: NgffImage, block_index: int):
@@ -114,7 +113,7 @@ def _downsample_itk_bin_shrink(ngff_image: NgffImage, default_chunks, out_chunks
     previous_image = ngff_image
     dims = ngff_image.dims
     previous_dim_factors = {d: 1 for d in dims}
-    spatial_dims = [dim for dim in dims if dim in _all_spatial_dims]
+    spatial_dims = [dim for dim in dims if dim in _spatial_dims]
     for scale_factor in scale_factors:
         dim_factors = _dim_scale_factors(dims, scale_factor, previous_dim_factors)
         previous_dim_factors = dim_factors
@@ -205,13 +204,13 @@ def _downsample_itk_gaussian(ngff_image: NgffImage, default_chunks, out_chunks, 
     previous_image = ngff_image
     dims = ngff_image.dims
     previous_dim_factors = {d: 1 for d in dims}
-    spatial_dims = [dim for dim in dims if dim in _all_spatial_dims]
+    spatial_dims = [dim for dim in dims if dim in _spatial_dims]
     for scale_factor in scale_factors:
         dim_factors = _dim_scale_factors(dims, scale_factor, previous_dim_factors)
         previous_dim_factors = dim_factors
         previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
 
-        shrink_factors = [dim_factors[sf] for sf in _all_spatial_dims if sf in dim_factors]
+        shrink_factors = [dim_factors[sf] for sf in _spatial_dims if sf in dim_factors]
 
         # Compute metadata for region splitting
 
