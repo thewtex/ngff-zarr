@@ -27,7 +27,7 @@ from .memory_usage import memory_usage
 from .task_count import task_count
 from ._array_split import _array_split
 
-_spatial_dims = {'x', 'y', 'z'}
+from .methods._support import _spatial_dims
 
 def _ngff_image_scale_factors(ngff_image, min_length, out_chunks):
     sizes = { d: s for d, s in zip(ngff_image.dims, ngff_image.data.shape) if d in _spatial_dims }
