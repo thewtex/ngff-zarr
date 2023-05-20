@@ -277,13 +277,15 @@ def to_multiscales(
     for dim in ngff_image.dims:
         unit = None
         if ngff_image.axes_units and dim in ngff_image.axes_units:
-            unit = axes_units[dim]
+            unit = ngff_image.axes_units[dim]
         if dim in {"x", "y", "z"}:
             axis = Axis(name=dim, type="space", unit=unit)
         elif dim == "c":
             axis = Axis(name=dim, type="channel", unit=unit)
         elif dim == "t":
             axis = Axis(name=dim, type="time", unit=unit)
+        else:
+            raise KeyError(f'Dimension identifier is not valid: {dim}')
         axes.append(axis)
 
     datasets = []
