@@ -29,7 +29,6 @@ def from_ngff_zarr(
 
     root = zarr.open_group(store, mode='r')
     metadata = root.attrs["multiscales"][0]
-    assert metadata["@type"] == "ngff:Image"
 
     dims = [a["name"] for a in metadata["axes"]]
 
@@ -64,7 +63,7 @@ def from_ngff_zarr(
         ngff_image = NgffImage(data, dims, scale, translation, name, units)
         images.append(ngff_image)
 
-    metadata.pop("@type")
+    metadata.pop("@type", None)
     axes = [Axis(**axis) for axis in metadata["axes"]]
     metadata = Metadata(axes=axes, datasets=datasets, name=name, version=metadata["version"])
 
