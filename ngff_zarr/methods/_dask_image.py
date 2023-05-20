@@ -153,7 +153,7 @@ def _downsample_dask_image(
         else:
             input_scale_list = []
             for dim in dims:
-                if dims in previous_image.scale:
+                if dim in previous_image.scale:
                     input_scale_list.append(previous_image.scale[dim])
                 else:
                     input_scale_list.append(1.0)
