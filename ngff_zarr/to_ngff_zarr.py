@@ -104,7 +104,7 @@ def to_ngff_zarr(
             y_index = dims.index('y')
             if 'z' in dims:
                 z_index = dims.index('z')
-                # TODD address, c, t, large 2D
+                # TODO address, c, t, large 2D
                 slice_bytes = memory_usage(image, {'z'})
                 scale_factors = multiscales.scale_factors
                 slab_slices = min(int(np.ceil(config.memory_target / slice_bytes)), arr.shape[z_index])
