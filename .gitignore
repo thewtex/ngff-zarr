@@ -6,3 +6,12 @@ test/data.tar.gz
 *__pycache__*
 
 .vs/
+
+.ipynb_checkpoints/
+LIDC2.mha
+LIDC2.zarr/
+LIDCFull.vtk
+LIDCFull.zarr/
+MR-head.nrrd
+MR-head.zarr/
+Untitled.ipynb
