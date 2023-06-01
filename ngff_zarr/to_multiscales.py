@@ -24,8 +24,6 @@ from .methods import Methods
 from .config import config
 from .rich_dask_progress import NgffProgress, NgffProgressCallback
 from .memory_usage import memory_usage
-from .task_count import task_count
-from ._array_split import _array_split
 
 from .methods._support import _spatial_dims
 
@@ -97,62 +95,90 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
 
     if 'z' in dims:
         z_index = dims.index('z')
-        # slice_bytes = memory_usage(image, {'z'})
         slice_bytes = data.dtype.itemsize * data.shape[x_index] * data.shape[y_index]
 
         slab_slices = min(int(np.ceil(config.memory_target / slice_bytes)), data.shape[z_index])
-        # slice_tasks = task_count(image, {'z'})
-        # slab_slices = min(int(np.ceil(config.task_target / slice_tasks)), slab_slices)
         if optimized_chunks < data.shape[z_index]:
             slab_slices = min(slab_slices, optimized_chunks)
         rechunks[z_index] = slab_slices
 
-        split = _array_split(data, data.shape[z_index]//slab_slices, z_index)
+        path = f"{base_path}/slabs"
+        slabs = data.rechunk(rechunks)
 
+        chunks = tuple([c[0] for c in slabs.chunks])
+        optimized = dask.array.Array(dask.array.optimize(slabs.__dask_graph__(),
+            slabs.__dask_keys__()), slabs.name,
+            slabs.chunks, meta=slabs)
+        zarr_array = zarr.creation.open_array(
+            shape=data.shape,
+            chunks=chunks,
+            dtype=data.dtype,
+            store=cache_store,
+            path=path,
+            mode='a',
+        )
+
+        n_slabs = int(np.ceil(data.shape[z_index] / slab_slices))
         if progress:
-            progress.add_cache_task(f"[blue]Caching z-slabs", len(split))
-        split_arrays = []
-        for slab_index, slab in enumerate(split):
-            path = base_path + f"/slab/{slab_index}"
+            progress.add_cache_task(f"[blue]Caching z-slabs", n_slabs)
+        for slab_index in range(n_slabs):
             if progress:
                 if isinstance(progress, NgffProgressCallback):
-                    progress.add_callback_task(f"[blue]Caching z-slabs {slab_index+1} of {len(split)}")
+                    progress.add_callback_task(f"[blue]Caching z-slabs {slab_index+1} of {n_slabs}")
                 progress.update_cache_task_completed((slab_index+1))
-            slab = slab.rechunk(rechunks)
-            optimized = dask.array.Array(dask.array.optimize(slab.__dask_graph__(),
-                slab.__dask_keys__()), slab.name,
-                slab.chunks, meta=slab)
+            region = [slice(data.shape[i]) for i in range(data.ndim)]
+            region[z_index] = slice(slab_index*slab_slices, min((slab_index+1)*slab_slices, data.shape[z_index]))
+            region = tuple(region)
+            arr_region = optimized[region]
             dask.array.to_zarr(
-                slab,
-                cache_store,
+                arr_region,
+                zarr_array,
+                region=region,
                 component=path,
                 overwrite=False,
                 compute=True,
                 return_stored=False,
             )
-            arr = dask.array.from_zarr(cache_store, component=path)
-            split_arrays.append(arr)
-        data = dask.array.concatenate(split_arrays)
+        data = dask.array.from_zarr(cache_store, component=path)
         if optimized_chunks < data.shape[z_index] and slab_slices < optimized_chunks:
             rechunks[z_index] = optimized_chunks
             data = data.rechunk(rechunks)
-            path = base_path + f"/optimized_chunks"
-            if progress and isinstance(progress, NgffProgressCallback):
-                progress.add_callback_task(f"[blue]Caching z rechunk")
-            dask.array.to_zarr(
-                data,
-                cache_store,
-                component=path,
-                overwrite=False,
-                compute=True,
-                return_stored=False,
+            path = f"{base_path}/optimized_chunks"
+            chunks = tuple([c[0] for c in optimized.chunks])
+            data = data.rechunk(chunks)
+            zarr_array = zarr.creation.open_array(
+                shape=data.shape,
+                chunks=chunks,
+                dtype=data.dtype,
+                store=cache_store,
+                path=path,
+                mode='a',
             )
+            n_slabs = int(np.ceil(data.shape[z_index] / optimized_chunks))
+            for slab_index in range(n_slabs):
+                if progress:
+                    if isinstance(progress, NgffProgressCallback):
+                        progress.add_callback_task(f"[blue]Caching z-rechunk {slab_index+1} of {n_slabs}")
+                    progress.update_cache_task_completed((slab_index+1))
+                region = [slice(data.shape[i]) for i in range(data.ndim)]
+                region[z_index] = slice(slab_index*optimized_chunks, min((slab_index+1)*optimized_chunks, data.shape[z_index]))
+                region = tuple(region)
+                arr_region = data[region]
+                dask.array.to_zarr(
+                    arr_region,
+                    zarr_array,
+                    region=region,
+                    component=path,
+                    overwrite=False,
+                    compute=True,
+                    return_stored=False,
+                )
             data = dask.array.from_zarr(cache_store, component=path)
         else:
             data = data.rechunk(rechunks)
     else:
         data = data.rechunk(rechunks)
-        # TODO: Do we need to split / concat very large 2D images
+        # TODO: Slab, chunk optimized very large 2D images
         path = base_path + f"/optimized_chunks"
         if progress:
             progress.add_callback_task(f"[blue]Caching optimized chunks")
