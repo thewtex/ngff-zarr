@@ -75,7 +75,7 @@ def to_ngff_zarr(
         array_dims_group = root.create_group(str(PurePosixPath(path).parent))
         array_dims_group.attrs["_ARRAY_DIMENSIONS"] = image.dims
 
-        if index < nscales - 1:
+        if index > 0 and index < nscales - 1:
             dim_factors = _dim_scale_factors(dims, multiscales.scale_factors[index], previous_dim_factors)
         else:
             dim_factors = { d: 1 for d in dims }
@@ -106,7 +106,6 @@ def to_ngff_zarr(
                 z_index = dims.index('z')
                 # TODO address, c, t, large 2D
                 slice_bytes = memory_usage(image, {'z'})
-                scale_factors = multiscales.scale_factors
                 slab_slices = min(int(np.ceil(config.memory_target / slice_bytes)), arr.shape[z_index])
                 z_chunks = chunks[z_index]
                 slice_planes = False
@@ -198,16 +197,17 @@ def to_ngff_zarr(
             )
 
         # Minimize task graph depth
-        if index < nscales - 2 and multiscales.scale_factors and multiscales.method and multiscales.chunks:
+        if index > 1 and index < nscales - 2 and multiscales.scale_factors and multiscales.method and multiscales.chunks:
             image.data = dask.array.from_zarr(store, component=path)
-            next_multiscales_factor = multiscales.scale_factors[index+1]
+            next_multiscales_factor = multiscales.scale_factors[index]
             if isinstance(next_multiscales_factor, int):
-                next_multiscales_factor = next_multiscales_factor // multiscales.scale_factors[index]
+                next_multiscales_factor = next_multiscales_factor // multiscales.scale_factors[index-1]
             else:
                 updated_factors = {}
                 for d, f in next_multiscales_factor.items():
-                    updated_factors[d] = f // multiscales.scale_factors[index][d]
+                    updated_factors[d] = f // multiscales.scale_factors[index-1][d]
                 next_multiscales_factor = updated_factors
+
             next_multiscales = to_multiscales(image,
                 scale_factors=[next_multiscales_factor,],
                 method=multiscales.method,
