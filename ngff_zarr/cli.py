@@ -77,7 +77,7 @@ def _ngff_image_to_multiscales(live, ngff_image, args, progress, rich_dask_progr
         if any(unsupported_units):
             live.console.print(f"[red]The following unit(s) were requested but are not supported: {unsupported_units}")
             sys.exit(1)
-        ngff_image.axes_units.update(unit_pairs)
+        ngff_image.axes_units = unit_pairs
     if args.name:
         ngff_image.name = args.name
 
