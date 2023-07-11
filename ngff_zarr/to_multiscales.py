@@ -197,7 +197,7 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
 
 def to_multiscales(
     data: Union[NgffImage, ArrayLike, MutableMapping, str, ZarrArray],
-    layout: Literal['itk', 'cellmap'] = 'cellmap',
+    layout: Literal['itk', 'cellmap'] = 'itk',
     scale_factors: Union[int, Sequence[Union[Dict[str, int], int]]] = 128,
     method: Optional[Methods] = None,
     chunks: Optional[
@@ -217,7 +217,7 @@ def to_multiscales(
     data: NgffImage, ArrayLike, ZarrArray, MutableMapping, str
         Multi-dimensional array that provides the image pixel values, or image pixel values + image metadata when an NgffImage.
 
-    layout: str, must be either 'cellmap' or 'itk'. Default is 'cellmap'.
+    layout: str, must be either 'cellmap' or 'itk'. Default is 'itk'.
         Determines the on-disk layout for the multiscale data. 
         
         If 'itk' is chosen, each scale level will be stored in a Zarr array in a 
