@@ -80,7 +80,7 @@ def _ngff_image_to_multiscales(live, ngff_image, args, progress, rich_dask_progr
         ngff_image.axes_units = unit_pairs
     if args.name:
         ngff_image.name = args.name
-    if args.layout:
+    if layout := args.layout:
         if layout not in ('itk', 'cellmap'):
             msg = (f"Invalid layout specified: {layout}." 
                    "Layout must be either 'itk' or 'cellmap'")
@@ -123,7 +123,7 @@ def main():
     processing_group.add_argument('-m', '--method', default="dask_image_gaussian", choices=methods_values, help="Downsampling method")
     processing_group.add_argument('-q', '--quiet', action='store_true', help='Do not display progress information')
     processing_group.add_argument('-l', '--local-cluster', action='store_true', help='Create a Dask Distributed LocalCluster. Better for large datasets.')
-    processing_group.add_argument('-layout', '--layout', action='store_true', help='Which layout to use. Must be either "itk" or "cellmap". Default is "itk"')
+    processing_group.add_argument('--layout', choices=('itk', 'cellmap'), default='itk', help='Which layout to use. Must be either "itk" or "cellmap". Default is "itk"')
     processing_group.add_argument('--input-backend', choices=conversion_backends_values, help='Input conversion backend')
     processing_group.add_argument('--memory-target', help='Memory limit, e.g. 4GB')
     processing_group.add_argument('--cache-dir', help='Directory to use for caching with large datasets')
