@@ -45,6 +45,34 @@ ngff-zarr = "ngff_zarr.cli:main"
 [tool.hatch.version]
 path = "ngff_zarr/__about__.py"
 
+[tool.hatch.envs.cli]
+dependencies = [
+    "dask-image",
+    "dask[distributed]",
+    "itk-filtering>=5.3.0",
+    "itk-io>=5.3.0",
+    "imageio",
+    "tifffile",
+
+]
+
+[tool.hatch.envs.test]
+dependencies = [
+  "pytest",
+  "pooch",
+  "itkwasm",
+  "itk-io>=5.3.0",
+  "itk-filtering>=5.3.0",
+  "tifffile",
+  "coverage[toml]",
+  "pytest-cov",
+  "dask-image"
+]
+
+[tool.hatch.envs.test.scripts]
+run-coverage = "pytest --cov-config=pyproject.toml --cov=pkg --cov=tests"
+run = "run-coverage --no-cov"
+
 [project.optional-dependencies]
 dask-image = [
     "dask-image",

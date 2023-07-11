@@ -197,6 +197,7 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
 
 def to_multiscales(
     data: Union[NgffImage, ArrayLike, MutableMapping, str, ZarrArray],
+    layout: Literal['itk', 'cellmap'] = 'itk',
     scale_factors: Union[int, Sequence[Union[Dict[str, int], int]]] = 128,
     method: Optional[Methods] = None,
     chunks: Optional[
@@ -215,6 +216,29 @@ def to_multiscales(
 
     data: NgffImage, ArrayLike, ZarrArray, MutableMapping, str
         Multi-dimensional array that provides the image pixel values, or image pixel values + image metadata when an NgffImage.
+
+    layout: str, must be either 'cellmap' or 'itk'. Default is 'itk'.
+        Determines the on-disk layout for the multiscale data. 
+        
+        If 'itk' is chosen, each scale level will be stored in a Zarr array in a 
+        subgroup of the multiscale group. 
+        
+        For example, if the multiscale group is called 'foo', then choosing the 'itk'
+        layout will result arrays with paths like 
+        `foo/scale0/image` 
+        `foo/scale1/image`
+
+        Additionally, an extra piece of metadata will be added to each of the `scaleX` 
+        groups that facilitates compatibility with the python library Xarray.
+
+        If 'ngff' is chosen, then storage will use the layout given as an example in the
+        OME-NGFF specification, with one modification: instead of saving arrays with 
+        names like 0,1, etc, arrays will be saved with names that are prefixed by 's'. 
+
+        For example, if the multiscale group is called 'foo', then choosing the 'ngff'
+        layout will result arrays with paths like 
+        `foo/s0` 
+        `foo/s1`  
 
     scale_factors : int of minimum length, int per scale or dict of spatial dimension int's per scale
         If a single integer, scale factors in spatial dimensions will be increased by a factor of two until this minimum length is reached.
@@ -316,7 +340,14 @@ def to_multiscales(
 
     datasets = []
     for index, image in enumerate(images):
-        path = f"scale{index}/{ngff_image.name}"
+        if layout == 'itk':
+            path = f"scale{index}/{ngff_image.name}"
+        elif layout == 'cellmap':
+            path = f"s{index}"
+        else:
+            msg = (f"Invalid layout specified: {layout}." 
+                   "Layout must be either 'itk' or 'cellmap'")
+            raise ValueError(msg)
         scale = []
         for dim in image.dims:
             if dim in image.scale:
