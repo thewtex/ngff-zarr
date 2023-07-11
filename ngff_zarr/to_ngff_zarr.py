@@ -72,9 +72,16 @@ def to_ngff_zarr(
         image = next_image
         arr = image.data
         path = multiscales.metadata.datasets[index].path
-        array_dims_group = root.create_group(str(PurePosixPath(path).parent))
-        array_dims_group.attrs["_ARRAY_DIMENSIONS"] = image.dims
-
+        num_subgroups = len(PurePosixPath(path).parts) - 1
+        if num_subgroups == 0:
+            pass
+        elif num_subgroups == 1:
+            array_dims_group = root.create_group(str(PurePosixPath(path).parent))
+            array_dims_group.attrs["_ARRAY_DIMENSIONS"] = image.dims
+        else:
+            msg = (f"Only one level of subgrouping is allowed. Based on the path {path}"
+                   f" {num_subgroups} were requested.")
+            raise ValueError(msg)
         if index > 0 and index < nscales - 1:
             dim_factors = _dim_scale_factors(dims, multiscales.scale_factors[index], previous_dim_factors)
         else:

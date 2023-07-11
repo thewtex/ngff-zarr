@@ -80,6 +80,14 @@ def _ngff_image_to_multiscales(live, ngff_image, args, progress, rich_dask_progr
         ngff_image.axes_units = unit_pairs
     if args.name:
         ngff_image.name = args.name
+    if args.layout:
+        if layout not in ('itk', 'cellmap'):
+            msg = (f"Invalid layout specified: {layout}." 
+                   "Layout must be either 'itk' or 'cellmap'")
+            raise ValueError(msg)
+        layout = args.layout
+    else:
+        layout = 'cellmap'
 
     # Generate Multiscales
     cache = data.nbytes > config.memory_target
@@ -93,7 +101,7 @@ def _ngff_image_to_multiscales(live, ngff_image, args, progress, rich_dask_progr
             chunks = chunks[0]
         else:
             chunks = tuple(chunks)
-    multiscales = to_multiscales(ngff_image, method=method, progress=rich_dask_progress, chunks=chunks, cache=cache)
+    multiscales = to_multiscales(ngff_image, layout=layout, method=method, progress=rich_dask_progress, chunks=chunks, cache=cache)
     return multiscales
 
 

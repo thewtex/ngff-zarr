@@ -11,7 +11,7 @@ def test_gaussian_isotropic_scale_factors(input_images):
     dataset_name = "cthead1"
     image = input_images[dataset_name]
     baseline_name = "2_4/DASK_IMAGE_GAUSSIAN.zarr"
-    multiscales = to_multiscales(image, [2, 4], method=Methods.DASK_IMAGE_GAUSSIAN)
+    multiscales = to_multiscales(image, scale_factors=[2, 4], method=Methods.DASK_IMAGE_GAUSSIAN)
     # store_new_multiscales(dataset_name, f'{baseline_name}', multiscales)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 

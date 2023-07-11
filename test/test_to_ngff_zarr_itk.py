@@ -8,7 +8,7 @@ def test_bin_shrink_isotropic_scale_factors(input_images):
     dataset_name = "cthead1"
     image = input_images[dataset_name]
     baseline_name = "2_4/ITK_BIN_SHRINK.zarr"
-    multiscales = to_multiscales(image, [2, 4], method=Methods.ITK_BIN_SHRINK)
+    multiscales = to_multiscales(image, scale_factors=[2, 4], method=Methods.ITK_BIN_SHRINK)
     # store_new_multiscales(dataset_name, baseline_name, multiscales)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
@@ -20,7 +20,7 @@ def test_gaussian_isotropic_scale_factors(input_images):
     dataset_name = "cthead1"
     image = input_images[dataset_name]
     baseline_name = "2_4/ITK_GAUSSIAN.zarr"
-    multiscales = to_multiscales(image, [2, 4], method=Methods.ITK_GAUSSIAN)
+    multiscales = to_multiscales(image, scale_factors=[2, 4], method=Methods.ITK_GAUSSIAN)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
     baseline_name = "auto/ITK_GAUSSIAN.zarr"
