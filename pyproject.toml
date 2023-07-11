@@ -45,6 +45,17 @@ ngff-zarr = "ngff_zarr.cli:main"
 [tool.hatch.version]
 path = "ngff_zarr/__about__.py"
 
+[tool.hatch.envs.cli]
+dependencies = [
+    "dask-image",
+    "dask[distributed]",
+    "itk-filtering>=5.3.0",
+    "itk-io>=5.3.0",
+    "imageio",
+    "tifffile",
+
+]
+
 [tool.hatch.envs.test]
 dependencies = [
   "pytest",
