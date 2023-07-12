@@ -111,10 +111,12 @@ def _downsample_dask_image(
     ]
     previous_image = ngff_image
     dims = ngff_image.dims
-    previous_dim_factors = {d: 1 for d in dims}
+    previous_absolute_dim_factors = {d: 1 for d in dims}
+    previous_scale_factor = 1
     for scale_factor in scale_factors:
-        dim_factors = _dim_scale_factors(dims, scale_factor, previous_dim_factors)
-        previous_dim_factors = dim_factors
+        dim_factors = _dim_scale_factors(dims, scale_factor, previous_absolute_dim_factors)
+        previous_absolute_dim_factors = {d:v*previous_scale_factor for d, v in dim_factors.items()}
+        previous_scale_factor = scale_factor
         previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
 
         shrink_factors = []
