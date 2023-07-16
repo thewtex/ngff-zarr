@@ -43,6 +43,14 @@ await micropip.install('ngff-zarr')
 ```{toctree}
 :hidden:
 :maxdepth: 3
+
+cli.md
+development.md
+```
+
+```{toctree}
+:hidden:
+:maxdepth: 3
 :caption: 📖 Reference
 
 apidocs/index.rst
