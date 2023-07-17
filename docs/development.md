@@ -8,6 +8,7 @@ To run the unit tests:
 
 ```sh
 pip install -e ".[test,dask-image,itk,cli]"
+pre-commit install
 pytest
 ```
 
