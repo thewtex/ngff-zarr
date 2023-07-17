@@ -181,6 +181,7 @@ def to_ngff_zarr(
                         overwrite=False,
                         compute=True,
                         return_stored=False,
+                        dimension_separator="/",
                         **kwargs,
                     )
         else:
@@ -193,6 +194,7 @@ def to_ngff_zarr(
                 overwrite=False,
                 compute=True,
                 return_stored=False,
+                dimension_separator="/",
                 **kwargs,
             )
 
