@@ -345,8 +345,16 @@ def _downsample_dask_image(
                 while region_output_shape[x_index] % shrink_factors[x_index] != 0:
                     region_output_shape[x_index] -= 1
 
-                def downscale_region(region, offset):
-                    blurred_region = blurred_array[region]
+                def downscale_region(
+                    region,  # noqa: ARG001
+                    offset,
+                    blurred_array=blurred_array,
+                    transform=transform,
+                    region_output_shape=region_output_shape,
+                    order=order,
+                ):
+                    # TODO: this should be transformed??
+                    # blurred_region = blurred_array[region]
                     return dask_image.ndinterp.affine_transform(
                         blurred_array,
                         matrix=transform,
