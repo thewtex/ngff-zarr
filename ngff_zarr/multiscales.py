@@ -1,9 +1,10 @@
-from typing import Union, Optional, Sequence, Mapping, Dict, Tuple, Any, List
 from dataclasses import dataclass
+from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
+from .methods import Methods
 from .ngff_image import NgffImage
 from .zarr_metadata import Metadata
-from .methods import Methods
+
 
 @dataclass
 class Multiscales:
@@ -19,4 +20,3 @@ class Multiscales:
             Mapping[Any, Union[None, int, Tuple[int, ...]]],
         ]
     ] = None
-

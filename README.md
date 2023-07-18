@@ -6,9 +6,10 @@
 [![DOI](https://zenodo.org/badge/541840158.svg)](https://zenodo.org/badge/latestdoi/541840158)
 [![Documentation Status](https://readthedocs.org/projects/ngff-zarr/badge/?version=latest)](https://ngff-zarr.readthedocs.io/en/latest/?badge=latest)
 
------
+---
 
-A lean and kind Open Microscopy Environment (OME) Next Generation File Format (NGFF) Zarr implementation.
+A lean and kind Open Microscopy Environment (OME) Next Generation File Format
+(NGFF) Zarr implementation.
 
 ## Features
 
@@ -18,8 +19,8 @@ A lean and kind Open Microscopy Environment (OME) Next Generation File Format (N
 - Process extremely large datasets
 - Multiple downscaling methods
 - Supports Python>=3.7
-- Implements version 0.4 of the [OME-Zarr
-NGFF specification](https://github.com/ome/ngff)
+- Implements version 0.4 of the
+  [OME-Zarr NGFF specification](https://github.com/ome/ngff)
 
 ## Installation
 
@@ -31,7 +32,9 @@ pip install 'ngff-zarr[cli]'
 
 ## Documentation
 
-More information an command line usage, the Python API, library features, and how to contribute can be found in [our documentation](https://ngff-zarr.readthedocs.io/).
+More information an command line usage, the Python API, library features, and
+how to contribute can be found in
+[our documentation](https://ngff-zarr.readthedocs.io/).
 
 ## See also
 
@@ -40,4 +43,5 @@ More information an command line usage, the Python API, library features, and ho
 
 ## License
 
-`ngff-zarr` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
+`ngff-zarr` is distributed under the terms of the
+[MIT](https://spdx.org/licenses/MIT.html) license.

@@ -1,13 +1,13 @@
 from collections import OrderedDict
 
-import numpy as np
 import dask.array
+import numpy as np
 
-from ._support import _align_chunks, _dim_scale_factors, _compute_sigma, _spatial_dims
-from ..ngff_image import NgffImage
+from .._array_split import _array_split
 from ..config import config
 from ..memory_usage import memory_usage
-from .._array_split import _array_split
+from ..ngff_image import NgffImage
+from ._support import _align_chunks, _compute_sigma, _dim_scale_factors, _spatial_dims
 
 
 def _compute_next_scale(previous_image: NgffImage, dim_factors):
@@ -24,7 +24,11 @@ def _compute_next_scale(previous_image: NgffImage, dim_factors):
         Example {'x': 2.0, 'y': 1.0}
     """
     input_scale = previous_image.scale
-    return {dim: input_scale[dim] * dim_factors[dim] for dim in previous_image.dims if dim in _spatial_dims}
+    return {
+        dim: input_scale[dim] * dim_factors[dim]
+        for dim in previous_image.dims
+        if dim in _spatial_dims
+    }
 
 
 def _compute_next_translation(previous_image, dim_factors):
@@ -87,10 +91,8 @@ def _get_truncate(previous_image, sigma_values, truncate_start=4.0) -> float:
 
     border = _get_border(previous_image.data, sigma_values, truncate)
     while any(
-        [
-            border_len > image_len
-            for border_len, image_len in zip(border, previous_image.data.shape)
-        ]
+        border_len > image_len
+        for border_len, image_len in zip(border, previous_image.data.shape)
     ):
         truncate = truncate - stddev_step
         if truncate <= 0.0:
@@ -114,8 +116,12 @@ def _downsample_dask_image(
     previous_absolute_dim_factors = {d: 1 for d in dims}
     previous_scale_factor = 1
     for scale_factor in scale_factors:
-        dim_factors = _dim_scale_factors(dims, scale_factor, previous_absolute_dim_factors)
-        previous_absolute_dim_factors = {d:v*previous_scale_factor for d, v in dim_factors.items()}
+        dim_factors = _dim_scale_factors(
+            dims, scale_factor, previous_absolute_dim_factors
+        )
+        previous_absolute_dim_factors = {
+            d: v * previous_scale_factor for d, v in dim_factors.items()
+        }
         previous_scale_factor = scale_factor
         previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
 
@@ -173,11 +179,10 @@ def _downsample_dask_image(
         # Construct downsample parameters
         image_dimension = len(shrink_factors)
         transform = np.eye(image_dimension)
-        if label:
-            order = 0
-        else:
-            order = 1
-        depth = [1,]*blurred_array.ndim
+        order = 0 if label else 1
+        depth = [
+            1,
+        ] * blurred_array.ndim
         for dim, shrink_factor in enumerate(shrink_factors):
             transform[dim, dim] = shrink_factor
             depth[dim] = shrink_factor + 1 + order
@@ -188,20 +193,22 @@ def _downsample_dask_image(
                 out_chunks_list.append(out_chunks[dim])
             else:
                 out_chunks_list.append(1)
-        output_chunks=tuple(out_chunks_list)
+        output_chunks = tuple(out_chunks_list)
 
         if memory_usage(previous_image) > config.memory_target:
             chunks = tuple([c[0] for c in blurred_array.chunks])
-            x_index = dims.index('x')
-            y_index = dims.index('y')
+            x_index = dims.index("x")
+            y_index = dims.index("y")
             ndim = blurred_array.ndim
             shape = blurred_array.shape
-            if 'z' in dims:
-                slice_slabs = True
-                z_index = dims.index('z')
+            if "z" in dims:
+                z_index = dims.index("z")
                 # TODD address, c, t, large 2D
-                slice_bytes = memory_usage(previous_image, {'z'})
-                slab_slices = min(int(np.ceil(config.memory_target / slice_bytes)), blurred_array.shape[z_index])
+                slice_bytes = memory_usage(previous_image, {"z"})
+                slab_slices = min(
+                    int(np.ceil(config.memory_target / slice_bytes)),
+                    blurred_array.shape[z_index],
+                )
                 z_chunks = chunks[z_index]
                 slice_planes = False
                 if slab_slices < z_chunks:
@@ -218,8 +225,10 @@ def _downsample_dask_image(
                 regions = OrderedDict()
                 if slice_planes:
                     # TODO
-                    plane_bytes = memory_usage(previous_image, {'z', 'y'})
-                    plane_slices = min(int(np.ceil(config.memory_target / plane_bytes)), shape[y_index])
+                    plane_bytes = memory_usage(previous_image, {"z", "y"})
+                    plane_slices = min(
+                        int(np.ceil(config.memory_target / plane_bytes)), shape[y_index]
+                    )
                     y_chunks = chunks[y_index]
                     slice_strips = False
                     if plane_slices < y_chunks:
@@ -232,8 +241,11 @@ def _downsample_dask_image(
                     while num_y_splits % shrink_factors[y_index] > 1:
                         num_y_splits += 1
                     if slice_strips:
-                        strip_bytes = memory_usage(previous_image, {'z', 'y', 'x'})
-                        strip_slices = min(int(np.ceil(config.memory_target / strip_bytes)), shape[x_index])
+                        strip_bytes = memory_usage(previous_image, {"z", "y", "x"})
+                        strip_slices = min(
+                            int(np.ceil(config.memory_target / strip_bytes)),
+                            shape[x_index],
+                        )
                         x_chunks = chunks[x_index]
                         strip_slices = max(strip_slices, x_chunks)
                         slice_strips = False
@@ -257,14 +269,24 @@ def _downsample_dask_image(
                                 x_offset = 0
                                 for x_split_index, x_split in enumerate(y_split):
                                     region = [slice(shape[i]) for i in range(ndim)]
-                                    region[z_index] = slice(z_offset, z_offset+x_split.shape[z_index])
-                                    region[y_index] = slice(y_offset, y_offset+x_split.shape[y_index])
-                                    region[x_index] = slice(x_offset, x_offset+x_split.shape[x_index])
-                                    offset = [0,]*ndim
+                                    region[z_index] = slice(
+                                        z_offset, z_offset + x_split.shape[z_index]
+                                    )
+                                    region[y_index] = slice(
+                                        y_offset, y_offset + x_split.shape[y_index]
+                                    )
+                                    region[x_index] = slice(
+                                        x_offset, x_offset + x_split.shape[x_index]
+                                    )
+                                    offset = [
+                                        0,
+                                    ] * ndim
                                     offset[z_index] = z_offset
                                     offset[y_index] = y_offset
                                     offset[x_index] = x_offset
-                                    regions[(z_split_index, y_split_index, x_split_index)] = tuple(region), tuple(offset)
+                                    regions[
+                                        (z_split_index, y_split_index, x_split_index)
+                                    ] = tuple(region), tuple(offset)
                                     x_offset += x_split.shape[x_index]
                                 y_offset += y_split[0].shape[y_index]
                             z_offset += z_split[0][0].shape[z_index]
@@ -278,12 +300,20 @@ def _downsample_dask_image(
                             y_offset = 0
                             for y_split_index, y_split in enumerate(z_split):
                                 region = [slice(shape[i]) for i in range(ndim)]
-                                region[z_index] = slice(z_offset, z_offset+y_split.shape[z_index])
-                                region[y_index] = slice(y_offset, y_offset+y_split.shape[y_index])
-                                offset = [0,]*ndim
+                                region[z_index] = slice(
+                                    z_offset, z_offset + y_split.shape[z_index]
+                                )
+                                region[y_index] = slice(
+                                    y_offset, y_offset + y_split.shape[y_index]
+                                )
+                                offset = [
+                                    0,
+                                ] * ndim
                                 offset[z_index] = z_offset
                                 offset[y_index] = y_offset
-                                regions[(z_split_index, y_split_index, 0)] = tuple(region), tuple(offset)
+                                regions[(z_split_index, y_split_index, 0)] = tuple(
+                                    region
+                                ), tuple(offset)
                                 y_offset += y_split.shape[y_index]
                             z_offset += z_split[0].shape[z_index]
                 else:
@@ -291,13 +321,17 @@ def _downsample_dask_image(
                     z_offset = 0
                     for split_index, split in enumerate(z_splits):
                         region = [slice(shape[i]) for i in range(ndim)]
-                        region[z_index] = slice(z_offset, z_offset+split.shape[z_index])
-                        offset = [0,]*ndim
+                        region[z_index] = slice(
+                            z_offset, z_offset + split.shape[z_index]
+                        )
+                        offset = [
+                            0,
+                        ] * ndim
                         offset[z_index] = z_offset
                         regions[(split_index, 0, 0)] = tuple(region), tuple(offset)
                         z_offset += split.shape[z_index]
 
-                blurred_region = blurred_array[regions[(0,0,0)][0]]
+                blurred_region = blurred_array[regions[(0, 0, 0)][0]]
                 region_output_shape = [
                     arr_len // shrink_factor
                     for arr_len, shrink_factor in zip(
@@ -310,16 +344,17 @@ def _downsample_dask_image(
                     region_output_shape[y_index] -= 1
                 while region_output_shape[x_index] % shrink_factors[x_index] != 0:
                     region_output_shape[x_index] -= 1
+
                 def downscale_region(region, offset):
                     blurred_region = blurred_array[region]
-                    downscaled_region = dask_image.ndinterp.affine_transform(
+                    return dask_image.ndinterp.affine_transform(
                         blurred_array,
                         matrix=transform,
                         offset=offset,
                         output_shape=tuple(region_output_shape),  # tzyx order
                         order=order,
                     )
-                    return downscaled_region
+
                 z_splits = []
                 for z_split in range(num_z_splits):
                     y_splits = []
@@ -338,7 +373,9 @@ def _downsample_dask_image(
                     )
                 ]
                 # trim
-                downscaled_array = downscaled_array[tuple([slice(output_shape[i]) for i in range(ndim)])]
+                downscaled_array = downscaled_array[
+                    tuple([slice(output_shape[i]) for i in range(ndim)])
+                ]
             else:
                 # Todo: downsample 2D images
                 downscaled_array = dask_image.ndinterp.affine_transform(

@@ -1,10 +1,12 @@
-from .ngff_image import NgffImage
 import numpy as np
 
 from .methods._support import _spatial_dims
+from .ngff_image import NgffImage
+
 
 def _dtype_to_component_type(dtype):
-    from itkwasm import IntTypes, FloatTypes
+    from itkwasm import FloatTypes, IntTypes
+
     if dtype == np.uint8:
         return IntTypes.UInt8
     elif dtype == np.int8:
@@ -25,37 +27,35 @@ def _dtype_to_component_type(dtype):
         return FloatTypes.Float32
     elif dtype == np.float64:
         return FloatTypes.Float64
-    raise ValueError(f"Unsupported dtype {dtype}")
+    msg = f"Unsupported dtype {dtype}"
+    raise ValueError(msg)
+
 
 def ngff_image_to_itk_image(
     ngff_image: NgffImage,
     wasm: bool = True,
-    ):
-
+):
     from itkwasm import IntTypes, PixelTypes
 
     dims = ngff_image.dims
-    if 'z' in dims:
-        dimension = 3
-    else:
-        dimension = 2
+    dimension = 3 if "z" in dims else 2
 
     componentType = _dtype_to_component_type(ngff_image.data.dtype)
 
     components = 1
     pixelType = PixelTypes.Scalar
-    if 'c' in dims:
-        components = ngff_image.data.shape[dims.index('c')]
+    if "c" in dims:
+        components = ngff_image.data.shape[dims.index("c")]
         if components == 3 and componentType == IntTypes.UInt8:
             pixelType = PixelTypes.RGB
         else:
             pixelType = PixelTypes.VariableLengthVector
     imageType = {
-        'dimension': dimension,
-        'componentType': str(componentType),
-        'pixelType': str(pixelType),
-        'components': components
-        }
+        "dimension": dimension,
+        "componentType": str(componentType),
+        "pixelType": str(pixelType),
+        "components": components,
+    }
 
     spatial_dims = [dim for dim in dims if dim in _spatial_dims]
     spatial_dims.sort()
@@ -67,22 +67,21 @@ def ngff_image_to_itk_image(
     data = np.asarray(ngff_image.data)
 
     image_dict = {
-            'imageType': imageType,
-            'name': ngff_image.name,
-            'origin': origin,
-            'spacing': spacing,
-            'direction': np.eye(dimension),
-            'size': size,
-            'metadata': {},
-            'data': data,
-            }
+        "imageType": imageType,
+        "name": ngff_image.name,
+        "origin": origin,
+        "spacing": spacing,
+        "direction": np.eye(dimension),
+        "size": size,
+        "metadata": {},
+        "data": data,
+    }
 
     if wasm:
         from itkwasm import Image
-        image = Image(**image_dict)
-        return image
+
+        return Image(**image_dict)
     else:
         import itk
-        image = itk.image_from_dict(image_dict)
-        return image
 
+        return itk.image_from_dict(image_dict)

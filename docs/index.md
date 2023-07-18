@@ -1,5 +1,4 @@
-ngff-zarr
-=========
+# ngff-zarr
 
 [![PyPI - Version](https://img.shields.io/pypi/v/ngff-zarr.svg)](https://pypi.org/project/ngff-zarr)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ngff-zarr.svg)](https://pypi.org/project/ngff-zarr)
@@ -7,7 +6,8 @@ ngff-zarr
 [![DOI](https://zenodo.org/badge/541840158.svg)](https://zenodo.org/badge/latestdoi/541840158)
 [![Documentation Status](https://readthedocs.org/projects/ngff-zarr/badge/?version=latest)](https://ngff-zarr.readthedocs.io/en/latest/?badge=latest)
 
-A lean and kind Open Microscopy Environment (OME) Next Generation File Format (NGFF) Zarr implementation.
+A lean and kind Open Microscopy Environment (OME) Next Generation File Format
+(NGFF) Zarr implementation.
 
 ## Features
 
@@ -17,23 +17,26 @@ A lean and kind Open Microscopy Environment (OME) Next Generation File Format (N
 - Process extremely large datasets
 - Multiple downscaling methods
 - Supports Python>=3.7
-- Implements version 0.4 of the [OME-Zarr
-NGFF specification](https://github.com/ome/ngff)
+- Implements version 0.4 of the
+  [OME-Zarr NGFF specification](https://github.com/ome/ngff)
 
 ## Installation
 
 ::::{tab-set}
 
 :::{tab-item} System
+
 ```shell
 pip install 'ngff-zarr[cli]'
 ```
+
 :::
 
-:::{tab-item} Browser
-In Pyodide, e.g. the [Pyodide REPL](https://pyodide.org/en/stable/console.html) or [JupyterLite](https://jupyterlite.readthedocs.io/en/latest/try/lab),
+:::{tab-item} Browser In Pyodide, e.g. the
+[Pyodide REPL](https://pyodide.org/en/stable/console.html) or
+[JupyterLite](https://jupyterlite.readthedocs.io/en/latest/try/lab),
 
-```python
+````python
 import micropip
 await micropip.install('ngff-zarr')
 :::
@@ -46,7 +49,7 @@ await micropip.install('ngff-zarr')
 
 cli.md
 development.md
-```
+````
 
 ```{toctree}
 :hidden:

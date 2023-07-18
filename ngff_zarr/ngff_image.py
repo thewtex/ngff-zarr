@@ -1,7 +1,8 @@
 from dataclasses import dataclass
-from typing import Sequence, Dict, Optional, Mapping
+from typing import Dict, Mapping, Optional, Sequence
 
 from dask.array.core import Array as DaskArray
+
 from .zarr_metadata import Units
 
 

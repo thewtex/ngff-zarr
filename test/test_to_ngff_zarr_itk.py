@@ -1,7 +1,6 @@
-from ngff_zarr import Methods, to_ngff_zarr, to_multiscales
-from zarr.storage import MemoryStore
+from ngff_zarr import Methods, to_multiscales
 
-from ._data import input_images, store_new_multiscales, verify_against_baseline
+from ._data import verify_against_baseline
 
 
 def test_bin_shrink_isotropic_scale_factors(input_images):
@@ -16,6 +15,7 @@ def test_bin_shrink_isotropic_scale_factors(input_images):
     multiscales = to_multiscales(image, method=Methods.ITK_BIN_SHRINK)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
+
 def test_gaussian_isotropic_scale_factors(input_images):
     dataset_name = "cthead1"
     image = input_images[dataset_name]
@@ -26,6 +26,7 @@ def test_gaussian_isotropic_scale_factors(input_images):
     baseline_name = "auto/ITK_GAUSSIAN.zarr"
     multiscales = to_multiscales(image, method=Methods.ITK_GAUSSIAN)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
+
 
 #     dataset_name = "cthead1"
 #     image = input_images[dataset_name]

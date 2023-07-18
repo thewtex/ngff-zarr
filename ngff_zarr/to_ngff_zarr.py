@@ -1,21 +1,20 @@
-from typing import Union, Optional
 from collections.abc import MutableMapping
-from pathlib import Path, PurePosixPath
 from dataclasses import asdict
-from functools import reduce
+from pathlib import Path, PurePosixPath
+from typing import Optional, Union
 
-from zarr.storage import BaseStore
-import zarr
 import dask.array
 import numpy as np
+import zarr
+from zarr.storage import BaseStore
 
-from .multiscales import Multiscales
-from .to_multiscales import to_multiscales
 from .config import config
-from .rich_dask_progress import NgffProgress, NgffProgressCallback
 from .memory_usage import memory_usage
-from .task_count import task_count
 from .methods._support import _dim_scale_factors
+from .multiscales import Multiscales
+from .rich_dask_progress import NgffProgress, NgffProgressCallback
+from .to_multiscales import to_multiscales
+
 
 def to_ngff_zarr(
     store: Union[MutableMapping, str, Path, BaseStore],
@@ -62,13 +61,13 @@ def to_ngff_zarr(
 
     nscales = len(multiscales.images)
     if progress:
-        progress.add_multiscales_task(f"[green]Writing scales", nscales)
+        progress.add_multiscales_task("[green]Writing scales", nscales)
     next_image = multiscales.images[0]
     dims = next_image.dims
     previous_dim_factors = {d: 1 for d in dims}
     for index in range(nscales):
         if progress:
-            progress.update_multiscales_task_completed((index+1))
+            progress.update_multiscales_task_completed(index + 1)
         image = next_image
         arr = image.data
         path = multiscales.metadata.datasets[index].path
@@ -76,9 +75,11 @@ def to_ngff_zarr(
         array_dims_group.attrs["_ARRAY_DIMENSIONS"] = image.dims
 
         if index > 0 and index < nscales - 1:
-            dim_factors = _dim_scale_factors(dims, multiscales.scale_factors[index], previous_dim_factors)
+            dim_factors = _dim_scale_factors(
+                dims, multiscales.scale_factors[index], previous_dim_factors
+            )
         else:
-            dim_factors = { d: 1 for d in dims }
+            dim_factors = {d: 1 for d in dims}
         previous_dim_factors = dim_factors
 
         if memory_usage(image) > config.memory_target:
@@ -96,18 +97,20 @@ def to_ngff_zarr(
                 dtype=arr.dtype,
                 store=store,
                 path=path,
-                mode='a',
+                mode="a",
                 dimension_separator="/",
             )
 
             shape = image.data.shape
-            x_index = dims.index('x')
-            y_index = dims.index('y')
-            if 'z' in dims:
-                z_index = dims.index('z')
+            x_index = dims.index("x")
+            y_index = dims.index("y")
+            if "z" in dims:
+                z_index = dims.index("z")
                 # TODO address, c, t, large 2D
-                slice_bytes = memory_usage(image, {'z'})
-                slab_slices = min(int(np.ceil(config.memory_target / slice_bytes)), arr.shape[z_index])
+                slice_bytes = memory_usage(image, {"z"})
+                slab_slices = min(
+                    int(np.ceil(config.memory_target / slice_bytes)), arr.shape[z_index]
+                )
                 z_chunks = chunks[z_index]
                 slice_planes = False
                 if slab_slices < z_chunks:
@@ -124,8 +127,11 @@ def to_ngff_zarr(
                 regions = []
                 for slab_index in range(num_z_splits):
                     if slice_planes:
-                        plane_bytes = memory_usage(image, {'z', 'y'})
-                        plane_slices = min(int(np.ceil(config.memory_target / plane_bytes)), arr.shape[y_index])
+                        plane_bytes = memory_usage(image, {"z", "y"})
+                        plane_slices = min(
+                            int(np.ceil(config.memory_target / plane_bytes)),
+                            arr.shape[y_index],
+                        )
                         y_chunks = chunks[y_index]
                         slice_strips = False
                         if plane_slices < y_chunks:
@@ -138,8 +144,11 @@ def to_ngff_zarr(
                         while num_y_splits % shrink_factors[y_index] > 1:
                             num_y_splits += 1
                         if slice_strips:
-                            strip_bytes = memory_usage(image, {'z', 'y', 'x'})
-                            strip_slices = min(int(np.ceil(config.memory_target / strip_bytes)), arr.shape[x_index])
+                            strip_bytes = memory_usage(image, {"z", "y", "x"})
+                            strip_slices = min(
+                                int(np.ceil(config.memory_target / strip_bytes)),
+                                arr.shape[x_index],
+                            )
                             x_chunks = chunks[x_index]
                             strip_slices = max(strip_slices, x_chunks)
                             slice_strips = False
@@ -151,29 +160,69 @@ def to_ngff_zarr(
                                 num_x_splits += 1
                             for plane_index in range(num_y_splits):
                                 for strip_index in range(num_x_splits):
-                                    region = [slice(arr.shape[i]) for i in range(arr.ndim)]
-                                    region[z_index] = slice(slab_index*z_chunks, min((slab_index+1)*z_chunks, arr.shape[z_index]))
-                                    region[y_index] = slice(plane_index*y_chunks, min((plane_index+1)*y_chunks, arr.shape[y_index]))
-                                    region[x_index] = slice(strip_index*x_chunks, min((strip_index+1)*x_chunks, arr.shape[x_index]))
+                                    region = [
+                                        slice(arr.shape[i]) for i in range(arr.ndim)
+                                    ]
+                                    region[z_index] = slice(
+                                        slab_index * z_chunks,
+                                        min(
+                                            (slab_index + 1) * z_chunks,
+                                            arr.shape[z_index],
+                                        ),
+                                    )
+                                    region[y_index] = slice(
+                                        plane_index * y_chunks,
+                                        min(
+                                            (plane_index + 1) * y_chunks,
+                                            arr.shape[y_index],
+                                        ),
+                                    )
+                                    region[x_index] = slice(
+                                        strip_index * x_chunks,
+                                        min(
+                                            (strip_index + 1) * x_chunks,
+                                            arr.shape[x_index],
+                                        ),
+                                    )
                                     regions.append(tuple(region))
                         else:
                             for plane_index in range(num_y_splits):
                                 region = [slice(arr.shape[i]) for i in range(arr.ndim)]
-                                region[z_index] = slice(slab_index*z_chunks, min((slab_index+1)*z_chunks, arr.shape[z_index]))
-                                region[y_index] = slice(plane_index*y_chunks, min((plane_index+1)*y_chunks, arr.shape[y_index]))
+                                region[z_index] = slice(
+                                    slab_index * z_chunks,
+                                    min(
+                                        (slab_index + 1) * z_chunks, arr.shape[z_index]
+                                    ),
+                                )
+                                region[y_index] = slice(
+                                    plane_index * y_chunks,
+                                    min(
+                                        (plane_index + 1) * y_chunks, arr.shape[y_index]
+                                    ),
+                                )
                                 regions.append(tuple(region))
                     else:
                         region = [slice(arr.shape[i]) for i in range(arr.ndim)]
-                        region[z_index] = slice(slab_index*z_chunks, min((slab_index+1)*z_chunks, arr.shape[z_index]))
+                        region[z_index] = slice(
+                            slab_index * z_chunks,
+                            min((slab_index + 1) * z_chunks, arr.shape[z_index]),
+                        )
                         regions.append(tuple(region))
                 regions = tuple(regions)
                 for region_index, region in enumerate(regions):
                     if isinstance(progress, NgffProgressCallback):
-                        progress.add_callback_task(f"[green]Writing scale {index+1} of {nscales}, region {region_index+1} of {len(regions)}")
+                        progress.add_callback_task(
+                            f"[green]Writing scale {index+1} of {nscales}, region {region_index+1} of {len(regions)}"
+                        )
                     arr_region = arr[region]
-                    optimized = dask.array.Array(dask.array.optimize(arr_region.__dask_graph__(),
-                        arr_region.__dask_keys__()), arr_region.name,
-                        arr_region.chunks, meta=arr_region)
+                    optimized = dask.array.Array(
+                        dask.array.optimize(
+                            arr_region.__dask_graph__(), arr_region.__dask_keys__()
+                        ),
+                        arr_region.name,
+                        arr_region.chunks,
+                        meta=arr_region,
+                    )
                     dask.array.to_zarr(
                         optimized,
                         zarr_array,
@@ -187,7 +236,9 @@ def to_ngff_zarr(
                     )
         else:
             if isinstance(progress, NgffProgressCallback):
-                progress.add_callback_task(f"[green]Writing scale {index+1} of {nscales}")
+                progress.add_callback_task(
+                    f"[green]Writing scale {index+1} of {nscales}"
+                )
             dask.array.to_zarr(
                 arr,
                 store,
@@ -200,26 +251,38 @@ def to_ngff_zarr(
             )
 
         # Minimize task graph depth
-        if index > 1 and index < nscales - 2 and multiscales.scale_factors and multiscales.method and multiscales.chunks:
+        if (
+            index > 1
+            and index < nscales - 2
+            and multiscales.scale_factors
+            and multiscales.method
+            and multiscales.chunks
+        ):
             image.data = dask.array.from_zarr(store, component=path)
             next_multiscales_factor = multiscales.scale_factors[index]
             if isinstance(next_multiscales_factor, int):
-                next_multiscales_factor = next_multiscales_factor // multiscales.scale_factors[index-1]
+                next_multiscales_factor = (
+                    next_multiscales_factor // multiscales.scale_factors[index - 1]
+                )
             else:
                 updated_factors = {}
                 for d, f in next_multiscales_factor.items():
-                    updated_factors[d] = f // multiscales.scale_factors[index-1][d]
+                    updated_factors[d] = f // multiscales.scale_factors[index - 1][d]
                 next_multiscales_factor = updated_factors
 
-            next_multiscales = to_multiscales(image,
-                scale_factors=[next_multiscales_factor,],
+            next_multiscales = to_multiscales(
+                image,
+                scale_factors=[
+                    next_multiscales_factor,
+                ],
                 method=multiscales.method,
                 chunks=multiscales.chunks,
                 progress=progress,
-                cache=False)
-            multiscales.images[index+1] = next_multiscales.images[1]
+                cache=False,
+            )
+            multiscales.images[index + 1] = next_multiscales.images[1]
             next_image = next_multiscales.images[1]
         elif index < nscales - 1:
-            next_image = multiscales.images[index+1]
+            next_image = multiscales.images[index + 1]
 
     zarr.consolidate_metadata(store)

@@ -8,24 +8,24 @@
 
 from datetime import date
 
-project = 'ngff-zarr'
-copyright = f'{date.today().year}, NumFOCUS'
-author = 'Matt McCormick'
+project = "ngff-zarr"
+copyright = f"{date.today().year}, NumFOCUS"
+author = "Matt McCormick"
 
 extensions = [
-    'sphinx.ext.autosummary',
-    'autodoc2',
-    'myst_parser',
-    'sphinx.ext.intersphinx',
-    'sphinx_copybutton',
-    'sphinxext.opengraph',
-    'sphinx_design',
+    "sphinx.ext.autosummary",
+    "autodoc2",
+    "myst_parser",
+    "sphinx.ext.intersphinx",
+    "sphinx_copybutton",
+    "sphinxext.opengraph",
+    "sphinx_design",
 ]
 
 myst_enable_extensions = ["colon_fence", "fieldlist"]
 
-templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+templates_path = ["_templates"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 autodoc2_packages = [
     {
@@ -41,8 +41,8 @@ intersphinx_mapping = {
     "dask": ("https://docs.dask.org/en/stable/", None),
 }
 
-html_theme = 'furo'
-html_static_path = ['_static']
+html_theme = "furo"
+html_static_path = ["_static"]
 html_logo = "_static/logo.png"
 html_favicon = "_static/favicon.png"
 html_title = f"{project}"

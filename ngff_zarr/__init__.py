@@ -2,21 +2,21 @@
 #
 # SPDX-License-Identifier: MIT
 
-from .to_ngff_image import to_ngff_image
+from .__about__ import __version__
+from .cli_input_to_ngff_image import cli_input_to_ngff_image
+from .config import config
+from .detect_cli_io_backend import ConversionBackend, detect_cli_io_backend
 from .from_ngff_zarr import from_ngff_zarr
 from .itk_image_to_ngff_image import itk_image_to_ngff_image
-from .ngff_image_to_itk_image import ngff_image_to_itk_image
-from .detect_cli_io_backend import detect_cli_io_backend, ConversionBackend
-from .cli_input_to_ngff_image import cli_input_to_ngff_image
-from .__about__ import __version__
-from .ngff_image import NgffImage
-from .multiscales import Multiscales
 from .memory_usage import memory_usage
-from .task_count import task_count
-from .to_multiscales import to_multiscales, Multiscales
-from .to_ngff_zarr import to_ngff_zarr
 from .methods import Methods
-from .config import config
+from .multiscales import Multiscales
+from .ngff_image import NgffImage
+from .ngff_image_to_itk_image import ngff_image_to_itk_image
+from .task_count import task_count
+from .to_multiscales import to_multiscales
+from .to_ngff_image import to_ngff_image
+from .to_ngff_zarr import to_ngff_zarr
 
 __all__ = [
     "__version__",
@@ -32,6 +32,7 @@ __all__ = [
     "to_multiscales",
     "Methods",
     "to_ngff_zarr",
+    "from_ngff_zarr",
     "detect_cli_io_backend",
     "ConversionBackend",
     "cli_input_to_ngff_image",

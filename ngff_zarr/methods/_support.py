@@ -4,10 +4,13 @@ _spatial_dims = {"x", "y", "z"}
 def _dim_scale_factors(dims, scale_factor, previous_dim_factors):
     if isinstance(scale_factor, int):
         result_scale_factors = {
-            dim: int(scale_factor / previous_dim_factors[dim]) for dim in _spatial_dims.intersection(dims)
+            dim: int(scale_factor / previous_dim_factors[dim])
+            for dim in _spatial_dims.intersection(dims)
         }
     else:
-        result_scale_factors = { d:int(scale_factor[d] / previous_dim_factors[d]) for d in scale_factor.keys() }
+        result_scale_factors = {
+            d: int(scale_factor[d] / previous_dim_factors[d]) for d in scale_factor
+        }
     return result_scale_factors
 
 
@@ -24,8 +27,10 @@ def _align_chunks(previous_image, default_chunks, dim_factors):
         else:
             aligned_chunks[dim] = default_chunks[dim]
     if rechunk:
-        dask_aligned_chunks = { previous_image.dims.index(dim):
-                aligned_chunks[dim] for dim in aligned_chunks.keys() }
+        dask_aligned_chunks = {
+            previous_image.dims.index(dim): aligned_chunks[dim]
+            for dim in aligned_chunks
+        }
         previous_image.data = previous_image.data.rechunk(dask_aligned_chunks)
 
     return previous_image

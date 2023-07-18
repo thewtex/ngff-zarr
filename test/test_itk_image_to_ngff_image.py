@@ -1,9 +1,9 @@
-from ngff_zarr import itk_image_to_ngff_image
 import itk
 import itkwasm
 import numpy as np
+from ngff_zarr import itk_image_to_ngff_image
 
-from ._data import input_images, test_data_dir
+from ._data import test_data_dir
 
 
 def test_2d_itk_image(input_images):
@@ -16,7 +16,8 @@ def test_2d_itk_image(input_images):
     assert ngff_image.translation["x"] == 0.0
     assert ngff_image.translation["y"] == 0.0
     assert ngff_image.name == "image"
-    assert ngff_image.axes_units == None
+    assert ngff_image.axes_units is None
+
 
 def test_2d_rgb_itk_image(input_images):
     array = np.random.randint(0, 255, size=(224, 224, 3), dtype=np.uint8)
@@ -30,7 +31,8 @@ def test_2d_rgb_itk_image(input_images):
     assert ngff_image.translation["x"] == 0.0
     assert ngff_image.translation["y"] == 0.0
     assert ngff_image.name == "image"
-    assert ngff_image.axes_units == None
+    assert ngff_image.axes_units is None
+
 
 def test_2d_itk_vector_image(input_images):
     array = np.random.rand(224, 224, 3).astype(dtype=np.float32)
@@ -44,7 +46,8 @@ def test_2d_itk_vector_image(input_images):
     assert ngff_image.translation["x"] == 0.0
     assert ngff_image.translation["y"] == 0.0
     assert ngff_image.name == "image"
-    assert ngff_image.axes_units == None
+    assert ngff_image.axes_units is None
+
 
 def test_3d_itk_vector_image(input_images):
     array = np.random.rand(224, 224, 128, 3).astype(dtype=np.float32)
@@ -60,7 +63,8 @@ def test_3d_itk_vector_image(input_images):
     assert ngff_image.translation["y"] == 0.0
     assert ngff_image.translation["z"] == 0.0
     assert ngff_image.name == "image"
-    assert ngff_image.axes_units == None
+    assert ngff_image.axes_units is None
+
 
 def test_2d_itkwasm_image(input_images):
     itk_image = itk.imread(test_data_dir / "input" / "cthead1.png")
@@ -74,4 +78,4 @@ def test_2d_itkwasm_image(input_images):
     assert ngff_image.translation["x"] == 0.0
     assert ngff_image.translation["y"] == 0.0
     assert ngff_image.name == "image"
-    assert ngff_image.axes_units == None
+    assert ngff_image.axes_units is None

@@ -79,7 +79,6 @@ test = [
 ]
 
 
-
 [tool.coverage.report]
 run.source = ["ngff_zarr"]
 report.exclude_lines = [
@@ -88,6 +87,7 @@ report.exclude_lines = [
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:",
 ]
+
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -98,6 +98,7 @@ log_cli_level = "INFO"
 testpaths = [
   "tests",
 ]
+
 
 [tool.ruff]
 select = [
@@ -136,6 +137,7 @@ unfixable = [
 ]
 exclude = []
 flake8-unused-arguments.ignore-variadic-names = true
+line-length = 88
 
 [tool.ruff.per-file-ignores]
 "tests/**" = ["T20"]

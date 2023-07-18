@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Union, Optional, List
+from typing import List, Optional, Union
+
 from typing_extensions import Literal
 
 SupportedDims = Union[
@@ -63,25 +64,71 @@ TimeUnits = Union[
 ]
 Units = Union[SpaceUnits, TimeUnits]
 
-supported_dims = ['x','y','z','c','t']
+supported_dims = ["x", "y", "z", "c", "t"]
 
-space_units = ['angstrom', 'attometer', 'centimeter', 'decimeter', 'exameter',
-                 'femtometer', 'foot', 'gigameter', 'hectometer', 'inch', 'kilometer',
-                 'megameter', 'meter', 'micrometer', 'mile', 'millimeter', 'nanometer',
-                 'parsec', 'petameter', 'picometer', 'terameter', 'yard', 'yoctometer',
-                 'yottameter', 'zeptometer', 'zettameter']
+space_units = [
+    "angstrom",
+    "attometer",
+    "centimeter",
+    "decimeter",
+    "exameter",
+    "femtometer",
+    "foot",
+    "gigameter",
+    "hectometer",
+    "inch",
+    "kilometer",
+    "megameter",
+    "meter",
+    "micrometer",
+    "mile",
+    "millimeter",
+    "nanometer",
+    "parsec",
+    "petameter",
+    "picometer",
+    "terameter",
+    "yard",
+    "yoctometer",
+    "yottameter",
+    "zeptometer",
+    "zettameter",
+]
 
-time_units = ['attosecond', 'centisecond', 'day', 'decisecond', 'exasecond', 'femtosecond',
-              'gigasecond', 'hectosecond', 'hour', 'kilosecond', 'megasecond', 'microsecond',
-              'millisecond', 'minute', 'nanosecond', 'petasecond', 'picosecond', 'second',
-              'terasecond', 'yoctosecond', 'yottasecond', 'zeptosecond', 'zettasecond']
+time_units = [
+    "attosecond",
+    "centisecond",
+    "day",
+    "decisecond",
+    "exasecond",
+    "femtosecond",
+    "gigasecond",
+    "hectosecond",
+    "hour",
+    "kilosecond",
+    "megasecond",
+    "microsecond",
+    "millisecond",
+    "minute",
+    "nanosecond",
+    "petasecond",
+    "picosecond",
+    "second",
+    "terasecond",
+    "yoctosecond",
+    "yottasecond",
+    "zeptosecond",
+    "zettasecond",
+]
 
-def is_dimension_supported(dim:str) -> bool:
-    '''Helper for string validation'''
+
+def is_dimension_supported(dim: str) -> bool:
+    """Helper for string validation"""
     return dim in supported_dims
 
-def is_unit_supported(unit:str) -> bool:
-    '''Helper for string validation'''
+
+def is_unit_supported(unit: str) -> bool:
+    """Helper for string validation"""
     return (unit in time_units) or (unit in space_units)
 
 

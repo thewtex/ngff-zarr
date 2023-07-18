@@ -1,45 +1,57 @@
-from typing import Union, Optional, Sequence, Mapping, Dict, Tuple, Any, List
-from typing_extensions import Literal
-from collections.abc import MutableMapping
-import time
-import shutil
-from pathlib import Path
 import atexit
+import shutil
 import signal
+import time
+from collections.abc import MutableMapping
+from pathlib import Path
+from typing import Any, Dict, Mapping, Optional, Sequence, Tuple, Union
 
-from zarr.core import Array as ZarrArray
-from numpy.typing import ArrayLike
-from dask.array.core import Array as DaskArray
+import dask
 import numpy as np
 import zarr
-import dask
+from dask.array.core import Array as DaskArray
+from numpy.typing import ArrayLike
+from zarr.core import Array as ZarrArray
 
-from .methods._dask_image import _downsample_dask_image
-from .methods._itk import _downsample_itk_bin_shrink, _downsample_itk_gaussian, _downsample_itk_label
-from .to_ngff_image import to_ngff_image
-from .ngff_image import NgffImage
-from .multiscales import Multiscales
-from .zarr_metadata import Metadata, Axis, Translation, Scale, Dataset
-from .methods import Methods
 from .config import config
-from .rich_dask_progress import NgffProgress, NgffProgressCallback
 from .memory_usage import memory_usage
-
+from .methods import Methods
+from .methods._dask_image import _downsample_dask_image
+from .methods._itk import (
+    _downsample_itk_bin_shrink,
+    _downsample_itk_gaussian,
+)
 from .methods._support import _spatial_dims
+from .multiscales import Multiscales
+from .ngff_image import NgffImage
+from .rich_dask_progress import NgffProgress, NgffProgressCallback
+from .to_ngff_image import to_ngff_image
+from .zarr_metadata import Axis, Dataset, Metadata, Scale, Translation
+
 
 def _ngff_image_scale_factors(ngff_image, min_length, out_chunks):
-    sizes = { d: s for d, s in zip(ngff_image.dims, ngff_image.data.shape) if d in _spatial_dims }
+    sizes = {
+        d: s
+        for d, s in zip(ngff_image.dims, ngff_image.data.shape)
+        if d in _spatial_dims
+    }
     scale_factors = []
     dims = ngff_image.dims
-    previous = { d: 1 for d in _spatial_dims.intersection(dims) }
+    previous = {d: 1 for d in _spatial_dims.intersection(dims)}
     sizes_array = np.array(list(sizes.values()))
-    sizes = { d: s for d, s in zip(ngff_image.dims, ngff_image.data.shape) if d in _spatial_dims }
-    double_chunks = np.array([2*out_chunks[d] for d in _spatial_dims.intersection(out_chunks)])
+    sizes = {
+        d: s
+        for d, s in zip(ngff_image.dims, ngff_image.data.shape)
+        if d in _spatial_dims
+    }
+    double_chunks = np.array(
+        [2 * out_chunks[d] for d in _spatial_dims.intersection(out_chunks)]
+    )
     while (sizes_array > double_chunks).any():
         max_size = np.array(list(sizes.values())).max()
-        to_skip = { d: sizes[d] <= max_size / 2 for d in previous.keys() }
+        to_skip = {d: sizes[d] <= max_size / 2 for d in previous}
         scale_factor = {}
-        for dim in previous.keys():
+        for dim in previous:
             if to_skip[dim] or sizes[dim] / 2 < out_chunks[dim]:
                 scale_factor[dim] = previous[dim]
                 continue
@@ -55,15 +67,16 @@ def _ngff_image_scale_factors(ngff_image, min_length, out_chunks):
 
     return scale_factors
 
-def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffProgress, NgffProgressCallback]]):
-    if "z" in image.dims:
-        optimized_chunks = 512
-    else:
-        optimized_chunks = 1024
+
+def _large_image_serialization(
+    image: NgffImage, progress: Optional[Union[NgffProgress, NgffProgressCallback]]
+):
+    optimized_chunks = 512 if "z" in image.dims else 1024
     base_path = f"{image.name}-cache-{time.time()}"
 
     cache_store = config.cache_store
     base_path_removed = False
+
     def remove_from_cache_store(sig_id, frame):
         nonlocal base_path_removed
         if not base_path_removed:
@@ -74,6 +87,7 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
             else:
                 zarr.storage.rmdir(cache_store, base_path)
             base_path_removed = True
+
     atexit.register(remove_from_cache_store, None, None)
     signal.signal(signal.SIGTERM, remove_from_cache_store)
     signal.signal(signal.SIGINT, remove_from_cache_store)
@@ -81,23 +95,25 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
     data = image.data
 
     dims = list(image.dims)
-    x_index = dims.index('x')
-    y_index = dims.index('y')
+    x_index = dims.index("x")
+    y_index = dims.index("y")
 
     rechunks = {}
     for index, dim in enumerate(dims):
-        if dim == 't':
+        if dim == "t":
             rechunks[index] = 1
-        elif dim == 'c':
+        elif dim == "c":
             rechunks[index] = 1
         else:
             rechunks[index] = min(optimized_chunks, data.shape[index])
 
-    if 'z' in dims:
-        z_index = dims.index('z')
+    if "z" in dims:
+        z_index = dims.index("z")
         slice_bytes = data.dtype.itemsize * data.shape[x_index] * data.shape[y_index]
 
-        slab_slices = min(int(np.ceil(config.memory_target / slice_bytes)), data.shape[z_index])
+        slab_slices = min(
+            int(np.ceil(config.memory_target / slice_bytes)), data.shape[z_index]
+        )
         if optimized_chunks < data.shape[z_index]:
             slab_slices = min(slab_slices, optimized_chunks)
         rechunks[z_index] = slab_slices
@@ -106,29 +122,37 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
         slabs = data.rechunk(rechunks)
 
         chunks = tuple([c[0] for c in slabs.chunks])
-        optimized = dask.array.Array(dask.array.optimize(slabs.__dask_graph__(),
-            slabs.__dask_keys__()), slabs.name,
-            slabs.chunks, meta=slabs)
+        optimized = dask.array.Array(
+            dask.array.optimize(slabs.__dask_graph__(), slabs.__dask_keys__()),
+            slabs.name,
+            slabs.chunks,
+            meta=slabs,
+        )
         zarr_array = zarr.creation.open_array(
             shape=data.shape,
             chunks=chunks,
             dtype=data.dtype,
             store=cache_store,
             path=path,
-            mode='a',
+            mode="a",
             dimension_separator="/",
         )
 
         n_slabs = int(np.ceil(data.shape[z_index] / slab_slices))
         if progress:
-            progress.add_cache_task(f"[blue]Caching z-slabs", n_slabs)
+            progress.add_cache_task("[blue]Caching z-slabs", n_slabs)
         for slab_index in range(n_slabs):
             if progress:
                 if isinstance(progress, NgffProgressCallback):
-                    progress.add_callback_task(f"[blue]Caching z-slabs {slab_index+1} of {n_slabs}")
-                progress.update_cache_task_completed((slab_index+1))
+                    progress.add_callback_task(
+                        f"[blue]Caching z-slabs {slab_index+1} of {n_slabs}"
+                    )
+                progress.update_cache_task_completed(slab_index + 1)
             region = [slice(data.shape[i]) for i in range(data.ndim)]
-            region[z_index] = slice(slab_index*slab_slices, min((slab_index+1)*slab_slices, data.shape[z_index]))
+            region[z_index] = slice(
+                slab_index * slab_slices,
+                min((slab_index + 1) * slab_slices, data.shape[z_index]),
+            )
             region = tuple(region)
             arr_region = optimized[region]
             dask.array.to_zarr(
@@ -154,17 +178,22 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
                 dtype=data.dtype,
                 store=cache_store,
                 path=path,
-                mode='a',
+                mode="a",
                 dimension_separator="/",
             )
             n_slabs = int(np.ceil(data.shape[z_index] / optimized_chunks))
             for slab_index in range(n_slabs):
                 if progress:
                     if isinstance(progress, NgffProgressCallback):
-                        progress.add_callback_task(f"[blue]Caching z-rechunk {slab_index+1} of {n_slabs}")
-                    progress.update_cache_task_completed((slab_index+1))
+                        progress.add_callback_task(
+                            f"[blue]Caching z-rechunk {slab_index+1} of {n_slabs}"
+                        )
+                    progress.update_cache_task_completed(slab_index + 1)
                 region = [slice(data.shape[i]) for i in range(data.ndim)]
-                region[z_index] = slice(slab_index*optimized_chunks, min((slab_index+1)*optimized_chunks, data.shape[z_index]))
+                region[z_index] = slice(
+                    slab_index * optimized_chunks,
+                    min((slab_index + 1) * optimized_chunks, data.shape[z_index]),
+                )
                 region = tuple(region)
                 arr_region = data[region]
                 dask.array.to_zarr(
@@ -183,9 +212,9 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
     else:
         data = data.rechunk(rechunks)
         # TODO: Slab, chunk optimized very large 2D images
-        path = base_path + f"/optimized_chunks"
+        path = base_path + "/optimized_chunks"
         if progress:
-            progress.add_callback_task(f"[blue]Caching optimized chunks")
+            progress.add_callback_task("[blue]Caching optimized chunks")
         dask.array.to_zarr(
             data,
             cache_store,
@@ -199,6 +228,7 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
 
     image.data = data
     return image
+
 
 def to_multiscales(
     data: Union[NgffImage, ArrayLike, MutableMapping, str, ZarrArray],
@@ -243,16 +273,10 @@ def to_multiscales(
         NgffImage for each resolution and NGFF multiscales metadata
     """
     image = data
-    if isinstance(data, NgffImage):
-        ngff_image = data
-    else:
-        ngff_image = to_ngff_image(data)
+    ngff_image = data if isinstance(data, NgffImage) else to_ngff_image(data)
 
     # IPFS and visualization friendly default chunks
-    if "z" in ngff_image.dims:
-        default_chunks = 128
-    else:
-        default_chunks = 256
+    default_chunks = 128 if "z" in ngff_image.dims else 256
     default_chunks = {d: default_chunks for d in ngff_image.dims}
     if "t" in ngff_image.dims:
         default_chunks["t"] = 1
@@ -316,7 +340,8 @@ def to_multiscales(
         elif dim == "t":
             axis = Axis(name=dim, type="time", unit=unit)
         else:
-            raise KeyError(f'Dimension identifier is not valid: {dim}')
+            msg = f"Dimension identifier is not valid: {dim}"
+            raise KeyError(msg)
         axes.append(axis)
 
     datasets = []
@@ -341,5 +366,4 @@ def to_multiscales(
         datasets.append(dataset)
     metadata = Metadata(axes=axes, datasets=datasets, name=ngff_image.name)
 
-    multiscales = Multiscales(images, metadata, scale_factors, method, out_chunks)
-    return multiscales
+    return Multiscales(images, metadata, scale_factors, method, out_chunks)
