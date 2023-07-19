@@ -274,7 +274,7 @@ def _downsample_dask_image(
                             y_splits = _array_split(split, num_y_splits, y_index)
                             z_splits[split_index] = y_splits
                         z_offset = 0
-                        for z_split_index, z_split in enumerate(splits):
+                        for z_split_index, z_split in enumerate(z_splits):
                             y_offset = 0
                             for y_split_index, y_split in enumerate(z_split):
                                 region = [slice(shape[i]) for i in range(ndim)]
