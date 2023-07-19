@@ -97,6 +97,7 @@ def to_ngff_zarr(
                 store=store,
                 path=path,
                 mode='a',
+                dimension_separator="/",
             )
 
             shape = image.data.shape

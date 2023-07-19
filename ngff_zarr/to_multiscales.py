@@ -116,6 +116,7 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
             store=cache_store,
             path=path,
             mode='a',
+            dimension_separator="/",
         )
 
         n_slabs = int(np.ceil(data.shape[z_index] / slab_slices))
@@ -138,6 +139,7 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
                 overwrite=False,
                 compute=True,
                 return_stored=False,
+                dimension_separator="/",
             )
         data = dask.array.from_zarr(cache_store, component=path)
         if optimized_chunks < data.shape[z_index] and slab_slices < optimized_chunks:
@@ -153,6 +155,7 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
                 store=cache_store,
                 path=path,
                 mode='a',
+                dimension_separator="/",
             )
             n_slabs = int(np.ceil(data.shape[z_index] / optimized_chunks))
             for slab_index in range(n_slabs):
@@ -172,6 +175,7 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
                     overwrite=False,
                     compute=True,
                     return_stored=False,
+                    dimension_separator="/",
                 )
             data = dask.array.from_zarr(cache_store, component=path)
         else:
@@ -189,6 +193,7 @@ def _large_image_serialization(image: NgffImage, progress: Optional[Union[NgffPr
             overwrite=False,
             compute=True,
             return_stored=False,
+            dimension_separator="/",
         )
         data = dask.array.from_zarr(cache_store, component=path)
 
