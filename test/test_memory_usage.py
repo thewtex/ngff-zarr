@@ -9,9 +9,11 @@ from ngff_zarr import (
     to_ngff_zarr,
 )
 
+rng = np.random.default_rng(12345)
+
 
 def test_memory_usage():
-    arr = np.random.randint(0, 255, size=(4, 4, 4), dtype=np.uint8)
+    arr = rng.integers(0, 255, size=(4, 4, 4), dtype=np.uint8)
     arr = dask.array.from_array(arr, chunks=2)
     image = to_ngff_image(arr)
     multiscales = to_multiscales(image, scale_factors=[], chunks=2)

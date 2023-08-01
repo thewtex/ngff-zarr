@@ -16,7 +16,7 @@ def test_large_image_serialization(input_images):
         name="LIDC2",
     )
     multiscales = to_multiscales(image)
-    baseline_name = "auto/memory_target_1e6.zarr"
+    # baseline_name = "auto/memory_target_1e6.zarr"
     # store_new_multiscales(dataset_name, baseline_name, multiscales)
     test_store = MemoryStore(dimension_separator="/")
     to_ngff_zarr(test_store, multiscales)
