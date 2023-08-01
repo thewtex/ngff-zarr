@@ -23,9 +23,7 @@ def _get_block(previous_image: NgffImage, block_index: int):
     return block
 
 
-def _compute_itk_gaussian_kernel_radius(
-    input_size, sigma_values, shrink_factors
-) -> list:
+def _compute_itk_gaussian_kernel_radius(input_size, sigma_values) -> list:
     """Get kernel radius in xyzt directions"""
     DEFAULT_MAX_KERNEL_WIDTH = 32
     MAX_KERNEL_ERROR = 0.01
@@ -179,7 +177,7 @@ def _downsample_itk_bin_shrink(
         filt = itk.BinShrinkImageFilter.New(block_input, shrink_factors=shrink_factors)
         filt.UpdateOutputInformation()
         block_output = filt.GetOutput()
-        for i, c in enumerate(output_chunks):
+        for i in range(len(output_chunks)):
             output_chunks[i][-1] = block_output.shape[i]
             output_chunks[i] = tuple(output_chunks[i])
         output_chunks = tuple(output_chunks)
@@ -248,7 +246,7 @@ def _downsample_itk_gaussian(
 
         sigma_values = _compute_sigma(input_spacing, shrink_factors)
         kernel_radius = _compute_itk_gaussian_kernel_radius(
-            itk.size(block_0_image), sigma_values, shrink_factors
+            itk.size(block_0_image), sigma_values
         )
 
         # Compute output size and spatial metadata for blocks 0, .., N-2
@@ -298,7 +296,7 @@ def _downsample_itk_gaussian(
             itk.size(block_output)[dim] == computed_size[dim]
             for dim in range(block_output.ndim)
         )
-        for i, c in enumerate(output_chunks):
+        for i in range(len(output_chunks)):
             output_chunks[i][-1] = block_output.shape[i]
             output_chunks[i] = tuple(output_chunks[i])
         output_chunks = tuple(output_chunks)
@@ -356,118 +354,125 @@ def _downsample_itk_gaussian(
     return multiscales
 
 
-def _downsample_itk_label(
-    current_input, default_chunks, out_chunks, scale_factors, data_objects, image
-):
-    # Uses the LabelImageGaussianInterpolateImageFunction. More appropriate for integer label images.
-    import itk
+# todo
+# def _downsample_itk_label(
+#     current_input,
+#     default_chunks,
+#     out_chunks,
+#     scale_factors,
+#     data_objects,
+#     image,
+# ):
+# Uses the LabelImageGaussianInterpolateImageFunction. More appropriate for integer label images.
+# import itk
 
-    gaussian_filter_name = "DiscreteGaussianImageFilter"
-    interpolator_name = "LabelImageGaussianInterpolateImageFunction"
+# gaussian_filter_name = "DiscreteGaussianImageFilter"
+# interpolator_name = "LabelImageGaussianInterpolateImageFunction"
 
-    for factor_index, scale_factor in enumerate(scale_factors):
-        dim_factors = _dim_scale_factors(image.dims, scale_factor)
-        current_input = _align_chunks(current_input, default_chunks, dim_factors)
+# for _factor_index, scale_factor in enumerate(scale_factors):
+#     dim_factors = _dim_scale_factors(image.dims, scale_factor)
+#     current_input = _align_chunks(current_input, default_chunks, dim_factors)
 
-        shrink_factors = [dim_factors[sf] for sf in _image_dims if sf in dim_factors]
+#     shrink_factors = [dim_factors[sf] for sf in _image_dims if sf in dim_factors]
 
-        # Compute metadata for region splitting
+#     # Compute metadata for region splitting
 
-        # Blocks 0, ..., N-2 have the same shape
-        block_0_input = _get_block(current_input, 0)
-        # Block N-1 may be smaller than preceding blocks
-        block_neg1_input = _get_block(current_input, -1)
+#     # Blocks 0, ..., N-2 have the same shape
+#     block_0_input = _get_block(current_input, 0)
+#     # Block N-1 may be smaller than preceding blocks
+#     block_neg1_input = _get_block(current_input, -1)
 
-        # Compute overlap for Gaussian blurring for all blocks
-        block_0_image = itk.image_from_xarray(block_0_input)
-        input_spacing = itk.spacing(block_0_image)
-        sigma_values = _compute_sigma(input_spacing, shrink_factors)
-        kernel_radius = _compute_itk_gaussian_kernel_radius(
-            itk.size(block_0_image), sigma_values, shrink_factors
-        )
+#     # Compute overlap for Gaussian blurring for all blocks
+#     block_0_image = itk.image_from_xarray(block_0_input)
+#     input_spacing = itk.spacing(block_0_image)
+#     sigma_values = _compute_sigma(input_spacing, shrink_factors)
+#     kernel_radius = _compute_itk_gaussian_kernel_radius(
+#         itk.size(block_0_image), sigma_values
+#     )
 
-        # Compute output size and spatial metadata for blocks 0, .., N-2
-        filt = itk.BinShrinkImageFilter.New(
-            block_0_image, shrink_factors=shrink_factors
-        )
-        filt.UpdateOutputInformation()
-        block_output = filt.GetOutput()
-        block_0_output_spacing = block_output.GetSpacing()
-        block_0_output_origin = block_output.GetOrigin()
+#     # Compute output size and spatial metadata for blocks 0, .., N-2
+#     filt = itk.BinShrinkImageFilter.New(
+#         block_0_image, shrink_factors=shrink_factors
+#     )
+#     filt.UpdateOutputInformation()
+#     block_output = filt.GetOutput()
+#     block_0_output_spacing = block_output.GetSpacing()
+#     block_0_output_origin = block_output.GetOrigin()
 
-        block_0_scale = {
-            _image_dims[i]: s for (i, s) in enumerate(block_0_output_spacing)
-        }
-        block_0_translation = {
-            _image_dims[i]: s for (i, s) in enumerate(block_0_output_origin)
-        }
-        dtype = block_output.dtype
+#     block_0_scale = {
+#         _image_dims[i]: s for (i, s) in enumerate(block_0_output_spacing)
+#     }
+#     block_0_translation = {
+#         _image_dims[i]: s for (i, s) in enumerate(block_0_output_origin)
+#     }
+#     dtype = block_output.dtype
 
-        computed_size = [
-            int(block_len / shrink_factor)
-            for block_len, shrink_factor in zip(itk.size(block_0_image), shrink_factors)
-        ]
-        assert all(
-            itk.size(block_output)[dim] == computed_size[dim]
-            for dim in range(block_output.ndim)
-        )
-        output_chunks = list(current_input.chunks)
-        for i, c in enumerate(output_chunks):
-            output_chunks[i] = [
-                block_output.shape[i],
-            ] * len(c)
+#     computed_size = [
+#         int(block_len / shrink_factor)
+#         for block_len, shrink_factor in zip(itk.size(block_0_image), shrink_factors)
+#     ]
+#     assert all(
+#         itk.size(block_output)[dim] == computed_size[dim]
+#         for dim in range(block_output.ndim)
+#     )
+#     output_chunks = list(current_input.chunks)
+#     for i, c in enumerate(output_chunks):
+#         output_chunks[i] = [
+#             block_output.shape[i],
+#         ] * len(c)
 
-        # Compute output size for block N-1
-        block_neg1_image = itk.image_from_xarray(block_neg1_input)
-        filt.SetInput(block_neg1_image)
-        filt.UpdateOutputInformation()
-        block_output = filt.GetOutput()
-        computed_size = [
-            int(block_len / shrink_factor)
-            for block_len, shrink_factor in zip(
-                itk.size(block_neg1_image), shrink_factors
-            )
-        ]
-        assert all(
-            itk.size(block_output)[dim] == computed_size[dim]
-            for dim in range(block_output.ndim)
-        )
-        for i, c in enumerate(output_chunks):
-            output_chunks[i][-1] = block_output.shape[i]
-            output_chunks[i] = tuple(output_chunks[i])
-        output_chunks = tuple(output_chunks)
+#     # Compute output size for block N-1
+#     block_neg1_image = itk.image_from_xarray(block_neg1_input)
+#     filt.SetInput(block_neg1_image)
+#     filt.UpdateOutputInformation()
+#     block_output = filt.GetOutput()
+#     computed_size = [
+#         int(block_len / shrink_factor)
+#         for block_len, shrink_factor in zip(
+#             itk.size(block_neg1_image), shrink_factors
+#         )
+#     ]
+#     assert all(
+#         itk.size(block_output)[dim] == computed_size[dim]
+#         for dim in range(block_output.ndim)
+#     )
+#     for i in range(len(output_chunks)):
+#         output_chunks[i][-1] = block_output.shape[i]
+#         output_chunks[i] = tuple(output_chunks[i])
+#     output_chunks = tuple(output_chunks)
 
-        downscaled_array = map_overlap(
-            _itk_blur_and_downsample,
-            current_input.data,
-            gaussian_filter_name=gaussian_filter_name,
-            interpolator_name=interpolator_name,
-            shrink_factors=shrink_factors,
-            sigma_values=sigma_values,
-            kernel_radius=kernel_radius,
-            dtype=dtype,
-            depth=dict(enumerate(np.flip(kernel_radius))),  # overlap is in tzyx
-            boundary="nearest",
-            trim=False,  # Overlapped region is trimmed in blur_and_downsample to output size
-        ).compute()
+#     downscaled_array = map_overlap(
+#         _itk_blur_and_downsample,
+#         current_input.data,
+#         gaussian_filter_name=gaussian_filter_name,
+#         interpolator_name=interpolator_name,
+#         shrink_factors=shrink_factors,
+#         sigma_values=sigma_values,
+#         kernel_radius=kernel_radius,
+#         dtype=dtype,
+#         depth=dict(enumerate(np.flip(kernel_radius))),  # overlap is in tzyx
+#         boundary="nearest",
+#         trim=False,  # Overlapped region is trimmed in blur_and_downsample to output size
+#     ).compute()
 
-        downscaled = to_spatial_image(
-            downscaled_array,
-            dims=image.dims,
-            scale=block_0_scale,
-            translation=block_0_translation,
-            name=current_input.name,
-            axis_names={
-                d: image.coords[d].attrs.get("long_name", d) for d in image.dims
-            },
-            axis_units={d: image.coords[d].attrs.get("units", "") for d in image.dims},
-            t_coords=image.coords.get("t", None),
-            c_coords=image.coords.get("c", None),
-        )
-        downscaled = downscaled.chunk(out_chunks)
-        data_objects[f"scale{factor_index+1}"] = downscaled.to_dataset(
-            name=image.name, promote_attrs=True
-        )
-        current_input = downscaled
+#     # todo
+#     # downscaled = to_spatial_image(
+#     #     downscaled_array,
+#     #     dims=image.dims,
+#     #     scale=block_0_scale,
+#     #     translation=block_0_translation,
+#     #     name=current_input.name,
+#     #     axis_names={
+#     #         d: image.coords[d].attrs.get("long_name", d) for d in image.dims
+#     #     },
+#     #     axis_units={d: image.coords[d].attrs.get("units", "") for d in image.dims},
+#     #     t_coords=image.coords.get("t", None),
+#     #     c_coords=image.coords.get("c", None),
+#     # )
+#     # downscaled = downscaled.chunk(out_chunks)
+#     # data_objects[f"scale{factor_index+1}"] = downscaled.to_dataset(
+#     #     name=image.name, promote_attrs=True
+#     # )
+#     # current_input = downscaled
 
-    return data_objects
+# return data_objects
