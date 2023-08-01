@@ -77,7 +77,7 @@ def _large_image_serialization(
     cache_store = config.cache_store
     base_path_removed = False
 
-    def remove_from_cache_store(sig_id, frame):
+    def remove_from_cache_store(sig_id, frame):  # noqa: ARG001
         nonlocal base_path_removed
         if not base_path_removed:
             if isinstance(cache_store, zarr.storage.DirectoryStore):
@@ -100,9 +100,7 @@ def _large_image_serialization(
 
     rechunks = {}
     for index, dim in enumerate(dims):
-        if dim == "t":
-            rechunks[index] = 1
-        elif dim == "c":
+        if dim == "t" or dim == "c":
             rechunks[index] = 1
         else:
             rechunks[index] = min(optimized_chunks, data.shape[index])
