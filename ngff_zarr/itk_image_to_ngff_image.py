@@ -1,6 +1,8 @@
-import dask.array
-from .ngff_image import NgffImage
 from dataclasses import asdict
+
+import dask.array
+
+from .ngff_image import NgffImage
 
 
 def itk_image_to_ngff_image(
@@ -46,11 +48,14 @@ def itk_image_to_ngff_image(
         pass
 
     if image_dict is None:
-        raise RuntimeError('Could not import itk or itkwasm or input is not itk.Image or itkwasm.Image')
+        msg = (
+            "Could not import itk or itkwasm or input is not itk.Image or itkwasm.Image"
+        )
+        raise RuntimeError(msg)
 
     data = dask.array.from_array(image_dict["data"])
     ndim = data.ndim
-    if ndim == 3 and image_dict['imageType']['components'] > 1:
+    if ndim == 3 and image_dict["imageType"]["components"] > 1:
         dims = ("y", "x", "c")
     elif ndim < 4:
         dims = ("z", "y", "x")[-ndim:]
@@ -67,5 +72,4 @@ def itk_image_to_ngff_image(
     origin = image_dict["origin"]
     translation = {dim: origin[::-1][idx] for idx, dim in enumerate(spatial_dims)}
 
-    ngff_image = NgffImage(data, dims, scale, translation)
-    return ngff_image
+    return NgffImage(data, dims, scale, translation)

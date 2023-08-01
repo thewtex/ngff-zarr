@@ -1,14 +1,15 @@
-from typing import Union, Optional
 from collections.abc import MutableMapping
 from pathlib import Path
+from typing import Union
 
-from zarr.storage import BaseStore
-import zarr
 import dask.array
+import zarr
+from zarr.storage import BaseStore
 
-from .to_multiscales import Multiscales
 from .ngff_image import NgffImage
-from .zarr_metadata import Metadata, Axis, Dataset, Scale, Translation
+from .to_multiscales import Multiscales
+from .zarr_metadata import Axis, Dataset, Metadata, Scale, Translation
+
 
 def from_ngff_zarr(
     store: Union[MutableMapping, str, Path, BaseStore],
@@ -27,7 +28,7 @@ def from_ngff_zarr(
 
     """
 
-    root = zarr.open_group(store, mode='r')
+    root = zarr.open_group(store, mode="r")
     metadata = root.attrs["multiscales"][0]
 
     dims = [a["name"] for a in metadata["axes"]]
@@ -36,37 +37,44 @@ def from_ngff_zarr(
     if name in metadata:
         name = metadata["name"]
 
-    units = { d: None for d in dims }
+    units = {d: None for d in dims}
     for axis in metadata["axes"]:
-       if "unit" in axis:
-          units[axis["name"]] = axis["unit"]
+        if "unit" in axis:
+            units[axis["name"]] = axis["unit"]
 
     images = []
     datasets = []
     for dataset in metadata["datasets"]:
         data = dask.array.from_zarr(store, component=dataset["path"])
 
-        scale = { d: 1.0 for d in dims }
-        translation = { d: 0.0 for d in dims }
+        scale = {d: 1.0 for d in dims}
+        translation = {d: 0.0 for d in dims}
         coordinateTransformations = []
         for transformation in dataset["coordinateTransformations"]:
-            if 'scale' in transformation:
+            if "scale" in transformation:
                 scale = transformation["scale"]
-                scale = { d: s for d, s in zip(dims, scale)}
+                scale = dict(zip(dims, scale))
                 coordinateTransformations.append(Scale(transformation["scale"]))
-            elif 'translation' in transformation:
+            elif "translation" in transformation:
                 translation = transformation["translation"]
-                translation = { d: t for d, t in zip(dims, translation)}
-                coordinateTransformations.append(Translation(transformation["translation"]))
-        datasets.append(Dataset(path=dataset["path"], coordinateTransformations=coordinateTransformations))
+                translation = dict(zip(dims, translation))
+                coordinateTransformations.append(
+                    Translation(transformation["translation"])
+                )
+        datasets.append(
+            Dataset(
+                path=dataset["path"],
+                coordinateTransformations=coordinateTransformations,
+            )
+        )
 
         ngff_image = NgffImage(data, dims, scale, translation, name, units)
         images.append(ngff_image)
 
     metadata.pop("@type", None)
     axes = [Axis(**axis) for axis in metadata["axes"]]
-    metadata = Metadata(axes=axes, datasets=datasets, name=name, version=metadata["version"])
+    metadata = Metadata(
+        axes=axes, datasets=datasets, name=name, version=metadata["version"]
+    )
 
-    multiscales = Multiscales(images, metadata)
-
-    return multiscales
+    return Multiscales(images, metadata)

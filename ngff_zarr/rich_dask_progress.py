@@ -1,7 +1,8 @@
 from typing import Dict, Optional, Set
 
-from rich.progress import TaskID
 from dask.callbacks import Callback
+from rich.progress import TaskID
+
 
 class NgffProgress:
     def __init__(self, rich_progress):
@@ -19,10 +20,11 @@ class NgffProgress:
     def update_cache_task_completed(self, completed: int):
         self.rich.update(self.cache_task, completed=completed, refresh=True)
 
+
 class NgffProgressCallback(Callback, NgffProgress):
     def __init__(self, rich_progress):
         self.rich = rich_progress
-        self.tasks: Dict[str, Optional[TaskId]] = {}
+        self.tasks: Dict[str, Optional[TaskID]] = {}
         self.hide_after_finished: Set[str] = set()
         self.next_task = None
 
@@ -34,14 +36,14 @@ class NgffProgressCallback(Callback, NgffProgress):
     def _start(self, dsk):
         if self.next_task:
             description = self.next_task
-            dsk['ngff_zarr_task'] = description
+            dsk["ngff_zarr_task"] = description
 
     def _start_state(self, dsk, state):
         pass
 
-    def _pretask(self, key, dsk, state):
-        if 'ngff_zarr_task' in dsk:
-            description = dsk['ngff_zarr_task']
+    def _pretask(self, key, dsk, state):  # noqa: ARG002
+        if "ngff_zarr_task" in dsk:
+            description = dsk["ngff_zarr_task"]
             task = self.tasks[description]
             ndone = len(state["finished"])
             ntasks = sum(len(state[k]) for k in ["ready", "waiting", "running"]) + ndone
@@ -51,12 +53,14 @@ class NgffProgressCallback(Callback, NgffProgress):
         pass
 
     def _finish(self, dsk, state, errored):
-        if 'ngff_zarr_task' in dsk:
-            description = dsk['ngff_zarr_task']
+        if "ngff_zarr_task" in dsk:
+            description = dsk["ngff_zarr_task"]
             task = self.tasks[description]
             if not errored:
                 ndone = len(state["finished"])
-                ntasks = sum(len(state[k]) for k in ["ready", "waiting", "running"]) + ndone
+                ntasks = (
+                    sum(len(state[k]) for k in ["ready", "waiting", "running"]) + ndone
+                )
                 self.rich.update(task, total=ntasks, completed=ndone)
                 if description in self.hide_after_finished:
                     self.rich.update(task, visible=False)

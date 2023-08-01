@@ -1,5 +1,6 @@
-import numpy as np
 import dask.array
+import numpy as np
+
 
 def _array_split(ary, indices_or_sections, axis=0):
     """
@@ -36,16 +37,17 @@ def _array_split(ary, indices_or_sections, axis=0):
     try:
         # handle array case.
         Nsections = len(indices_or_sections) + 1
-        div_points = [0] + list(indices_or_sections) + [Ntotal]
+        div_points = [0, *list(indices_or_sections), Ntotal]
     except TypeError:
         # indices_or_sections is a scalar, not an array.
         Nsections = int(indices_or_sections)
         if Nsections <= 0:
-            raise ValueError('number sections must be larger than 0.') from None
+            msg = "number sections must be larger than 0."
+            raise ValueError(msg) from None
         Neach_section, extras = divmod(Ntotal, Nsections)
-        section_sizes = ([0] +
-                         extras * [Neach_section+1] +
-                         (Nsections-extras) * [Neach_section])
+        section_sizes = (
+            [0] + extras * [Neach_section + 1] + (Nsections - extras) * [Neach_section]
+        )
         div_points = np.array(section_sizes, dtype=np.intp).cumsum()
 
     sub_arys = []
@@ -56,5 +58,3 @@ def _array_split(ary, indices_or_sections, axis=0):
         sub_arys.append(dask.array.swapaxes(sary[st:end], axis, 0))
 
     return sub_arys
-
-

@@ -1,19 +1,19 @@
-from typing import Union, Optional, Sequence, Hashable, Mapping, Dict, Tuple, Any, List
 from collections.abc import MutableMapping
+from typing import Hashable, Mapping, Optional, Sequence, Union
 
+import dask
+from dask.array.core import Array as DaskArray
 from numpy.typing import ArrayLike
 from zarr.core import Array as ZarrArray
-from dask.array.core import Array as DaskArray
-import dask
 
 from .methods._support import _spatial_dims
 from .ngff_image import NgffImage
-from .zarr_metadata import Units
+from .zarr_metadata import SupportedDims, Units
 
 
 def to_ngff_image(
     data: Union[ArrayLike, MutableMapping, str, ZarrArray],
-    dims: Optional[Sequence[Union["t", "z", "y", "x", "c"]]] = None,
+    dims: Optional[Sequence[SupportedDims]] = None,
     scale: Optional[Union[Mapping[Hashable, float]]] = None,
     translation: Optional[Union[Mapping[Hashable, float]]] = None,
     name: str = "image",
@@ -68,7 +68,8 @@ def to_ngff_image(
     else:
         _supported_dims = {"c", "x", "y", "z", "t"}
         if not set(dims).issubset(_supported_dims):
-            raise ValueError("dims not valid")
+            msg = "dims not valid"
+            raise ValueError(msg)
 
     if scale is None:
         scale = {dim: 1.0 for dim in dims if dim in _spatial_dims}
@@ -82,7 +83,7 @@ def to_ngff_image(
         else:
             data = dask.array.from_array(data)
 
-    ngff_image = NgffImage(
+    return NgffImage(
         data=data,
         dims=dims,
         scale=scale,
@@ -90,5 +91,3 @@ def to_ngff_image(
         name=name,
         axes_units=axes_units,
     )
-
-    return ngff_image

@@ -1,9 +1,12 @@
-from typing import Set
-from .ngff_image import NgffImage
-from dask.array import take
+from typing import Optional, Set
 
-def task_count(image: NgffImage, constrained_dims: Set[str] = set()) -> int:
+from .ngff_image import NgffImage
+
+
+def task_count(image: NgffImage, constrained_dims: Optional[Set[str]] = None) -> int:
     """Approximate dask array partition task count."""
+    if constrained_dims is None:
+        constrained_dims = set()
     arr = image.data
     dims = image.dims
     slices = []
@@ -13,4 +16,3 @@ def task_count(image: NgffImage, constrained_dims: Set[str] = set()) -> int:
         else:
             slices.append(slice(arr.shape[index]))
     return len(arr[tuple(slices)].dask)
-
