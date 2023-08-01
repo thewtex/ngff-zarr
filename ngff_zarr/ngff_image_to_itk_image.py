@@ -9,23 +9,23 @@ def _dtype_to_component_type(dtype):
 
     if dtype == np.uint8:
         return IntTypes.UInt8
-    elif dtype == np.int8:
+    if dtype == np.int8:
         return IntTypes.Int8
-    elif dtype == np.uint16:
+    if dtype == np.uint16:
         return IntTypes.UInt16
-    elif dtype == np.int16:
+    if dtype == np.int16:
         return IntTypes.Int16
-    elif dtype == np.uint32:
+    if dtype == np.uint32:
         return IntTypes.UInt32
-    elif dtype == np.int32:
+    if dtype == np.int32:
         return IntTypes.Int32
-    elif dtype == np.uint64:
+    if dtype == np.uint64:
         return IntTypes.UInt64
-    elif dtype == np.int64:
+    if dtype == np.int64:
         return IntTypes.Int64
-    elif dtype == np.float32:
+    if dtype == np.float32:
         return FloatTypes.Float32
-    elif dtype == np.float64:
+    if dtype == np.float64:
         return FloatTypes.Float64
     msg = f"Unsupported dtype {dtype}"
     raise ValueError(msg)
@@ -81,7 +81,7 @@ def ngff_image_to_itk_image(
         from itkwasm import Image
 
         return Image(**image_dict)
-    else:
-        import itk
 
-        return itk.image_from_dict(image_dict)
+    import itk
+
+    return itk.image_from_dict(image_dict)
