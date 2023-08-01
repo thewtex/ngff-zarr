@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import itk
@@ -68,15 +69,15 @@ def store_equals(baseline_store, test_store):
     baseline_keys = set(baseline_store.keys())
     test_keys = set(test_store.keys())
     if baseline_keys != test_keys:
-        print("test keys != baseline keys")
-        print("baseline - test:", baseline_keys.difference(test_keys))
-        print("test - baseline:", test_keys.difference(baseline_keys))
+        sys.stderr.write("test keys != baseline keys\n")
+        sys.stderr.write("baseline - test:", baseline_keys.difference(test_keys), "\n")
+        sys.stderr.write("test - baseline:", test_keys.difference(baseline_keys), "\n")
         return False
     for k in baseline_keys:
         if baseline_store[k] != test_store[k]:
-            print(f"test value != baseline value for key {k}")
-            print("baseline:", baseline_store[k])
-            print("test:", test_store[k])
+            sys.stderr.write(f"test value != baseline value for key {k}\n")
+            sys.stderr.write("baseline:", baseline_store[k], "\n")
+            sys.stderr.write("test:", test_store[k], "\n")
             return False
     return True
 
