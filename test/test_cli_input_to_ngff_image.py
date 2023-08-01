@@ -3,7 +3,7 @@ from ngff_zarr import ConversionBackend, cli_input_to_ngff_image
 from ._data import test_data_dir
 
 
-def test_cli_input_to_ngff_image_itk(input_images):
+def test_cli_input_to_ngff_image_itk(input_images):  # noqa: ARG001
     input = [
         test_data_dir / "input" / "cthead1.png",
     ]
@@ -11,7 +11,7 @@ def test_cli_input_to_ngff_image_itk(input_images):
     assert image.dims == ("y", "x")
 
 
-def test_cli_input_to_ngff_image_itk_glob(input_images):
+def test_cli_input_to_ngff_image_itk_glob(input_images):  # noqa: ARG001
     input = [
         test_data_dir / "input" / "lung_series" / "*.png",
     ]
@@ -19,7 +19,7 @@ def test_cli_input_to_ngff_image_itk_glob(input_images):
     assert image.dims == ("z", "y", "x")
 
 
-def test_cli_input_to_ngff_image_itk_list(input_images):
+def test_cli_input_to_ngff_image_itk_list(input_images):  # noqa: ARG001
     input = [
         test_data_dir / "input" / "lung_series" / "LIDC2-025.png",
         test_data_dir / "input" / "lung_series" / "LIDC2-026.png",
@@ -29,7 +29,7 @@ def test_cli_input_to_ngff_image_itk_list(input_images):
     assert image.dims == ("z", "y", "x")
 
 
-def test_cli_input_to_ngff_image_tifffile(input_images):
+def test_cli_input_to_ngff_image_tifffile(input_images):  # noqa: ARG001
     input = [
         test_data_dir / "input" / "bat-cochlea-volume.tif",
     ]
@@ -37,7 +37,7 @@ def test_cli_input_to_ngff_image_tifffile(input_images):
     assert image.dims == ("z", "y", "x")
 
 
-def test_cli_input_to_ngff_image_imageio(input_images):
+def test_cli_input_to_ngff_image_imageio(input_images):  # noqa: ARG001
     input = [
         test_data_dir / "input" / "cthead1.png",
     ]
