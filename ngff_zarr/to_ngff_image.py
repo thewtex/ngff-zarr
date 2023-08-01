@@ -8,12 +8,12 @@ from zarr.core import Array as ZarrArray
 
 from .methods._support import _spatial_dims
 from .ngff_image import NgffImage
-from .zarr_metadata import Units
+from .zarr_metadata import SupportedDims, Units
 
 
 def to_ngff_image(
     data: Union[ArrayLike, MutableMapping, str, ZarrArray],
-    dims: Optional[Sequence[Union["t", "z", "y", "x", "c"]]] = None,
+    dims: Optional[Sequence[SupportedDims]] = None,
     scale: Optional[Union[Mapping[Hashable, float]]] = None,
     translation: Optional[Union[Mapping[Hashable, float]]] = None,
     name: str = "image",
