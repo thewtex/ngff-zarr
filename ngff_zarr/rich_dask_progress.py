@@ -1,6 +1,7 @@
 from typing import Dict, Optional, Set
 
 from dask.callbacks import Callback
+from rich.progress import TaskID
 
 
 class NgffProgress:
@@ -23,7 +24,7 @@ class NgffProgress:
 class NgffProgressCallback(Callback, NgffProgress):
     def __init__(self, rich_progress):
         self.rich = rich_progress
-        self.tasks: Dict[str, Optional[TaskId]] = {}
+        self.tasks: Dict[str, Optional[TaskID]] = {}
         self.hide_after_finished: Set[str] = set()
         self.next_task = None
 
@@ -40,7 +41,7 @@ class NgffProgressCallback(Callback, NgffProgress):
     def _start_state(self, dsk, state):
         pass
 
-    def _pretask(self, key, dsk, state):
+    def _pretask(self, key, dsk, state):  # noqa: ARG002
         if "ngff_zarr_task" in dsk:
             description = dsk["ngff_zarr_task"]
             task = self.tasks[description]
