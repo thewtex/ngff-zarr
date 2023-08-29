@@ -89,6 +89,10 @@ def _ngff_image_to_multiscales(live, ngff_image, args, progress, rich_dask_progr
     else:
         layout = 'cellmap'
 
+    if args.scale_factors == None:
+        scale_factors = (2,) * len(ngff_image.dims)
+    else:
+        scale_factors = [int(s) for s in args.scale_factors]
     # Generate Multiscales
     cache = data.nbytes > config.memory_target
     if not args.output:
@@ -101,7 +105,13 @@ def _ngff_image_to_multiscales(live, ngff_image, args, progress, rich_dask_progr
             chunks = chunks[0]
         else:
             chunks = tuple(chunks)
-    multiscales = to_multiscales(ngff_image, layout=layout, method=method, progress=rich_dask_progress, chunks=chunks, cache=cache)
+    multiscales = to_multiscales(ngff_image, 
+                                 scale_factors=scale_factors,
+                                 layout=layout, 
+                                 method=method, 
+                                 progress=rich_dask_progress, 
+                                 chunks=chunks, 
+                                 cache=cache)
     return multiscales
 
 
@@ -124,6 +134,7 @@ def main():
     processing_group.add_argument('-q', '--quiet', action='store_true', help='Do not display progress information')
     processing_group.add_argument('-l', '--local-cluster', action='store_true', help='Create a Dask Distributed LocalCluster. Better for large datasets.')
     processing_group.add_argument('--layout', choices=('itk', 'cellmap'), default='itk', help='Which layout to use. Must be either "itk" or "cellmap". Default is "itk"')
+    processing_group.add_argument('--scale-factors', nargs='+', help='Scale factors to use for downsampling. Default is 2 along each axis.')
     processing_group.add_argument('--input-backend', choices=conversion_backends_values, help='Input conversion backend')
     processing_group.add_argument('--memory-target', help='Memory limit, e.g. 4GB')
     processing_group.add_argument('--cache-dir', help='Directory to use for caching with large datasets')
