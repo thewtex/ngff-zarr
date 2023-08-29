@@ -114,15 +114,21 @@ def _downsample_dask_image(
     previous_image = ngff_image
     dims = ngff_image.dims
     previous_absolute_dim_factors = {d: 1 for d in dims}
-    previous_scale_factor = 1
+    previous_scale_factors = {d: 1 for d in dims}
     for scale_factor in scale_factors:
         dim_factors = _dim_scale_factors(
             dims, scale_factor, previous_absolute_dim_factors
         )
         previous_absolute_dim_factors = {
-            d: v * previous_scale_factor for d, v in dim_factors.items()
+            d: v * previous_scale_factors[d] for d, v in dim_factors.items()
         }
-        previous_scale_factor = scale_factor
+        if isinstance(scale_factor, dict):
+            previous_scale_factors = scale_factor
+        elif isinstance(scale_factor, (int,)):
+            previous_scale_factors = {d: scale_factor for d in dims}
+        else:
+            msg = "Unexpected scale_factor type"
+            raise ValueError(msg)
         previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
 
         shrink_factors = []
