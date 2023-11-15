@@ -172,7 +172,7 @@ def _downsample_dask_image(
                 else:
                     input_scale_list.append(1.0)
 
-            sigma_values = _compute_sigma([1.0] * len(shrink_factors), shrink_factors)
+            sigma_values = _compute_sigma(shrink_factors)
             truncate = _get_truncate(previous_image, sigma_values)
 
             blurred_array = dask_image.ndfilters.gaussian_filter(
