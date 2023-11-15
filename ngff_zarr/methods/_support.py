@@ -1,3 +1,5 @@
+from typing import List
+
 _spatial_dims = {"x", "y", "z"}
 
 
@@ -36,7 +38,9 @@ def _align_chunks(previous_image, default_chunks, dim_factors):
     return previous_image
 
 
-def _compute_sigma(input_spacings, shrink_factors) -> list:
+def _compute_sigma(
+    input_spacings: List[float], shrink_factors: List[int]
+) -> List[float]:
     """Compute Gaussian kernel sigma values for resampling to isotropic spacing.
     sigma = sqrt((isoSpacing^2 - inputSpacing[0]^2)/(2*sqrt(2*ln(2)))^2)
     Ref https://discourse.itk.org/t/resampling-to-isotropic-signal-processing-theory/1403/16

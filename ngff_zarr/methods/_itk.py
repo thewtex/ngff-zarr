@@ -247,7 +247,8 @@ def _downsample_itk_gaussian(
         input_origin = [previous_image.translation[d] for d in spatial_dims]
         block_0_image.SetOrigin(input_origin)
 
-        sigma_values = _compute_sigma(input_spacing, shrink_factors)
+        # pixel units
+        sigma_values = _compute_sigma([1.0] * len(shrink_factors), shrink_factors)
         kernel_radius = _compute_itk_gaussian_kernel_radius(
             itk.size(block_0_image), sigma_values
         )

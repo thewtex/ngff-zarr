@@ -73,7 +73,7 @@ def _get_truncate(previous_image, sigma_values, truncate_start=4.0) -> float:
     previous_image: _NgffImage
         Chunked image to be smoothed
 
-    sigma:values: List
+    sigma_values: List
         Gaussian kernel standard deviations in tzyx order
 
     truncate_start: float
@@ -172,7 +172,7 @@ def _downsample_dask_image(
                 else:
                     input_scale_list.append(1.0)
 
-            sigma_values = _compute_sigma(input_scale_list, shrink_factors)
+            sigma_values = _compute_sigma([1.0] * len(shrink_factors), shrink_factors)
             truncate = _get_truncate(previous_image, sigma_values)
 
             blurred_array = dask_image.ndfilters.gaussian_filter(
