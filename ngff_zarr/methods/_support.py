@@ -1,3 +1,5 @@
+from typing import List
+
 _spatial_dims = {"x", "y", "z"}
 
 
@@ -36,10 +38,15 @@ def _align_chunks(previous_image, default_chunks, dim_factors):
     return previous_image
 
 
-def _compute_sigma(input_spacings, shrink_factors) -> list:
-    """Compute Gaussian kernel sigma values for resampling to isotropic spacing.
-    sigma = sqrt((isoSpacing^2 - inputSpacing[0]^2)/(2*sqrt(2*ln(2)))^2)
+def _compute_sigma(shrink_factors: List[int]) -> List[float]:
+    """Compute Gaussian kernel sigma values in pixel units for downsampling.
+    sigma = sqrt((k^2 - 1^2)/(2*sqrt(2*ln(2)))^2)
     Ref https://discourse.itk.org/t/resampling-to-isotropic-signal-processing-theory/1403/16
+    https://doi.org/10.1007/978-3-319-24571-3_81
+    http://discovery.ucl.ac.uk/1469251/1/scale-factor-point-5.pdf
+
+    Note: If input spacing / output sigma in physical units, the function would be
+        sigma = sqrt((input_spacing^2*(k^2 - 1^2))/(2*sqrt(2*ln(2)))^2)
 
     input spacings: List
         Input image physical spacings in xyzt order
@@ -50,15 +57,7 @@ def _compute_sigma(input_spacings, shrink_factors) -> list:
     result: List
         Standard deviation of Gaussian kernel along each axis in xyzt order
     """
-    assert len(input_spacings) == len(shrink_factors)
     import math
 
-    output_spacings = [
-        input_spacing * shrink
-        for input_spacing, shrink in zip(input_spacings, shrink_factors)
-    ]
     denominator = (2 * ((2 * math.log(2)) ** 0.5)) ** 2
-    return [
-        ((output_spacing**2 - input_spacing**2) / denominator) ** 0.5
-        for input_spacing, output_spacing in zip(input_spacings, output_spacings)
-    ]
+    return [((factor**2 - 1**2) / denominator) ** 0.5 for factor in shrink_factors]

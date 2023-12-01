@@ -61,20 +61,23 @@ def _itk_blur_and_downsample(
 
     # chunk does not have metadata attached, values are ITK defaults
     image = itk.image_view_from_array(image_data)
-    input_origin = itk.origin(image)
 
     # Skip this image block if it has 0 voxels
     block_size = itk.size(image)
     if any(block_len == 0 for block_len in block_size):
         return None
 
+    input_origin = itk.origin(image)
+    input_spacing = itk.spacing(image)
+
     # Output values are relative to input
     itk_shrink_factors = shrink_factors  # xyzt
     itk_kernel_radius = kernel_radius
     output_origin = [
-        val + radius for val, radius in zip(input_origin, itk_kernel_radius)
+        val + radius * spacing
+        for val, spacing, radius in zip(input_origin, input_spacing, itk_kernel_radius)
     ]
-    output_spacing = [s * f for s, f in zip(itk.spacing(image), itk_shrink_factors)]
+    output_spacing = [s * f for s, f in zip(input_spacing, itk_shrink_factors)]
     output_size = [
         max(0, int((image_len - 2 * radius) / shrink_factor))
         for image_len, radius, shrink_factor in zip(
@@ -244,7 +247,8 @@ def _downsample_itk_gaussian(
         input_origin = [previous_image.translation[d] for d in spatial_dims]
         block_0_image.SetOrigin(input_origin)
 
-        sigma_values = _compute_sigma(input_spacing, shrink_factors)
+        # pixel units
+        sigma_values = _compute_sigma(shrink_factors)
         kernel_radius = _compute_itk_gaussian_kernel_radius(
             itk.size(block_0_image), sigma_values
         )
@@ -385,7 +389,7 @@ def _downsample_itk_gaussian(
 #     # Compute overlap for Gaussian blurring for all blocks
 #     block_0_image = itk.image_from_xarray(block_0_input)
 #     input_spacing = itk.spacing(block_0_image)
-#     sigma_values = _compute_sigma(input_spacing, shrink_factors)
+#     sigma_values = _compute_sigma(shrink_factors)
 #     kernel_radius = _compute_itk_gaussian_kernel_radius(
 #         itk.size(block_0_image), sigma_values
 #     )
