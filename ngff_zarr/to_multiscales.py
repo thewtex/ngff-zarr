@@ -91,6 +91,7 @@ def _large_image_serialization(
     atexit.register(remove_from_cache_store, None, None)
     signal.signal(signal.SIGTERM, remove_from_cache_store)
     signal.signal(signal.SIGINT, remove_from_cache_store)
+    image.computed_callbacks.append(lambda: remove_from_cache_store(None, None))
 
     data = image.data
 
