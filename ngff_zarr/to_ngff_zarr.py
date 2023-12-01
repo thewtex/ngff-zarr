@@ -71,10 +71,12 @@ def to_ngff_zarr(
         image = next_image
         arr = image.data
         path = multiscales.metadata.datasets[index].path
-        array_dims_group = root.create_group(str(PurePosixPath(path).parent))
-        array_dims_group.attrs["_ARRAY_DIMENSIONS"] = image.dims
+        parent = str(PurePosixPath(path).parent)
+        if parent not in (".", "/"):
+            array_dims_group = root.create_group(parent)
+            array_dims_group.attrs["_ARRAY_DIMENSIONS"] = image.dims
 
-        if index > 0 and index < nscales - 1:
+        if index > 0 and index < nscales - 1 and multiscales.scale_factors:
             dim_factors = _dim_scale_factors(
                 dims, multiscales.scale_factors[index], previous_dim_factors
             )
@@ -82,7 +84,7 @@ def to_ngff_zarr(
             dim_factors = {d: 1 for d in dims}
         previous_dim_factors = dim_factors
 
-        if memory_usage(image) > config.memory_target:
+        if memory_usage(image) > config.memory_target and multiscales.scale_factors:
             shrink_factors = []
             for dim in dims:
                 if dim in dim_factors:
@@ -257,6 +259,7 @@ def to_ngff_zarr(
             and multiscales.scale_factors
             and multiscales.method
             and multiscales.chunks
+            and multiscales.scale_factors
         ):
             for callback in image.computed_callbacks:
                 callback()

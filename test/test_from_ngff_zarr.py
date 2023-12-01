@@ -1,13 +1,14 @@
 from dask_image import imread
 from ngff_zarr import (
     Methods,
+    from_ngff_zarr,
     to_multiscales,
     to_ngff_image,
     to_ngff_zarr,
 )
 from zarr.storage import MemoryStore
 
-from ._data import verify_against_baseline
+from ._data import test_data_dir, verify_against_baseline
 
 
 def test_gaussian_isotropic_scale_factors(input_images):
@@ -41,3 +42,11 @@ def test_from_ngff_zarr(input_images):
 
     # multiscales_back = from_ngff_zarr(test_store)
     # verify_against_baseline(dataset_name, baseline_name, multiscales_back)
+
+
+def test_omero_zarr_from_ngff_zarr_to_ngff_zarr(input_images):  # noqa: ARG001
+    dataset_name = "13457537"
+    store_path = test_data_dir / "input" / f"{dataset_name}.zarr"
+    multiscales = from_ngff_zarr(store_path)
+    test_store = MemoryStore(dimension_separator="/")
+    to_ngff_zarr(test_store, multiscales)
