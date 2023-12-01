@@ -7,7 +7,7 @@ build-backend = "hatchling.build"
 name = "ngff-zarr"
 description = 'A lean and kind Open Microscopy Environment (OME) Next Generation File Format (NGFF) Zarr implementation.'
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = "MIT"
 keywords = []
 authors = [

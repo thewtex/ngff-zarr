@@ -16,7 +16,7 @@ A lean and kind Open Microscopy Environment (OME) Next Generation File Format
 - Lazy, parallel, and web ready -- no local filesystem required
 - Process extremely large datasets
 - Multiple downscaling methods
-- Supports Python>=3.7
+- Supports Python>=3.8
 - Implements version 0.4 of the
   [OME-Zarr NGFF specification](https://github.com/ome/ngff)
 
