@@ -263,6 +263,7 @@ def to_ngff_zarr(
         ):
             for callback in image.computed_callbacks:
                 callback()
+            image.computed_callbacks = []
 
             image.data = dask.array.from_zarr(store, component=path)
             next_multiscales_factor = multiscales.scale_factors[index]
@@ -294,5 +295,6 @@ def to_ngff_zarr(
     for image in multiscales.images:
         for callback in image.computed_callbacks:
             callback()
+        image.computed_callbacks = []
 
     zarr.consolidate_metadata(store)
