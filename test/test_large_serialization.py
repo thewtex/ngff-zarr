@@ -4,6 +4,7 @@ from zarr.storage import MemoryStore
 
 
 def test_large_image_serialization(input_images):
+    default_mem_target = config.memory_target
     config.memory_target = int(1e6)
 
     dataset_name = "lung_series"
@@ -21,3 +22,5 @@ def test_large_image_serialization(input_images):
     test_store = MemoryStore(dimension_separator="/")
     to_ngff_zarr(test_store, multiscales)
     # verify_against_baseline(dataset_name, baseline_name, multiscales)
+
+    config.memory_target = default_mem_target

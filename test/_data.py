@@ -7,8 +7,8 @@ import pytest
 from ngff_zarr import itk_image_to_ngff_image, to_ngff_zarr
 from zarr.storage import DirectoryStore, MemoryStore
 
-test_data_ipfs_cid = "bafybeidycdocaf7muhwt73m6vxfeaxfidbq7prvnhgn4tzrpxmpui5rila"
-test_data_sha256 = "675a2cb532cb6fbabfd2b1e19f26f05b059ac51f0b611eed1164d8dd1a22e4cb"
+test_data_ipfs_cid = "bafybeifkrfjreee5e7rfoi2ka3t2n23jlqwsrqwg4gmbyqcrc47iet27km"
+test_data_sha256 = "861dd3acb8391a3ac2b10b3487c33ee74da1415ef30b9f4c37c7f8f49e802c32"
 
 test_dir = Path(__file__).resolve().parent
 extract_dir = "data"
@@ -67,14 +67,14 @@ def store_equals(baseline_store, test_store):
     test_keys = set(test_store.keys())
     if baseline_keys != test_keys:
         sys.stderr.write("test keys != baseline keys\n")
-        sys.stderr.write("baseline - test:", baseline_keys.difference(test_keys), "\n")
-        sys.stderr.write("test - baseline:", test_keys.difference(baseline_keys), "\n")
+        sys.stderr.write(f"baseline - test: {baseline_keys.difference(test_keys)}, \n")
+        sys.stderr.write(f"test - baseline: {test_keys.difference(baseline_keys)}, \n")
         return False
     for k in baseline_keys:
         if baseline_store[k] != test_store[k]:
             sys.stderr.write(f"test value != baseline value for key {k}\n")
-            sys.stderr.write("baseline:", baseline_store[k], "\n")
-            sys.stderr.write("test:", test_store[k], "\n")
+            sys.stderr.write(f"baseline: {baseline_store[k]}, \n")
+            sys.stderr.write(f"test: {test_store[k]}, \n")
             return False
     return True
 

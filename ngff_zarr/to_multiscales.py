@@ -363,6 +363,11 @@ def to_multiscales(
             path=path, coordinateTransformations=coordinateTransformations
         )
         datasets.append(dataset)
-    metadata = Metadata(axes=axes, datasets=datasets, name=ngff_image.name)
+    metadata = Metadata(
+        axes=axes,
+        datasets=datasets,
+        name=ngff_image.name,
+        coordinateTransformations=None,
+    )
 
     return Multiscales(images, metadata, scale_factors, method, out_chunks)

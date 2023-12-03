@@ -16,6 +16,17 @@ from .rich_dask_progress import NgffProgress, NgffProgressCallback
 from .to_multiscales import to_multiscales
 
 
+def _pop_metadata_optionals(metadata_dict):
+    for ax in metadata_dict["axes"]:
+        if ax["unit"] is None:
+            ax.pop("unit")
+
+    if metadata_dict["coordinateTransformations"] is None:
+        metadata_dict.pop("coordinateTransformations")
+
+    return metadata_dict
+
+
 def to_ngff_zarr(
     store: Union[MutableMapping, str, Path, BaseStore],
     multiscales: Multiscales,
@@ -55,6 +66,7 @@ def to_ngff_zarr(
     """
 
     metadata_dict = asdict(multiscales.metadata)
+    metadata_dict = _pop_metadata_optionals(metadata_dict)
     metadata_dict["@type"] = "ngff:Image"
     root = zarr.group(store, overwrite=overwrite, chunk_store=chunk_store)
     root.attrs["multiscales"] = [metadata_dict]
