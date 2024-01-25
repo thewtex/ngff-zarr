@@ -247,29 +247,26 @@ def to_multiscales(
     """
     Generate multiple resolution scales for the OME-NGFF standard data model.
 
-    data: NgffImage, ArrayLike, ZarrArray, MutableMapping, str
-        Multi-dimensional array that provides the image pixel values, or image pixel values + image metadata when an NgffImage.
+    :param  data: Multi-dimensional array that provides the image pixel values, or image pixel values + image metadata when an NgffImage.
+    :type   data: NgffImage, ArrayLike, ZarrArray, MutableMapping, str
 
-    scale_factors : int of minimum length, int per scale or dict of spatial dimension int's per scale
-        If a single integer, scale factors in spatial dimensions will be increased by a factor of two until this minimum length is reached.
+    :param scale_factors: If a single integer, scale factors in spatial dimensions will be increased by a factor of two until this minimum length is reached.
         If a list, integer scale factors to apply uniformly across all spatial dimensions or
         along individual spatial dimensions.
         Examples: 64 or [2, 4] or [{'x': 2, 'y': 4 }, {'x': 5, 'y': 10}]
+    :type  scale_factors: int of minimum length, int per scale or dict of spatial dimension int's per scale
 
-    chunks : Dask array chunking specification, optional
-        Specify the chunking used in each output scale.
+    :param chunks: Specify the chunking used in each output scale.
+    :type  chunks: Dask array chunking specification, optional
 
-    cache : bool, optional
-        Cache intermediate results to disk to limit memory consumption. If None, the default, determine based on ngff_zarr.config.memory_target.
+    :param cache: Cache intermediate results to disk to limit memory consumption. If None, the default, determine based on ngff_zarr.config.memory_target.
+    :type  cache: bool, optional
 
-    progress:
-        Optional progress logger
+    :param progress: Optional progress logger
+    :type  progress: NgffProgress, NgffProgressCallback
 
-    Returns
-    -------
-
-    multiscales: Multiscales
-        NgffImage for each resolution and NGFF multiscales metadata
+    :return: NgffImage for each resolution and NGFF multiscales metadata
+    :rtype : Multiscales
     """
     image = data
     ngff_image = data if isinstance(data, NgffImage) else to_ngff_image(data)

@@ -38,31 +38,23 @@ def to_ngff_zarr(
     """
     Write an image pixel array and metadata to a Zarr store with the OME-NGFF standard data model.
 
-    store : MutableMapping, str or Path, zarr.storage.BaseStore
-        Store or path to directory in file system.
+    :param store: Store or path to directory in file system.
+    :type  store: MutableMapping, str or Path, zarr.storage.BaseStore
 
-    multiscales: Multiscales
-        Multiscales OME-NGFF image pixel data and metadata. Can be generated with ngff_zarr.to_multiscales.
+    :param multiscales: Multiscales OME-NGFF image pixel data and metadata. Can be generated with ngff_zarr.to_multiscales.
+    :type  multiscales: Multiscales
 
-    overwrite : bool, optional
-        If True, delete any pre-existing data in `store` before creating groups.
+    :param overwrite: If True, delete any pre-existing data in `store` before creating groups.
+    :type  overwrite: bool, optional
 
-    chunk_store : MutableMapping, str or Path, zarr.storage.BaseStore, optional
-        Separate storage for chunks. If not provided, `store` will be used
+    :param chunk_store: Separate storage for chunks. If not provided, `store` will be used
         for storage of both chunks and metadata.
+    :type  chunk_store: MutableMapping, str or Path, zarr.storage.BaseStore, optional
 
-    progress: RichDaskProgress
-        Optional progress logger
+    :type  progress: RichDaskProgress
+    :param progress: Optional progress logger
 
-    **kwargs:
-        Passed to the zarr.creation.create() function, e.g., compression options.
-
-
-    Returns
-    -------
-
-    None
-
+    :param **kwargs: Passed to the zarr.creation.create() function, e.g., compression options.
     """
 
     metadata_dict = asdict(multiscales.metadata)
