@@ -38,10 +38,31 @@ def _itkwasm_blur_and_downsample(
     return downsampled.data
 
 
+def _itkwasm_chunk_bin_shrink(
+    image_data,
+    shrink_factors,
+):
+    """Compute the local mean and downsample on a given image chunk"""
+    import itkwasm
+    from itkwasm_downsample import downsample_bin_shrink
+
+    # chunk does not have metadata attached, values are ITK defaults
+    image = itkwasm.image_from_array(image_data)
+
+    # Skip this image block if it has 0 voxels
+    block_size = image.size
+    if any(block_len == 0 for block_len in block_size):
+        return None
+
+    downsampled = downsample_bin_shrink(image, shrink_factors=shrink_factors)
+    return downsampled.data
+
+
 def _downsample_itkwasm_bin_shrink(
     ngff_image: NgffImage, default_chunks, out_chunks, scale_factors
 ):
-    import itk
+    import itkwasm
+    from itkwasm_downsample import downsample_bin_shrink
 
     multiscales = [
         ngff_image,
@@ -62,40 +83,38 @@ def _downsample_itkwasm_bin_shrink(
         # For consistency for now, do not utilize direction until there is standardized support for
         # direction cosines / orientation in OME-NGFF
         # block_0.attrs.pop("direction", None)
-        block_input = itk.image_from_array(np.ones_like(block_0))
+        block_input = itkwasm.image_from_array(np.ones_like(block_0))
         spacing = [previous_image.scale[d] for d in spatial_dims]
-        block_input.SetSpacing(spacing)
+        block_input.spacing = spacing
         origin = [previous_image.translation[d] for d in spatial_dims]
-        block_input.SetOrigin(origin)
-        filt = itk.BinShrinkImageFilter.New(block_input, shrink_factors=shrink_factors)
-        filt.UpdateOutputInformation()
-        block_output = filt.GetOutput()
-        scale = {_image_dims[i]: s for (i, s) in enumerate(block_output.GetSpacing())}
-        translation = {
-            _image_dims[i]: s for (i, s) in enumerate(block_output.GetOrigin())
-        }
-        dtype = block_output.dtype
+        block_input.origin = origin
+        block_output = downsample_bin_shrink(
+            block_input, shrink_factors, information_only=False
+        )
+        scale = {_image_dims[i]: s for (i, s) in enumerate(block_output.spacing)}
+        translation = {_image_dims[i]: s for (i, s) in enumerate(block_output.origin)}
+        dtype = block_output.data.dtype
         output_chunks = list(previous_image.data.chunks)
         for i, c in enumerate(output_chunks):
             output_chunks[i] = [
-                block_output.shape[i],
+                block_output.data.shape[i],
             ] * len(c)
 
         block_neg1 = _get_block(previous_image, -1)
         # block_neg1.attrs.pop("direction", None)
-        block_input = itk.image_from_array(np.ones_like(block_neg1))
-        block_input.SetSpacing(spacing)
-        block_input.SetOrigin(origin)
-        filt = itk.BinShrinkImageFilter.New(block_input, shrink_factors=shrink_factors)
-        filt.UpdateOutputInformation()
-        block_output = filt.GetOutput()
+        block_input = itkwasm.image_from_array(np.ones_like(block_neg1))
+        block_input.spacing = spacing
+        block_input.origin = origin
+        block_output = downsample_bin_shrink(
+            block_input, shrink_factors, information_only=False
+        )
         for i in range(len(output_chunks)):
-            output_chunks[i][-1] = block_output.shape[i]
+            output_chunks[i][-1] = block_output.data.shape[i]
             output_chunks[i] = tuple(output_chunks[i])
         output_chunks = tuple(output_chunks)
 
         downscaled_array = map_blocks(
-            itk.bin_shrink_image_filter,
+            _itkwasm_chunk_bin_shrink,
             previous_image.data,
             shrink_factors=shrink_factors,
             dtype=dtype,
