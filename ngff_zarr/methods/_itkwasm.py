@@ -19,10 +19,10 @@ def _itkwasm_blur_and_downsample(
     image_data,
     shrink_factors,
     kernel_radius,
+    smoothing,
 ):
     """Blur and then downsample a given image chunk"""
     import itkwasm
-    from itkwasm_downsample import downsample
 
     # chunk does not have metadata attached, values are ITK defaults
     image = itkwasm.image_from_array(image_data)
@@ -32,9 +32,22 @@ def _itkwasm_blur_and_downsample(
     if any(block_len == 0 for block_len in block_size):
         return None
 
-    downsampled = downsample(
-        image, shrink_factors=shrink_factors, crop_radius=kernel_radius
-    )
+    if smoothing == "gaussian":
+        from itkwasm_downsample import downsample
+
+        downsampled = downsample(
+            image, shrink_factors=shrink_factors, crop_radius=kernel_radius
+        )
+    elif smoothing == "label_image":
+        from itkwasm_downsample import downsample_label_image
+
+        downsampled = downsample_label_image(
+            image, shrink_factors=shrink_factors, crop_radius=kernel_radius
+        )
+    else:
+        msg = f"Unknown smoothing method: {smoothing}"
+        raise ValueError(msg)
+
     return downsampled.data
 
 
@@ -134,8 +147,8 @@ def _downsample_itkwasm_bin_shrink(
     return multiscales
 
 
-def _downsample_itkwasm_gaussian(
-    ngff_image: NgffImage, default_chunks, out_chunks, scale_factors
+def _downsample_itkwasm(
+    ngff_image: NgffImage, default_chunks, out_chunks, scale_factors, smoothing
 ):
     import itkwasm
     from itkwasm_downsample import downsample_bin_shrink, gaussian_kernel_radius
@@ -232,6 +245,7 @@ def _downsample_itkwasm_gaussian(
                     data,
                     shrink_factors=shrink_factors,
                     kernel_radius=kernel_radius,
+                    smoothing=smoothing,
                     dtype=dtype,
                     depth=dict(enumerate(np.flip(kernel_radius))),  # overlap is in tzyx
                     boundary="nearest",
@@ -248,6 +262,7 @@ def _downsample_itkwasm_gaussian(
                 data,
                 shrink_factors=shrink_factors,
                 kernel_radius=kernel_radius,
+                smoothing=smoothing,
                 dtype=dtype,
                 depth=dict(enumerate(np.flip(kernel_radius))),  # overlap is in tzyx
                 boundary="nearest",

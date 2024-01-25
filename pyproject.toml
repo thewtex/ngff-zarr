@@ -31,7 +31,7 @@ classifiers = [
 ]
 dependencies = [
     "dask[array]",
-    "itkwasm >= 1.0b166",
+    "itkwasm >= 1.0b167",
     "itkwasm-downsample >= 1.1.0",
     "numpy",
     "platformdirs",

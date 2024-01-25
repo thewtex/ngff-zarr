@@ -27,11 +27,6 @@ def input_images():
     )
     result = {}
 
-    # store = DirectoryStore(
-    #     test_data_dir / "input" / "cthead1.zarr", dimension_separator="/"
-    # )
-    # image_ds = xr.open_zarr(store)
-    # image_da = image_ds.cthead1
     image = itk.imread(test_data_dir / "input" / "cthead1.png")
     image_ngff = itk_image_to_ngff_image(image)
     result["cthead1"] = image_ngff
@@ -45,19 +40,9 @@ def input_images():
     image_ngff = itk_image_to_ngff_image(image)
     result["brain_two_components"] = image_ngff
 
-    # store = DirectoryStore(
-    #     test_data_dir / "input" / "small_head.zarr", dimension_separator="/"
-    # )
-    # image_ds = xr.open_zarr(store)
-    # image_da = image_ds.small_head
-    # result["small_head"] = image_da
-
-    # store = DirectoryStore(
-    #     test_data_dir / "input" / "2th_cthead1.zarr",
-    # )
-    # image_ds = xr.open_zarr(store)
-    # image_da = image_ds['2th_cthead1']
-    # result["2th_cthead1"] = image_da
+    image = itk.imread(test_data_dir / "input" / "2th_cthead1.png")
+    image_ngff = itk_image_to_ngff_image(image)
+    result["2th_cthead1"] = image_ngff
 
     return result
 
