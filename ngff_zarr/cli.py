@@ -264,7 +264,7 @@ def main():
 
         cluster = LocalCluster(
             n_workers=n_workers,
-            memory_target=worker_memory_target,
+            memory_limit=worker_memory_target,
             processes=True,
             threads_per_worker=2,
         )
