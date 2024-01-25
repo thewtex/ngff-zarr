@@ -1,5 +1,9 @@
 from typing import List
 
+from dask.array import take
+
+from ..ngff_image import NgffImage
+
 _spatial_dims = {"x", "y", "z"}
 
 
@@ -61,3 +65,17 @@ def _compute_sigma(shrink_factors: List[int]) -> List[float]:
 
     denominator = (2 * ((2 * math.log(2)) ** 0.5)) ** 2
     return [((factor**2 - 1**2) / denominator) ** 0.5 for factor in shrink_factors]
+
+
+def _get_block(previous_image: NgffImage, block_index: int):
+    """Helper method for accessing an enumerated chunk from input"""
+    block_shape = [c[block_index] for c in previous_image.data.chunks]
+    block = previous_image.data[tuple([slice(0, s) for s in block_shape])]
+    # For consistency for now, do not utilize direction until there is standardized support for
+    # direction cosines / orientation in OME-NGFF
+    # block.attrs.pop("direction", None)
+    if "t" in previous_image.dims:
+        dims = list(previous_image.dims)
+        t_index = dims.index("t")
+        block = take(block, 0, t_index)
+    return block
