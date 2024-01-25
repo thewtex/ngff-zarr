@@ -7,8 +7,8 @@ import pytest
 from ngff_zarr import itk_image_to_ngff_image, to_ngff_zarr
 from zarr.storage import DirectoryStore, MemoryStore
 
-test_data_ipfs_cid = "bafybeifkrfjreee5e7rfoi2ka3t2n23jlqwsrqwg4gmbyqcrc47iet27km"
-test_data_sha256 = "861dd3acb8391a3ac2b10b3487c33ee74da1415ef30b9f4c37c7f8f49e802c32"
+test_data_ipfs_cid = "bafybeiawyalfemcmlfbizetoqilpmbk6coowu7cqr7av6aff4dpjwlsk6m"
+test_data_sha256 = "3f32e9e8fac84de3fbe63d0a6142b2eb65cadd8c9e1c3ba7f93080a6bc2150ef"
 
 test_dir = Path(__file__).resolve().parent
 extract_dir = "data"
@@ -21,7 +21,7 @@ def input_images():
     pooch.retrieve(
         fname="data.tar.gz",
         path=test_dir,
-        url=f"https://{test_data_ipfs_cid}.ipfs.w3s.link",
+        url=f"https://{test_data_ipfs_cid}.ipfs.w3s.link/ipfs/{test_data_ipfs_cid}/data.tar.gz",
         known_hash=f"sha256:{test_data_sha256}",
         processor=untar,
     )
@@ -43,6 +43,10 @@ def input_images():
     image = itk.imread(test_data_dir / "input" / "2th_cthead1.png")
     image_ngff = itk_image_to_ngff_image(image)
     result["2th_cthead1"] = image_ngff
+
+    image = itk.imread(test_data_dir / "input" / "MR-head.nrrd")
+    image_ngff = itk_image_to_ngff_image(image)
+    result["MR-head"] = image_ngff
 
     return result
 
