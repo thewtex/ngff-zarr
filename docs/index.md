@@ -48,6 +48,7 @@ await micropip.install('ngff-zarr')
 :maxdepth: 3
 
 cli.md
+methods.md
 development.md
 ````
 
