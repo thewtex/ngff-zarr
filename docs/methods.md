@@ -28,13 +28,17 @@ The default method.
 
 ## `ITKWASM_BIN_SHRINK`
 
-Used the local mean for the output value.
+Used the [local mean] for the output value. [WebAssembly] build.
 
 Fast but generates more artifacts than gaussian-based methods.
 
 Appropriate for intensity images.
 
 ## `ITKWASM_LABEL_IMAGE`
+
+A sample is the mode of the linearly weighted [local labels] in the image.
+
+Fast and minimal artifacts. For label images.
 
 ## `ITK_GAUSSIAN`
 
@@ -48,14 +52,40 @@ pip install itk-vkfft
 
 ## `ITK_BIN_SHRINK`
 
+Used the [local mean] for the output value. Native binary build.
+
+Fast but generates more artifacts than gaussian-based methods.
+
+Appropriate for intensity images.
+
 ## `DASK_IMAGE_GAUSSIAN`
+
+Smoothed with a discrete gaussian filter to generate a [scale space], ideal for
+intensity images.
+
+[dask-image] implementation based on [scipy].
 
 ## `DASK_IMAGE_MODE`
 
+Local mode for label images.
+
+Fewer artifacts than simple nearest neighbor interpolation.
+
+Slower.
+
 ## `DASK_IMAGE_NEAREST`
+
+Nearest neighbor for label images.
+
+Will have many artifacts for high-frequecy content and / or multiple scales.
 
 [aliasing artifacts]:
   https://en.wikipedia.org/wiki/Nyquist%E2%80%93Shannon_sampling_theorem
+[dask-image]: https://image.dask.org/
+[ITK-Wasm]: https://wasm.itk.orghttps://image.dask.org/
+[local mean]: https://doi.org/10.54294/p39qox
+[local labels]: https://doi.org/10.54294/nr6iii
 [SIMD]: https://en.wikipedia.org/wiki/Single_instruction,_multiple_data
 [scale space]: https://en.wikipedia.org/wiki/Scale_space
-[ITK-Wasm]: https://wasm.itk.org
+[scipy]: https://scipy.org/
+[WebAssembly]: https://webassembly.org/
