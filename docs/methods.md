@@ -56,6 +56,8 @@ To use a GPU-accelerated version, install the `itk-vkfft` package:
 pip install itk-vkfft
 ```
 
+And GPU-accelerated, FFT-based filtering is applied by default after installation.
+
 ## `ITK_BIN_SHRINK`
 
 Uses the [local mean] for the output value. Native binary build.
