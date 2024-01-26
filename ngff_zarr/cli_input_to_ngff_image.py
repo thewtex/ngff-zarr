@@ -21,6 +21,14 @@ def cli_input_to_ngff_image(
     if backend is ConversionBackend.ZARR_ARRAY:
         arr = zarr.open_array(input[0], mode="r")
         return to_ngff_image(arr)
+    if backend is ConversionBackend.ITKWASM:
+        try:
+            import itkwasm_image_io
+        except ImportError:
+            print("[red]Please install the [i]itkwasm-image-io[/i] package.")
+            sys.exit(1)
+        image = itkwasm_image_io.imread(input[0])
+        return itk_image_to_ngff_image(image)
     if backend is ConversionBackend.ITK:
         try:
             import itk

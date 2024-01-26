@@ -1,9 +1,9 @@
 import sys
 from pathlib import Path
 
-import itk
 import pooch
 import pytest
+from itkwasm_image_io import imread
 from ngff_zarr import itk_image_to_ngff_image, to_ngff_zarr
 from zarr.storage import DirectoryStore, MemoryStore
 
@@ -27,24 +27,23 @@ def input_images():
     )
     result = {}
 
-    image = itk.imread(test_data_dir / "input" / "cthead1.png")
+    image = imread(test_data_dir / "input" / "cthead1.png")
     image_ngff = itk_image_to_ngff_image(image)
     result["cthead1"] = image_ngff
 
     result["lung_series"] = test_data_dir / "input" / "lung_series" / "*"
 
-    image = itk.imread(
+    image = imread(
         test_data_dir / "input" / "brain_two_components.nrrd",
-        itk.VariableLengthVector[itk.SS],
     )
     image_ngff = itk_image_to_ngff_image(image)
     result["brain_two_components"] = image_ngff
 
-    image = itk.imread(test_data_dir / "input" / "2th_cthead1.png")
+    image = imread(test_data_dir / "input" / "2th_cthead1.png")
     image_ngff = itk_image_to_ngff_image(image)
     result["2th_cthead1"] = image_ngff
 
-    image = itk.imread(test_data_dir / "input" / "MR-head.nrrd")
+    image = imread(test_data_dir / "input" / "MR-head.nrrd")
     image_ngff = itk_image_to_ngff_image(image)
     result["MR-head"] = image_ngff
 
