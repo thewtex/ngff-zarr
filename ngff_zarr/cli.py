@@ -201,7 +201,7 @@ def main():
     processing_group.add_argument(
         "-m",
         "--method",
-        default="dask_image_gaussian",
+        default="itkwasm_gaussian",
         choices=methods_values,
         help="Downsampling method",
     )
@@ -292,7 +292,7 @@ def main():
         input_backend = detect_cli_io_backend(args.input)
     else:
         input_backend = ConversionBackend(args.input_backend)
-    method = Methods.ITK_GAUSSIAN if args.method is None else Methods(args.method)
+    method = Methods.ITKWASM_GAUSSIAN if args.method is None else Methods(args.method)
 
     if args.output:
         output_backend = detect_cli_io_backend(

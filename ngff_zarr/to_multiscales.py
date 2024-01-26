@@ -305,7 +305,7 @@ def to_multiscales(
     ngff_image.data = ngff_image.data.rechunk(da_out_chunks)
 
     if method is None:
-        method = Methods.DASK_IMAGE_GAUSSIAN
+        method = Methods.ITKWASM_GAUSSIAN
 
     if method is Methods.ITKWASM_GAUSSIAN:
         images = _downsample_itkwasm(
