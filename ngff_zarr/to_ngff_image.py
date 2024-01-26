@@ -22,37 +22,33 @@ def to_ngff_image(
     """
     Create an image with pixel array and metadata to following the OME-NGFF data model.
 
-    data: ArrayLike, ZarrArray, MutableMapping, str
-        Multi-dimensional array that provides the image pixel values. It can be a numpy.ndarray
+    :param data: Multi-dimensional array that provides the image pixel values. It can be a numpy.ndarray
          or another type that behaves like a numpy.ndarray, i.e. an ArrayLike.
          If a ZarrArray, MutableMapping, or str, it will be loaded into Dask lazily
          as a zarr Array.
+    :type  data: ArrayLike, ZarrArray, MutableMapping, str
 
-    dims: sequence of hashable, optional
-        Tuple specifying the data dimensions.
+    :param dims: Tuple specifying the data dimensions.
         Values should drawn from: {'t', 'z', 'y', 'x', 'c'} for time, third spatial direction
         second spatial direction, first spatial dimension, and channel or
         component, respectively spatial dimension, and time, respectively.
+    :type  dims: sequence of hashable, optional
 
-    scale: dict of floats, optional
-        Pixel spacing for the spatial dims
+    :param scale: Pixel spacing for the spatial dims
+    :type  scale: dict of floats, optional
 
-    translation: dict of floats, optional
-        Origin or offset of the center of the first pixel.
+    :param translation: Origin or offset of the center of the first pixel.
+    :type  translation: dict of floats, optional
 
-    name: str, optional
-        Name of the resulting image
+    :param name: Name of the resulting image
+    :type  name: str, optional
 
-    axes_units: dict of str, optional
-        Units to associate with the axes. Should be drawn from UDUNITS-2, enumerated at
+    :param axes_units: Units to associate with the axes. Should be drawn from UDUNITS-2, enumerated at
         https://ngff.openmicroscopy.org/latest/#axes-md
+    :type  axes_units: dict of str, optional
 
-
-    Returns
-    -------
-
-    image: NgffImage
-        Representation of an image (pixel data + metadata) for a single scale of an NGFF-OME-Zarr multiscale dataset
+    :return: Representation of an image (pixel data + metadata) for a single scale of an NGFF-OME-Zarr multiscale dataset
+    :rtype: NgffImage
     """
 
     ndim = data.ndim
