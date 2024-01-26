@@ -30,13 +30,15 @@ classifiers = [
   "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "numpy",
-    "zarr",
     "dask[array]",
+    "itkwasm >= 1.0b167",
+    "itkwasm-downsample >= 1.1.0",
+    "numpy",
     "platformdirs",
+    "psutil; sys_platform != \"emscripten\"",
     "rich",
     "typing_extensions",
-    "psutil; sys_platform != \"emscripten\""
+    "zarr",
 ]
 dynamic = ["version"]
 
