@@ -28,7 +28,7 @@ The default method.
 
 ## `ITKWASM_BIN_SHRINK`
 
-Used the [local mean] for the output value. [WebAssembly] build.
+Uses the [local mean] for the output value. [WebAssembly] build.
 
 Fast but generates more artifacts than gaussian-based methods.
 
@@ -52,7 +52,7 @@ pip install itk-vkfft
 
 ## `ITK_BIN_SHRINK`
 
-Used the [local mean] for the output value. Native binary build.
+Uses the [local mean] for the output value. Native binary build.
 
 Fast but generates more artifacts than gaussian-based methods.
 
