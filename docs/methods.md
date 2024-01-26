@@ -44,6 +44,12 @@ Fast and minimal artifacts. For label images.
 
 Similar to `ITKWASM_GAUSSIAN`, but the package is built to native binaries.
 
+Install required dependencies with:
+
+```sh
+pip install "ngff-zarr[itk]"
+```
+
 To use a GPU-accelerated version, install the `itk-vkfft` package:
 
 ```sh
@@ -58,12 +64,24 @@ Fast but generates more artifacts than gaussian-based methods.
 
 Appropriate for intensity images.
 
+Install required dependencies with:
+
+```sh
+pip install "ngff-zarr[itk]"
+```
+
 ## `DASK_IMAGE_GAUSSIAN`
 
 Smoothed with a discrete gaussian filter to generate a [scale space], ideal for
 intensity images.
 
 [dask-image] implementation based on [scipy].
+
+Install required dependencies with:
+
+```sh
+pip install "ngff-zarr[dask-image]"
+```
 
 ## `DASK_IMAGE_MODE`
 
@@ -78,6 +96,13 @@ Slower.
 Nearest neighbor for label images.
 
 Will have many artifacts for high-frequecy content and / or multiple scales.
+
+Install required dependencies with:
+
+```sh
+pip install "ngff-zarr[dask-image]"
+```
+
 
 [aliasing artifacts]:
   https://en.wikipedia.org/wiki/Nyquist%E2%80%93Shannon_sampling_theorem
