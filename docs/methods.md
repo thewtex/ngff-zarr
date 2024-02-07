@@ -26,6 +26,18 @@ intensity images.
 
 The default method.
 
+To use an NVIDIA CUDA GPU-accelerated version, install the
+`itkwasm-downsample-cucim` package:
+
+[Install cuCIM](https://github.com/rapidsai/cucim?tab=readme-ov-file#install-cucim),
+then:
+
+```sh
+pip install itkwasm-downsample-cucim
+```
+
+And GPU-accelerated filtering is applied by default after installation.
+
 ## `ITKWASM_BIN_SHRINK`
 
 Uses the [local mean] for the output value. [WebAssembly] build.
@@ -33,6 +45,9 @@ Uses the [local mean] for the output value. [WebAssembly] build.
 Fast but generates more artifacts than gaussian-based methods.
 
 Appropriate for intensity images.
+
+An NVIDIA CUDA GPU-accelerated version can be installed similar to
+`ITKWASM_GAUSSIAN` above.
 
 ## `ITKWASM_LABEL_IMAGE`
 
@@ -56,7 +71,8 @@ To use a GPU-accelerated version, install the `itk-vkfft` package:
 pip install itk-vkfft
 ```
 
-And GPU-accelerated, FFT-based filtering is applied by default after installation.
+And GPU-accelerated, FFT-based filtering is applied by default after
+installation.
 
 ## `ITK_BIN_SHRINK`
 
@@ -104,7 +120,6 @@ Install required dependencies with:
 ```sh
 pip install "ngff-zarr[dask-image]"
 ```
-
 
 [aliasing artifacts]:
   https://en.wikipedia.org/wiki/Nyquist%E2%80%93Shannon_sampling_theorem
