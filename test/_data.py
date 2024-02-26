@@ -7,8 +7,8 @@ from itkwasm_image_io import imread
 from ngff_zarr import itk_image_to_ngff_image, to_ngff_zarr
 from zarr.storage import DirectoryStore, MemoryStore
 
-test_data_ipfs_cid = "bafybeiawyalfemcmlfbizetoqilpmbk6coowu7cqr7av6aff4dpjwlsk6m"
-test_data_sha256 = "3f32e9e8fac84de3fbe63d0a6142b2eb65cadd8c9e1c3ba7f93080a6bc2150ef"
+test_data_ipfs_cid = "bafybeiaskr5fxg6rbcwlxl6ibzqhubdleacenrpbnymc6oblwoi7ceqzta"
+test_data_sha256 = "95e1f3864267dd9e0bd9ba7c99515d5952ca721b9dbbf282271e696fdab48f65"
 
 test_dir = Path(__file__).resolve().parent
 extract_dir = "data"
@@ -21,7 +21,8 @@ def input_images():
     pooch.retrieve(
         fname="data.tar.gz",
         path=test_dir,
-        url=f"https://{test_data_ipfs_cid}.ipfs.w3s.link/ipfs/{test_data_ipfs_cid}/data.tar.gz",
+        url=f"https://itk.mypinata.cloud/ipfs/{test_data_ipfs_cid}/data.tar.gz",
+        # url=f"https://{test_data_ipfs_cid}.ipfs.w3s.link/ipfs/{test_data_ipfs_cid}/data.tar.gz",
         known_hash=f"sha256:{test_data_sha256}",
         processor=untar,
     )
