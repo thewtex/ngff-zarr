@@ -1,3 +1,4 @@
+import importlib.util
 import sys
 from enum import Enum
 from pathlib import Path
@@ -8,6 +9,7 @@ conversion_backends = [
     ("ZARR_ARRAY", "zarr"),
     ("ITKWASM", "itkwasm_image_io"),
     ("ITK", "itk"),
+    ("CUCIM", "cucim"),
     ("TIFFFILE", "tifffile"),
     ("IMAGEIO", "imageio"),
 ]
@@ -102,6 +104,12 @@ def detect_cli_io_backend(input: List[str]) -> ConversionBackend:
 
     if extension in itk_supported_extensions:
         return ConversionBackend.ITK
+
+    if importlib.util.find_spec("cucim") is not None:
+        cucim_supported_extensions = (".svs", ".tif", ".tiff")
+
+        if extension in cucim_supported_extensions:
+            return ConversionBackend.CUCIM
 
     try:
         import tifffile

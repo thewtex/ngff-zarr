@@ -1,3 +1,5 @@
+import importlib.util
+
 from ngff_zarr import ConversionBackend, detect_cli_io_backend
 
 
@@ -18,7 +20,10 @@ def test_detect_tifffile_input_backend():
             f"file{extension}",
         ]
     )
-    assert backend == ConversionBackend.TIFFFILE
+    if importlib.util.find_spec("cucim") is not None:
+        assert backend == ConversionBackend.CUCIM
+    else:
+        assert backend == ConversionBackend.TIFFFILE
 
 
 def test_detect_imageio_input_backend():
