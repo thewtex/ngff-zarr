@@ -102,7 +102,7 @@ def _downsample_itkwasm_bin_shrink(
         origin = [previous_image.translation[d] for d in spatial_dims]
         block_input.origin = origin
         block_output = downsample_bin_shrink(
-            block_input, shrink_factors, information_only=False
+            block_input, shrink_factors, information_only=True
         )
         scale = {_image_dims[i]: s for (i, s) in enumerate(block_output.spacing)}
         translation = {_image_dims[i]: s for (i, s) in enumerate(block_output.origin)}

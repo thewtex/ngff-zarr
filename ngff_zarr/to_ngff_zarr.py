@@ -1,11 +1,18 @@
+import sys
 from collections.abc import MutableMapping
 from dataclasses import asdict
 from pathlib import Path, PurePosixPath
 from typing import Optional, Union
 
+if sys.version_info < (3, 10):
+    import importlib_metadata
+else:
+    import importlib.metadata as importlib_metadata
+
 import dask.array
 import numpy as np
 import zarr
+from itkwasm import array_like_to_numpy_array
 from zarr.storage import BaseStore
 
 from .config import config
@@ -25,6 +32,31 @@ def _pop_metadata_optionals(metadata_dict):
         metadata_dict.pop("coordinateTransformations")
 
     return metadata_dict
+
+
+def _prep_for_to_zarr(
+    store: Union[MutableMapping, str, Path, BaseStore], arr: dask.array.Array
+) -> dask.array.Array:
+    try:
+        importlib_metadata.distribution("kvikio")
+        _KVIKIO_AVAILABLE = True
+    except importlib_metadata.PackageNotFoundError:
+        _KVIKIO_AVAILABLE = False
+
+    if _KVIKIO_AVAILABLE:
+        from kvikio.zarr import GDSStore
+
+        if not isinstance(store, GDSStore):
+            arr = dask.array.map_blocks(
+                array_like_to_numpy_array,
+                arr,
+                dtype=arr.dtype,
+                meta=np.empty(()),
+            )
+        return arr
+    return dask.array.map_blocks(
+        array_like_to_numpy_array, arr, dtype=arr.dtype, meta=np.empty(())
+    )
 
 
 def to_ngff_zarr(
@@ -221,6 +253,7 @@ def to_ngff_zarr(
                             f"[green]Writing scale {index+1} of {nscales}, region {region_index+1} of {len(regions)}"
                         )
                     arr_region = arr[region]
+                    arr_region = _prep_for_to_zarr(store, arr_region)
                     optimized = dask.array.Array(
                         dask.array.optimize(
                             arr_region.__dask_graph__(), arr_region.__dask_keys__()
@@ -245,6 +278,7 @@ def to_ngff_zarr(
                 progress.add_callback_task(
                     f"[green]Writing scale {index+1} of {nscales}"
                 )
+            arr = _prep_for_to_zarr(store, arr)
             dask.array.to_zarr(
                 arr,
                 store,

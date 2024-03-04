@@ -2,15 +2,29 @@ from ngff_zarr import Methods, to_multiscales
 
 from ._data import verify_against_baseline
 
+_HAVE_CUCIM = False
+try:
+    import itkwasm_downsample_cucim  # noqa: F401
+
+    _HAVE_CUCIM = True
+except ImportError:
+    pass
+
 
 def test_bin_shrink_isotropic_scale_factors(input_images):
     dataset_name = "cthead1"
     image = input_images[dataset_name]
-    baseline_name = "2_4/ITKWASM_BIN_SHRINK.zarr"
+    if _HAVE_CUCIM:
+        baseline_name = "2_4/ITKWASM_BIN_SHRINK_CUCIM.zarr"
+    else:
+        baseline_name = "2_4/ITKWASM_BIN_SHRINK.zarr"
     multiscales = to_multiscales(image, [2, 4], method=Methods.ITKWASM_BIN_SHRINK)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
-    baseline_name = "auto/ITKWASM_BIN_SHRINK.zarr"
+    if _HAVE_CUCIM:
+        baseline_name = "auto/ITKWASM_BIN_SHRINK_CUCIM.zarr"
+    else:
+        baseline_name = "auto/ITKWASM_BIN_SHRINK.zarr"
     multiscales = to_multiscales(image, method=Methods.ITKWASM_BIN_SHRINK)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
@@ -18,23 +32,35 @@ def test_bin_shrink_isotropic_scale_factors(input_images):
 def test_gaussian_isotropic_scale_factors(input_images):
     dataset_name = "cthead1"
     image = input_images[dataset_name]
-    baseline_name = "2_4/ITKWASM_GAUSSIAN.zarr"
+    if _HAVE_CUCIM:
+        baseline_name = "2_4/ITKWASM_GAUSSIAN_CUCIM.zarr"
+    else:
+        baseline_name = "2_4/ITKWASM_GAUSSIAN.zarr"
     multiscales = to_multiscales(image, [2, 4], method=Methods.ITKWASM_GAUSSIAN)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
-    baseline_name = "auto/ITKWASM_GAUSSIAN.zarr"
+    if _HAVE_CUCIM:
+        baseline_name = "auto/ITKWASM_GAUSSIAN_CUCIM.zarr"
+    else:
+        baseline_name = "auto/ITKWASM_GAUSSIAN.zarr"
     multiscales = to_multiscales(image, method=Methods.ITKWASM_GAUSSIAN)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
     dataset_name = "cthead1"
     image = input_images[dataset_name]
-    baseline_name = "2_3/ITKWASM_GAUSSIAN.zarr"
+    if _HAVE_CUCIM:
+        baseline_name = "2_3/ITKWASM_GAUSSIAN_CUCIM.zarr"
+    else:
+        baseline_name = "2_3/ITKWASM_GAUSSIAN.zarr"
     multiscales = to_multiscales(image, [2, 3], method=Methods.ITKWASM_GAUSSIAN)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
     dataset_name = "MR-head"
     image = input_images[dataset_name]
-    baseline_name = "2_3_4/ITKWASM_GAUSSIAN.zarr"
+    if _HAVE_CUCIM:
+        baseline_name = "2_3_4/ITKWASM_GAUSSIAN_CUCIM.zarr"
+    else:
+        baseline_name = "2_3_4/ITKWASM_GAUSSIAN.zarr"
     multiscales = to_multiscales(image, [2, 3, 4], method=Methods.ITKWASM_GAUSSIAN)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 

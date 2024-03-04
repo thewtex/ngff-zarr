@@ -10,9 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
 keywords = []
-authors = [
-  { name = "Matt McCormick", email = "matt.mccormick@kitware.com" },
-]
+authors = [{ name = "Matt McCormick", email = "matt.mccormick@kitware.com" }]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Science/Research",
@@ -30,15 +28,15 @@ classifiers = [
   "Topic :: Scientific/Engineering",
 ]
 dependencies = [
-    "dask[array]",
-    "itkwasm >= 1.0b167",
-    "itkwasm-downsample >= 1.1.0",
-    "numpy",
-    "platformdirs",
-    "psutil; sys_platform != \"emscripten\"",
-    "rich",
-    "typing_extensions",
-    "zarr",
+  "dask[array]",
+  "itkwasm >= 1.0b168",
+  "itkwasm-downsample >= 1.1.0",
+  "numpy",
+  "platformdirs",
+  "psutil; sys_platform != \"emscripten\"",
+  "rich",
+  "typing_extensions",
+  "zarr",
 ]
 dynamic = ["version"]
 
@@ -55,32 +53,27 @@ ngff-zarr = "ngff_zarr.cli:main"
 path = "ngff_zarr/__about__.py"
 
 [project.optional-dependencies]
-dask-image = [
-    "dask-image",
-]
-itk = [
-    "itk-filtering>=5.3.0",
-]
+dask-image = ["dask-image"]
+itk = ["itk-filtering>=5.3.0"]
 cli = [
-    "dask-image",
-    "dask[distributed]",
-    "itk-filtering>=5.3.0",
-    "itk-io>=5.3.0",
-    "itkwasm-image-io",
-    "imageio",
-    "tifffile",
-    "imagecodecs",
+  "dask-image",
+  "dask[distributed]",
+  "itk-filtering>=5.3.0",
+  "itk-io>=5.3.0",
+  "itkwasm-image-io",
+  "imageio",
+  "tifffile",
+  "imagecodecs",
 ]
 test = [
-    "pytest >=6",
-    "pre-commit",
-    "pooch",
-    "itkwasm",
-    "itk-io>=5.3.0",
-    "itkwasm-image-io",
-    "itk-filtering>=5.3.0",
-    "tifffile",
-    "jsonschema",
+  "pytest >=6",
+  "pre-commit",
+  "pooch",
+  "itk-io>=5.3.0",
+  "itkwasm-image-io",
+  "itk-filtering>=5.3.0",
+  "tifffile",
+  "jsonschema",
 ]
 
 
@@ -100,40 +93,40 @@ filterwarnings = [
   "ignore:(ast.Str|Attribute s|ast.NameConstant|ast.Num) is deprecated:DeprecationWarning:_pytest",
 ]
 log_cli_level = "INFO"
-testpaths = [
-  "tests",
-]
+testpaths = ["tests"]
 
 
 [tool.ruff]
 select = [
-  "E", "F", "W", # flake8
-  "B",           # flake8-bugbear
-  "I",           # isort
-  "ARG",         # flake8-unused-arguments
-  "C4",          # flake8-comprehensions
-  "EM",          # flake8-errmsg
-  "ICN",         # flake8-import-conventions
-  "ISC",         # flake8-implicit-str-concat
-  "G",           # flake8-logging-format
-  "PGH",         # pygrep-hooks
-  "PIE",         # flake8-pie
-  "PL",          # pylint
-  "PT",          # flake8-pytest-style
-  "PTH",         # flake8-use-pathlib
-  "RET",         # flake8-return
-  "RUF",         # Ruff-specific
-  "SIM",         # flake8-simplify
-  "T20",         # flake8-print
-  "UP",          # pyupgrade
-  "YTT",         # flake8-2020
-  "EXE",         # flake8-executable
-  "NPY",         # NumPy specific rules
-  "PD",          # pandas-vet
+  "E",
+  "F",
+  "W",   # flake8
+  "B",   # flake8-bugbear
+  "I",   # isort
+  "ARG", # flake8-unused-arguments
+  "C4",  # flake8-comprehensions
+  "EM",  # flake8-errmsg
+  "ICN", # flake8-import-conventions
+  "ISC", # flake8-implicit-str-concat
+  "G",   # flake8-logging-format
+  "PGH", # pygrep-hooks
+  "PIE", # flake8-pie
+  "PL",  # pylint
+  "PT",  # flake8-pytest-style
+  "PTH", # flake8-use-pathlib
+  "RET", # flake8-return
+  "RUF", # Ruff-specific
+  "SIM", # flake8-simplify
+  "T20", # flake8-print
+  "UP",  # pyupgrade
+  "YTT", # flake8-2020
+  "EXE", # flake8-executable
+  "NPY", # NumPy specific rules
+  "PD",  # pandas-vet
 ]
 extend-ignore = [
-  "PLR",    # Design related pylint codes
-  "E501",   # Line too long
+  "PLR",  # Design related pylint codes
+  "E501", # Line too long
 ]
 src = ["src"]
 unfixable = [
@@ -150,7 +143,7 @@ line-length = 88
 
 [tool.pylint]
 py-version = "3.8"
-ignore-paths= ["src/ngff_zarr/__about__.py"]
+ignore-paths = ["src/ngff_zarr/__about__.py"]
 reports.output-format = "colorized"
 similarities.ignore-imports = "yes"
 messages_control.disable = [
