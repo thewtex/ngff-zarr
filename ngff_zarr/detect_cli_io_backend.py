@@ -105,6 +105,8 @@ def detect_cli_io_backend(input: List[str]) -> ConversionBackend:
     if extension in itk_supported_extensions:
         return ConversionBackend.ITK
 
+    extension = Path(input[0]).suffixes[-1].lower()
+
     if importlib.util.find_spec("cucim") is not None:
         cucim_supported_extensions = (".svs", ".tif", ".tiff")
 

@@ -1,14 +1,13 @@
 import sys
 
-import numpy as np
 import zarr
 from dask.array.image import imread as daimread
 from rich import print
 
+from .cucim_image_to_ngff_image import cucim_image_to_ngff_image
 from .detect_cli_io_backend import ConversionBackend
 from .from_ngff_zarr import from_ngff_zarr
 from .itk_image_to_ngff_image import itk_image_to_ngff_image
-from .methods._support import _spatial_dims
 from .ngff_image import NgffImage
 from .to_ngff_image import to_ngff_image
 
@@ -55,20 +54,7 @@ def cli_input_to_ngff_image(
             import cucim
 
             cuimage = cucim.CuImage(str(input[0]))
-            data = np.array(cuimage)
-            dims = tuple(d for d in cuimage.dims.lower())
-            spatial_dims = set(dims).intersection(_spatial_dims)
-            spatial_dims = [d for d in dims if d in spatial_dims]
-            spatial_dims_str = "".join(spatial_dims).upper()
-            translation = {d: 0.0 for d in spatial_dims}
-            for idx, dim in enumerate(spatial_dims):
-                # cucim: Should origin have a dim_order argument like spacing?
-                translation[dim] = cuimage.origin[idx]
-            spacing = cuimage.spacing(spatial_dims_str)
-            scale = {d: 1.0 for d in spatial_dims}
-            for idx, dim in enumerate(spatial_dims):
-                scale[dim] = spacing[idx]
-            return to_ngff_image(data, dims=dims, translation=translation, scale=scale)
+            return cucim_image_to_ngff_image(cuimage)
         except ImportError:
             print("[red]Please install the [i]cucim[/i] package.")
             sys.exit(1)

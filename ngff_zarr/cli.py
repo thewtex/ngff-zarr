@@ -28,6 +28,8 @@ from zarr.storage import DirectoryStore
 
 from .cli_input_to_ngff_image import cli_input_to_ngff_image
 from .config import config
+from .cucim_image_to_multiscales import cucim_image_to_multiscales
+from .cucim_image_to_ngff_image import cucim_image_to_ngff_image
 from .detect_cli_io_backend import (
     ConversionBackend,
     conversion_backends_values,
@@ -336,6 +338,31 @@ def main():
             _multiscales_to_ngff_zarr(
                 live, args, output_store, rich_dask_progress, multiscales
             )
+        elif input_backend is ConversionBackend.CUCIM:
+            try:
+                import cucim
+
+                cuimage = cucim.CuImage(str(args.input[0]))
+                if args.chunks is None:
+                    # Present the existing chunks and resolution levels
+                    multiscales = cucim_image_to_multiscales(cuimage)
+                else:
+                    ngff_image = cucim_image_to_ngff_image(cuimage)
+                    multiscales = _ngff_image_to_multiscales(
+                        live,
+                        ngff_image,
+                        args,
+                        progress,
+                        rich_dask_progress,
+                        subtitle,
+                        method,
+                    )
+                _multiscales_to_ngff_zarr(
+                    live, args, output_store, rich_dask_progress, multiscales
+                )
+            except ImportError:
+                sys.stdout.write("[red]Please install the [i]cucim[/i] package.\n")
+                sys.exit(1)
         elif input_backend is ConversionBackend.TIFFFILE:
             try:
                 import tifffile
