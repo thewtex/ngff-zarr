@@ -21,7 +21,7 @@ def detect_cli_io_backend(input: List[str]) -> ConversionBackend:
 
     extension = "".join(Path(input[0]).suffixes).lower()
 
-    ngff_zarr_supported_extensions = (".zarr",)
+    ngff_zarr_supported_extensions = (".zarr", ".ome.zarr")
     if extension in ngff_zarr_supported_extensions:
         return ConversionBackend.NGFF_ZARR
 

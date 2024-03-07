@@ -1,6 +1,16 @@
 from ngff_zarr import ConversionBackend, detect_cli_io_backend
 
 
+def test_detect_ngff_zarr_input_backend():
+    extension = ".ome.zarr"
+    backend = detect_cli_io_backend(
+        [
+            f"file{extension}",
+        ]
+    )
+    assert backend == ConversionBackend.NGFF_ZARR
+
+
 def test_detect_itk_input_backend():
     extension = ".nrrd"
     backend = detect_cli_io_backend(
