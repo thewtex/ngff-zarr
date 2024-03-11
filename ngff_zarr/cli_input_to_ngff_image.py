@@ -4,6 +4,7 @@ import zarr
 from dask.array.image import imread as daimread
 from rich import print
 
+from .cucim_image_to_ngff_image import cucim_image_to_ngff_image
 from .detect_cli_io_backend import ConversionBackend
 from .from_ngff_zarr import from_ngff_zarr
 from .itk_image_to_ngff_image import itk_image_to_ngff_image
@@ -48,6 +49,15 @@ def cli_input_to_ngff_image(
             return itk_image_to_ngff_image(image)
         image = itk.imread(input)
         return itk_image_to_ngff_image(image)
+    if backend is ConversionBackend.CUCIM:
+        try:
+            import cucim
+
+            cuimage = cucim.CuImage(str(input[0]))
+            return cucim_image_to_ngff_image(cuimage)
+        except ImportError:
+            print("[red]Please install the [i]cucim[/i] package.")
+            sys.exit(1)
     if backend is ConversionBackend.TIFFFILE:
         try:
             import tifffile
