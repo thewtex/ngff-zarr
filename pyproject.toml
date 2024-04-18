@@ -29,8 +29,8 @@ classifiers = [
 ]
 dependencies = [
   "dask[array]",
-  "itkwasm >= 1.0b168",
-  "itkwasm-downsample >= 1.1.0",
+  "itkwasm >= 1.0b171",
+  "itkwasm-downsample >= 1.2.0",
   "numpy",
   "platformdirs",
   "psutil; sys_platform != \"emscripten\"",
