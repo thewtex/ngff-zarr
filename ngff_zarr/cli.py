@@ -24,6 +24,7 @@ from rich.progress import (
     Progress as RichProgress,
 )
 from rich.spinner import Spinner
+from rich_argparse import RichHelpFormatter
 from zarr.storage import DirectoryStore
 
 from .cli_input_to_ngff_image import cli_input_to_ngff_image
@@ -141,7 +142,8 @@ def _ngff_image_to_multiscales(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Convert datasets to and from the OME-Zarr Next Generation File Format."
+        description="Convert datasets to and from the OME-Zarr Next Generation File Format.",
+        formatter_class=RichHelpFormatter,
     )
     parser.add_argument(
         "-i", "--input", nargs="+", help="Input image(s)", required=True

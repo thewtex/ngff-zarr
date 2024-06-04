@@ -35,6 +35,7 @@ dependencies = [
   "platformdirs",
   "psutil; sys_platform != \"emscripten\"",
   "rich",
+  "rich-argparse",
   "typing_extensions",
   "zarr",
 ]
