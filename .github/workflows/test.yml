@@ -9,14 +9,14 @@ jobs:
       max-parallel: 5
       matrix:
         os: [ubuntu-22.04, windows-2022, macos-12, macos-14]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
         if: ${{ matrix.os != 'mac-14' && matrix.package == '3.8' }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
