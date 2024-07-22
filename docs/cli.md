@@ -1,4 +1,4 @@
-# Command Line Interface (CLI)
+# 👨‍💻 Command Line Interface
 
 `ngff-zarr` provides a command line interface to convert a variety of scientific
 file formats to ome-zarr and inspect and ome-zarr store's contents.
@@ -23,7 +23,7 @@ Convert any scientific image file format supported by either
 Example:
 
 ```shell
-ngff-zarr -i ./MR-head.nrrd -o ./MR-head.zarr
+ngff-zarr -i ./MR-head.nrrd -o ./MR-head.ome.zarr
 ```
 
 ![ngff-zarr convert](https://i.imgur.com/I7gTG52.png)
@@ -33,7 +33,7 @@ ngff-zarr -i ./MR-head.nrrd -o ./MR-head.zarr
 Note the quotes:
 
 ```shell
-ngff-zarr -i "series/*.tif" -o ome-ngff.zarr
+ngff-zarr -i "series/*.tif" -o ome-ngff.ome.zarr
 ```
 
 ### Print information about generated multiscales
@@ -68,7 +68,7 @@ Limit memory consumption by passing a rough memory limit in human-readable
 units, e.g. _8GB_ with the `--memory-target` option.
 
 ```shell
-ngff-zarr --memory-target 50M -i ./LIDCFull.vtk -o ./LIDCFull.zarr
+ngff-zarr --memory-target 50M -i ./LIDCFull.vtk -o ./LIDCFull.ome.zarr
 ```
 
 ![ngff-zarr memory-target](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZmQ2NzVmMzU0NDA5ZDcyNzczNTU3MWE2YjczZjY5YmJkNWE4OTRhZSZjdD1n/ODobGeUYQr9wrE9J2s/giphy.gif)
