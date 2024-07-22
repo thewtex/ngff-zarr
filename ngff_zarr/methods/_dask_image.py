@@ -317,9 +317,10 @@ def _downsample_dask_image(
                                 ] * ndim
                                 offset[z_index] = z_offset
                                 offset[y_index] = y_offset
-                                regions[(z_split_index, y_split_index, 0)] = tuple(
-                                    region
-                                ), tuple(offset)
+                                regions[(z_split_index, y_split_index, 0)] = (
+                                    tuple(region),
+                                    tuple(offset),
+                                )
                                 y_offset += y_split.shape[y_index]
                             z_offset += z_split[0].shape[z_index]
                 else:
