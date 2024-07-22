@@ -5,17 +5,6 @@ ci:
   autofix_commit_msg: "STYLE: pre-commit fixes"
 
 repos:
-  - repo: https://github.com/psf/black
-    rev: "23.7.0"
-    hooks:
-      - id: black-jupyter
-
-  - repo: https://github.com/asottile/blacken-docs
-    rev: "1.15.0"
-    hooks:
-      - id: blacken-docs
-        additional_dependencies: [black==23.7.0]
-
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: "v4.6.0"
     hooks:
@@ -36,28 +25,12 @@ repos:
       - id: requirements-txt-fixer
       - id: trailing-whitespace
 
-  - repo: https://github.com/pre-commit/pygrep-hooks
-    rev: "v1.10.0"
-    hooks:
-      - id: rst-backticks
-      - id: rst-directive-colons
-      - id: rst-inline-touching-normal
-
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: "v3.0.0"
     hooks:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
         args: [--prose-wrap=always]
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "v1.4.1"
-    hooks:
-      - id: mypy
-        files: src|tests
-        args: []
-        additional_dependencies:
-          - pytest
 
   - repo: https://github.com/codespell-project/codespell
     rev: "v2.2.5"
@@ -69,59 +42,10 @@ repos:
     hooks:
       - id: shellcheck
 
-  - repo: local
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.5.4
     hooks:
-      - id: disallow-caps
-        name: Disallow improper capitalization
-        language: pygrep
-        entry: PyBind|Numpy|Cmake|CCache|Github|PyTest
-        exclude: .pre-commit-config.yaml
-
-  - repo: local
-    hooks:
-      - id: pixi-install
-        name: pixi-install
-        entry: pixi install -e lint
-        language: system
-        always_run: true
-        require_serial: true
-        pass_filenames: false
-      # pre-commit-hooks
-      - id: check-yaml
-        name: check-yaml
-        entry: pixi run -e lint check-yaml
-        language: system
-        types: [yaml]
-      - id: end-of-file
-        name: end-of-file
-        entry: pixi run -e lint end-of-file-fixer
-        language: system
-        types: [text]
-        stages: [commit, push, manual]
-      - id: trailing-whitespace
-        name: trailing-whitespace
-        entry: pixi run -e lint trailing-whitespace-fixer
-        language: system
-        types: [text]
-        stages: [commit, push, manual]
-      # Use ruff for python examples
       - id: ruff
-        name: ruff
-        entry:
-          pixi run -e lint ruff check --fix --exit-non-zero-on-fix
-          --force-exclude
-        language: system
-        types_or: [python, pyi]
-        require_serial: true
+        args: [--fix, --exit-non-zero-on-fix]
+        exclude: test/conftest.py
       - id: ruff-format
-        name: ruff-format
-        entry: pixi run -e lint ruff format --force-exclude
-        language: system
-        types_or: [python, pyi]
-        require_serial: true
-      # typos
-      - id: typos
-        name: typos
-        entry: pixi run -e lint typos --write-changes --force-exclude
-        language: system
-        types: [text]
