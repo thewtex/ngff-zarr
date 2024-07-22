@@ -72,6 +72,7 @@ test = [
   "pooch",
   "jsonschema",
 ]
+docs = [ "furo>=2024.7.18,<2025", "myst-parser>=3.0.1,<4", "sphinx>=7.4.7,<8", "sphinx-autodoc2>=0.5.0,<0.6", "sphinx-copybutton>=0.5.2,<0.6", "sphinx-design>=0.6.0,<0.7", "sphinxext-opengraph>=0.9.1,<0.10", "sphinx-autobuild>=2024.4.16,<2025"]
 
 
 [tool.coverage.report]
@@ -138,8 +139,6 @@ src = ["src"]
 exclude = []
 line-length = 88
 
-
-
 [tool.pylint]
 py-version = "3.8"
 ignore-paths = ["src/ngff_zarr/__about__.py"]
@@ -169,6 +168,8 @@ ngff-zarr = { path = ".", editable = true }
 default = { solve-group = "default" }
 test = { features = ["test", "dask-image", "itk", "cli"], solve-group = "default" }
 lint = { features = ["lint"], no-default-feature = true, solve-group = "default" }
+docs = { features = ["docs"], no-default-feature = true, solve-group = "default" }
+data = { features = ["data"], no-default-feature = true, solve-group = "default" }
 
 [tool.pixi.feature.test.tasks]
 test = { cmd = "pytest", description = "Run the test suite" }
@@ -180,3 +181,22 @@ pre-commit = "*"
 pre-commit-install = { cmd = "pre-commit install", description = "Install pre-commit hooks" }
 pre-commit-run = { cmd = "pre-commit run --all", description = "Run pre-commit hooks on all repository files" }
 lint = { depends-on = ["pre-commit-run"], description = "Run linters" }
+
+[tool.pixi.feature.docs.tasks]
+dev-docs = { cmd = "sphinx-autobuild docs docs/_build/html", description = "Build the documentation" }
+
+[tool.pixi.feature.docs.target.linux-64.tasks]
+build-docs = { cmd = "make html", cwd = "docs", description = "Build the documentation" }
+
+[tool.pixi.feature.docs.target.osx-64.tasks]
+build-docs = { cmd = "make html", cwd = "docs", description = "Build the documentation" }
+
+[tool.pixi.feature.docs.target.osx-arm64.tasks]
+build-docs = { cmd = "make html", cwd = "docs", description = "Build the documentation" }
+
+[tool.pixi.feature.data.dependencies]
+python = ">=3.9.19,<4"
+pooch = ">=1.8.2,<2"
+
+[tool.pixi.feature.data.tasks]
+hash-data = { cmd = "tar cvf ../data.tar * && gzip -9 -f ../data.tar && echo 'New SHA256:' && python3 -c 'import pooch; print(pooch.file_hash(\"../data.tar.gz\"))'", cwd = "test/data", description = "Update the testing data tarball and get its sha256 hash" }
