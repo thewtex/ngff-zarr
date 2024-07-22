@@ -260,6 +260,9 @@ def to_multiscales(
         Examples: 64 or [2, 4] or [{'x': 2, 'y': 4 }, {'x': 5, 'y': 10}]
     :type  scale_factors: int of minimum length, int per scale or dict of spatial dimension int's per scale
 
+    :param method:  Specify the anti-aliasing method used to downsample the image. Default is ITKWASM_GAUSSIAN.
+    :type  Methods: ngff_zarr.Methods enum
+
     :param chunks: Specify the chunking used in each output scale.
     :type  chunks: Dask array chunking specification, optional
 
