@@ -171,12 +171,12 @@ test = { features = ["test", "dask-image", "itk", "cli"], solve-group = "default
 lint = { features = ["lint"], no-default-feature = true, solve-group = "default" }
 
 [tool.pixi.feature.test.tasks]
-test = "pytest"
+test = { cmd = "pytest", description = "Run the test suite" }
 
 [tool.pixi.feature.lint.dependencies]
 pre-commit = "*"
 
 [tool.pixi.feature.lint.tasks]
-pre-commit-install = "pre-commit install"
-pre-commit-run = "pre-commit run --all"
-lint = { depends-on = ["pre-commit-run"] }
+pre-commit-install = { cmd = "pre-commit install", description = "Install pre-commit hooks" }
+pre-commit-run = { cmd = "pre-commit run --all", description = "Run pre-commit hooks on all repository files" }
+lint = { depends-on = ["pre-commit-run"], description = "Run linters" }
