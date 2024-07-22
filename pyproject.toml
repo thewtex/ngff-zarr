@@ -69,12 +69,7 @@ cli = [
 ]
 test = [
   "pytest >=6",
-  "pre-commit",
   "pooch",
-  "itk-io>=5.3.0",
-  "itkwasm-image-io",
-  "itk-filtering>=5.3.0",
-  "tifffile",
   "jsonschema",
 ]
 
@@ -158,3 +153,31 @@ messages_control.disable = [
 
 [tool.black]
 line-length = 88
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
+
+[tool.pixi.pypi-dependencies]
+ngff-zarr = { path = ".", editable = true }
+
+[tool.pixi.tasks]
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+test = { features = ["test", "dask-image", "itk", "cli"], solve-group = "default" }
+lint = { features = ["lint"], no-default-feature = true, solve-group = "default" }
+
+[tool.pixi.feature.test.tasks]
+test = "pytest"
+
+[tool.pixi.feature.lint.dependencies]
+pre-commit = "*"
+pre-commit-hooks = "*"
+ruff = "*"
+typos = ">=1.23.2,<1.24"
+
+[tool.pixi.feature.lint.tasks]
+pre-commit-install = "pre-commit install"
+pre-commit-run = "pre-commit run --all"
+lint = { depends-on = ["pre-commit-run"] }

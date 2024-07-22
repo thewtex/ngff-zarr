@@ -1,6 +1,8 @@
+exclude: (^.pixi/|.snap)
+
 ci:
-  autoupdate_commit_msg: "chore: update pre-commit hooks"
-  autofix_commit_msg: "style: pre-commit fixes"
+  autoupdate_commit_msg: "ENH: update pre-commit hooks"
+  autofix_commit_msg: "STYLE: pre-commit fixes"
 
 repos:
   - repo: https://github.com/psf/black
@@ -15,14 +17,18 @@ repos:
         additional_dependencies: [black==23.7.0]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: "v4.4.0"
+    rev: "v4.6.0"
     hooks:
       - id: check-added-large-files
       - id: check-case-conflict
-      - id: check-merge-conflict
       - id: check-symlinks
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-xml
       - id: check-yaml
       - id: debug-statements
+      - id: detect-private-key
       - id: end-of-file-fixer
       - id: mixed-line-ending
       - id: name-tests-test
@@ -43,12 +49,6 @@ repos:
       - id: prettier
         types_or: [yaml, markdown, html, css, scss, javascript, json]
         args: [--prose-wrap=always]
-
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: "v0.0.277"
-    hooks:
-      - id: ruff
-        args: ["--fix", "--show-fixes"]
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: "v1.4.1"
@@ -76,3 +76,52 @@ repos:
         language: pygrep
         entry: PyBind|Numpy|Cmake|CCache|Github|PyTest
         exclude: .pre-commit-config.yaml
+
+  - repo: local
+    hooks:
+      - id: pixi-install
+        name: pixi-install
+        entry: pixi install -e lint
+        language: system
+        always_run: true
+        require_serial: true
+        pass_filenames: false
+      # pre-commit-hooks
+      - id: check-yaml
+        name: check-yaml
+        entry: pixi run -e lint check-yaml
+        language: system
+        types: [yaml]
+      - id: end-of-file
+        name: end-of-file
+        entry: pixi run -e lint end-of-file-fixer
+        language: system
+        types: [text]
+        stages: [commit, push, manual]
+      - id: trailing-whitespace
+        name: trailing-whitespace
+        entry: pixi run -e lint trailing-whitespace-fixer
+        language: system
+        types: [text]
+        stages: [commit, push, manual]
+      # Use ruff for python examples
+      - id: ruff
+        name: ruff
+        entry:
+          pixi run -e lint ruff check --fix --exit-non-zero-on-fix
+          --force-exclude
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+      - id: ruff-format
+        name: ruff-format
+        entry: pixi run -e lint ruff format --force-exclude
+        language: system
+        types_or: [python, pyi]
+        require_serial: true
+      # typos
+      - id: typos
+        name: typos
+        entry: pixi run -e lint typos --write-changes --force-exclude
+        language: system
+        types: [text]
