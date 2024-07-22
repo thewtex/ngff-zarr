@@ -1,4 +1,4 @@
-# Methods
+# 🔖 Methods
 
 To avoid [aliasing artifacts] when generating a multiscale representation, it is
 crucial to smooth the input image before downsampling. Different downsampling

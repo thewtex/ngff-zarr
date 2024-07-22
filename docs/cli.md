@@ -1,4 +1,4 @@
-# 👨‍💻 Command Line Interface (CLI)
+# 👨‍💻 Command Line Interface
 
 `ngff-zarr` provides a command line interface to convert a variety of scientific
 file formats to ome-zarr and inspect and ome-zarr store's contents.
