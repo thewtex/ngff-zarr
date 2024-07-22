@@ -22,10 +22,11 @@ A lean and kind
   [OME-Zarr NGFF specification](https://github.com/ome/ngff)
 
 ```{toctree}
-:maxdepth: 3
+:maxdepth: 2
 
 quick_start.md
 installation.md
+array_api.md
 cli.md
 methods.md
 development.md

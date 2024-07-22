@@ -17,7 +17,8 @@ pip install "ngff-zarr[cli]"
 ```python
 import micropip
 await micropip.install('ngff-zarr')
+```
+
 :::
 
 ::::
-```
