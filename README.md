@@ -11,7 +11,7 @@
 A lean and kind Open Microscopy Environment (OME) Next Generation File Format
 (NGFF) Zarr implementation.
 
-## Features
+## ✨ Features
 
 - Minimal dependencies
 - Work with arbitrary Zarr store types
@@ -21,14 +21,6 @@ A lean and kind Open Microscopy Environment (OME) Next Generation File Format
 - Supports Python>=3.8
 - Implements version 0.4 of the
   [OME-Zarr NGFF specification](https://github.com/ome/ngff)
-
-## Installation
-
-To install the command line interface (CLI):
-
-```console
-pip install 'ngff-zarr[cli]'
-```
 
 ## Documentation
 
