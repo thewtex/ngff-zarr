@@ -1,4 +1,4 @@
-exclude: (^.pixi/|.snap)
+exclude: (^.pixi/|.snap|pixi.lock)
 
 ci:
   autoupdate_commit_msg: "ENH: update pre-commit hooks"
