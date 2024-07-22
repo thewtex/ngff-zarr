@@ -22,3 +22,11 @@ await micropip.install('ngff-zarr')
 :::
 
 ::::
+
+Optional dependencies include:
+
+`cli` : Additional IO libraries for the command line interface (CLI).
+
+`dask-image` : Multiscale generation with `dask-image` methods.
+
+`itk` : Multiscale generation with `itk` methods.

@@ -10,7 +10,7 @@ A lean and kind
 [Open Microscopy Environment (OME) Next Generation File Format (NGFF) Zarr implementation](https://ngff.openmicroscopy.org/latest/),
 [OME-Zarr](https://link.springer.com/article/10.1007/s00418-023-02209-1).
 
-## Features
+## ✨ Features
 
 - Minimal dependencies
 - Work with arbitrary Zarr store types
@@ -28,6 +28,7 @@ quick_start.md
 installation.md
 array_api.md
 cli.md
+itk.md
 methods.md
 development.md
 ```
