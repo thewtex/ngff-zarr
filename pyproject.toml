@@ -64,7 +64,7 @@ cli = [
   "itk-io>=5.3.0",
   "itkwasm-image-io",
   "imageio",
-  "tifffile",
+  "tifffile<2023.3.22",
   "imagecodecs",
 ]
 test = [
