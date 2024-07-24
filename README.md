@@ -32,6 +32,11 @@ how to contribute can be found in
 
 - [ome-zarr-py](https://github.com/ome/ome-zarr-py)
 - [multiscale-spatial-image](https://github.com/spatial-image/multiscale-spatial-image)
+- [itk-ioomezarrngff](https://github.com/InsightSoftwareConsortium/ITKIOOMEZarrNGFF)
+- [iohub](https://czbiohub-sf.github.io/iohub/)
+- [pydantic-ome-ngff](https://janeliascicomp.github.io/pydantic-ome-ngff/)
+- [aicsimageio](https://allencellmodeling.github.io/aicsimageio/)
+- [bfio](https://bfio.readthedocs.io/)
 
 ## License
 
