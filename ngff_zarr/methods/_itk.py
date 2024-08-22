@@ -223,7 +223,7 @@ def _downsample_itk_gaussian(
         previous_dim_factors = dim_factors
         previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
 
-        shrink_factors = [dim_factors[sf] for sf in _spatial_dims if sf in dim_factors]
+        shrink_factors = [factor for dim, factor in dim_factors.items() if dim in _spatial_dims]
 
         # Compute metadata for region splitting
 

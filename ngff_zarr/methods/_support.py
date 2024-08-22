@@ -11,7 +11,7 @@ def _dim_scale_factors(dims, scale_factor, previous_dim_factors):
     if isinstance(scale_factor, int):
         result_scale_factors = {
             dim: int(scale_factor / previous_dim_factors[dim])
-            for dim in _spatial_dims.intersection(dims)
+            for dim in dims if dim in _spatial_dims
         }
     else:
         result_scale_factors = {
