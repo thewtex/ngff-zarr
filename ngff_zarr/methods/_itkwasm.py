@@ -84,12 +84,13 @@ def _downsample_itkwasm_bin_shrink(
     dims = ngff_image.dims
     previous_dim_factors = {d: 1 for d in dims}
     spatial_dims = [dim for dim in dims if dim in _spatial_dims]
+    spatial_dims = _image_dims[: len(spatial_dims)]
     for scale_factor in scale_factors:
         dim_factors = _dim_scale_factors(dims, scale_factor, previous_dim_factors)
         previous_dim_factors = dim_factors
         previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
 
-        shrink_factors = [dim_factors[sf] for sf in _image_dims if sf in dim_factors]
+        shrink_factors = [dim_factors[sd] for sd in spatial_dims]
 
         block_0 = _get_block(previous_image, 0)
 
@@ -160,12 +161,13 @@ def _downsample_itkwasm(
     dims = ngff_image.dims
     previous_dim_factors = {d: 1 for d in dims}
     spatial_dims = [dim for dim in dims if dim in _spatial_dims]
+    spatial_dims = _image_dims[: len(spatial_dims)]
     for scale_factor in scale_factors:
         dim_factors = _dim_scale_factors(dims, scale_factor, previous_dim_factors)
         previous_dim_factors = dim_factors
         previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
 
-        shrink_factors = [factor for dim, factor in dim_factors.items() if dim in _spatial_dims]
+        shrink_factors = [dim_factors[sd] for sd in spatial_dims]
 
         # Compute metadata for region splitting
 
