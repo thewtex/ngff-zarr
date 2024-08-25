@@ -15,24 +15,41 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        if: ${{ matrix.os != 'macos-14' || matrix.package != '3.8' }}
+        if: ${{ matrix.os != 'macos-14' || matrix.python-version != '3.8' }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        if: ${{ matrix.os != 'macos-14' || matrix.package != '3.8' }}
+        if: ${{ matrix.os != 'macos-14' && matrix.python-version != '3.8' }}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test,dask-image,itk,cli]"
+
+      - name: Install dependencies
+        if: ${{ matrix.os != 'macos-14' && matrix.python-version == '3.8' }}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test,dask-image,itk]"
+          python -m pip install itkwasm-image-io
+
+      - name: Install dependencies
+        if: ${{ matrix.os == 'macos-14' && matrix.python-version != '3.8' }}
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e ".[test,dask-image,itk,cli]"
 
       - name: Test with pytest
-        if: ${{ matrix.os != 'macos-14' || matrix.package != '3.8' }}
+        if:
+          ${{ matrix.os != 'ubuntu-22.04' && (matrix.os != 'macos-14' ||
+          matrix.python-version != '3.8') }}
         run: |
           pytest --junitxml=junit/test-results.xml
 
       - name: Publish Test Report
-        if: ${{ matrix.os != 'macos-14' || matrix.package != '3.8' }}
+        if:
+          ${{ matrix.os != 'ubuntu-22.04' && (matrix.os != 'macos-14' ||
+          matrix.python-version != '3.8') }}
         uses: mikepenz/action-junit-report@v2
         with:
           report_paths: "junit/test-results*.xml"
