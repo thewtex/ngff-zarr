@@ -34,6 +34,7 @@ from .zarr_metadata import Axis, Dataset, Metadata, Scale, Translation
 
 
 def _ngff_image_scale_factors(ngff_image, min_length, out_chunks):
+    assert tuple(ngff_image.dims) == tuple(out_chunks.keys()), f"{ngff_image.dims} != {out_chunks.keys()}"
     sizes = {
         d: s
         for d, s in zip(ngff_image.dims, ngff_image.data.shape)
@@ -41,16 +42,9 @@ def _ngff_image_scale_factors(ngff_image, min_length, out_chunks):
     }
     scale_factors = []
     dims = ngff_image.dims
-    previous = {d: 1 for d in _spatial_dims.intersection(dims)}
+    previous = {d: 1 for d in dims if d in _spatial_dims}
     sizes_array = np.array(list(sizes.values()))
-    sizes = {
-        d: s
-        for d, s in zip(ngff_image.dims, ngff_image.data.shape)
-        if d in _spatial_dims
-    }
-    double_chunks = np.array(
-        [2 * out_chunks[d] for d in _spatial_dims.intersection(out_chunks)]
-    )
+    double_chunks = np.array([2 * s for d, s in out_chunks.items() if d in _spatial_dims])
     while (sizes_array > double_chunks).any():
         max_size = np.array(list(sizes.values())).max()
         to_skip = {d: sizes[d] <= max_size / 2 for d in previous}
@@ -63,11 +57,11 @@ def _ngff_image_scale_factors(ngff_image, min_length, out_chunks):
 
             sizes[dim] = int(sizes[dim] / 2)
         sizes_array = np.array(list(sizes.values()))
-        previous = scale_factor
         # There should be sufficient data in the result for statistics, etc.
-        if (np.prod(sizes_array) / min_length) < 2:
+        if (np.prod(sizes_array) / min_length) < 2 or scale_factor == previous:
             break
         scale_factors.append(scale_factor)
+        previous = scale_factor
 
     return scale_factors
 
@@ -275,7 +269,6 @@ def to_multiscales(
     :return: NgffImage for each resolution and NGFF multiscales metadata
     :rtype : Multiscales
     """
-    image = data
     ngff_image = data if isinstance(data, NgffImage) else to_ngff_image(data)
 
     # IPFS and visualization friendly default chunks
