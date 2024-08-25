@@ -7,8 +7,8 @@ from itkwasm_image_io import imread
 from ngff_zarr import itk_image_to_ngff_image, to_ngff_zarr
 from zarr.storage import DirectoryStore, MemoryStore
 
-test_data_ipfs_cid = "bafybeiaskr5fxg6rbcwlxl6ibzqhubdleacenrpbnymc6oblwoi7ceqzta"
-test_data_sha256 = "95e1f3864267dd9e0bd9ba7c99515d5952ca721b9dbbf282271e696fdab48f65"
+test_data_ipfs_cid = "bafybeif6s65ezzpejhcj5366nwvyljfcj4brmefqtjxymbrcicbo3ggcei"
+test_data_sha256 = "c70c024e79d3dd6ecff86b9da1367b761d5f157f5cdad529c1fe482d2bce699a"
 
 test_dir = Path(__file__).resolve().parent
 extract_dir = "data"
