@@ -17,6 +17,21 @@ from .task_count import task_count
 from .to_multiscales import to_multiscales
 from .to_ngff_image import to_ngff_image
 from .to_ngff_zarr import to_ngff_zarr
+from .zarr_metadata import (
+    AxesType,
+    SpatialDims,
+    SupportedDims,
+    SpaceUnits,
+    TimeUnits,
+    Units,
+    Axis,
+    Identity,
+    Scale,
+    Translation,
+    Transform,
+    Dataset,
+    Metadata,
+)
 
 __all__ = [
     "__version__",
@@ -36,4 +51,18 @@ __all__ = [
     "detect_cli_io_backend",
     "ConversionBackend",
     "cli_input_to_ngff_image",
+    "Metadata",
+    "AxesType",
+    "SpatialDims",
+    "SupportedDims",
+    "SpaceUnits",
+    "TimeUnits",
+    "Units",
+    "Axis",
+    "Identity",
+    "Scale",
+    "Translation",
+    "Transform",
+    "Dataset",
+    "Metadata",
 ]
