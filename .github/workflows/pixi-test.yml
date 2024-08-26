@@ -16,8 +16,6 @@ jobs:
       - uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: v0.27.1
-          cache: false
-          cache-write: false
           frozen: true
 
       - name: Run tests
