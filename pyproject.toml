@@ -157,7 +157,7 @@ line-length = 88
 
 [tool.pixi.project]
 channels = ["conda-forge"]
-platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
+platforms = ["win-64", "linux-64", "osx-64", "osx-arm64", "linux-aarch64"]
 
 [tool.pixi.pypi-dependencies]
 ngff-zarr = { path = ".", editable = true }
