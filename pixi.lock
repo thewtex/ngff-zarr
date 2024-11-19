@@ -3862,7 +3862,7 @@ packages:
   name: ngff-zarr
   version: 0.8.7
   path: .
-  sha256: 890f55deabcd7138be81c735c9bc8bf8226fd8db8b75f1ce88a7318423e1fbca
+  sha256: 8233de28bc699069f6c4c5dd1ca8e0f84fc13d0bc021fc8c5725a9d22260faee
   requires_dist:
   - dask[array]
   - itkwasm-downsample>=1.2.0
