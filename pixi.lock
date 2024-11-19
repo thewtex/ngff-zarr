@@ -3862,7 +3862,7 @@ packages:
   name: ngff-zarr
   version: 0.8.7
   path: .
-  sha256: c9184a12e04810ed96ff44a75e2435bd106170f274894c46ae13238be107c370
+  sha256: 890f55deabcd7138be81c735c9bc8bf8226fd8db8b75f1ce88a7318423e1fbca
   requires_dist:
   - dask[array]
   - itkwasm-downsample>=1.2.0
@@ -3896,7 +3896,7 @@ packages:
   - jsonschema ; extra == 'test'
   - pooch ; extra == 'test'
   - pytest>=6 ; extra == 'test'
-  requires_python: '>=3.8'
+  requires_python: '>=3.9'
   editable: true
 - kind: conda
   name: nodeenv
