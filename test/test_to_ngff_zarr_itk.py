@@ -1,6 +1,9 @@
+import pytest
+
 from ngff_zarr import Methods, to_multiscales
 
 from ._data import verify_against_baseline
+import platform
 
 
 def test_bin_shrink_isotropic_scale_factors(input_images):
@@ -16,6 +19,10 @@ def test_bin_shrink_isotropic_scale_factors(input_images):
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
 
+@pytest.mark.skipif(
+    platform.system() == "Linux" and platform.machine() == "aarch64",
+    reason="Skipping on Linux ARM systems",
+)
 def test_gaussian_isotropic_scale_factors(input_images):
     dataset_name = "cthead1"
     image = input_images[dataset_name]

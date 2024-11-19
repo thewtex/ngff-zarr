@@ -71,6 +71,7 @@ test = [
   "pytest >=6",
   "pooch",
   "jsonschema",
+  "deepdiff"
 ]
 docs = [ "furo>=2024.7.18,<2025", "myst-parser>=3.0.1,<4", "sphinx>=7.4.7,<8", "sphinx-autodoc2>=0.5.0,<0.6", "sphinx-copybutton>=0.5.2,<0.6", "sphinx-design>=0.6.0,<0.7", "sphinxext-opengraph>=0.9.1,<0.10", "sphinx-autobuild>=2024.4.16,<2025"]
 
@@ -157,7 +158,7 @@ line-length = 88
 
 [tool.pixi.project]
 channels = ["conda-forge"]
-platforms = ["win-64", "linux-64", "osx-64", "osx-arm64"]
+platforms = ["win-64", "linux-64", "osx-64", "osx-arm64", "linux-aarch64"]
 
 [tool.pixi.pypi-dependencies]
 ngff-zarr = { path = ".", editable = true }
