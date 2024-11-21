@@ -34,7 +34,9 @@ from .zarr_metadata import Axis, Dataset, Metadata, Scale, Translation
 
 
 def _ngff_image_scale_factors(ngff_image, min_length, out_chunks):
-    assert tuple(ngff_image.dims) == tuple(out_chunks.keys()), f"{ngff_image.dims} != {out_chunks.keys()}"
+    assert tuple(ngff_image.dims) == tuple(
+        out_chunks.keys()
+    ), f"{ngff_image.dims} != {out_chunks.keys()}"
     sizes = {
         d: s
         for d, s in zip(ngff_image.dims, ngff_image.data.shape)
@@ -44,7 +46,9 @@ def _ngff_image_scale_factors(ngff_image, min_length, out_chunks):
     dims = ngff_image.dims
     previous = {d: 1 for d in dims if d in _spatial_dims}
     sizes_array = np.array(list(sizes.values()))
-    double_chunks = np.array([2 * s for d, s in out_chunks.items() if d in _spatial_dims])
+    double_chunks = np.array(
+        [2 * s for d, s in out_chunks.items() if d in _spatial_dims]
+    )
     while (sizes_array > double_chunks).any():
         max_size = np.array(list(sizes.values())).max()
         to_skip = {d: sizes[d] <= max_size / 2 for d in previous}
@@ -252,12 +256,13 @@ def to_multiscales(
         If a list, integer scale factors to apply uniformly across all spatial dimensions or
         along individual spatial dimensions.
         Examples: 64 or [2, 4] or [{'x': 2, 'y': 4 }, {'x': 5, 'y': 10}]
+        Scaling is constrained by size of chunks - we do not scale below the chunk size.
     :type  scale_factors: int of minimum length, int per scale or dict of spatial dimension int's per scale
 
     :param method:  Specify the anti-aliasing method used to downsample the image. Default is ITKWASM_GAUSSIAN.
     :type  Methods: ngff_zarr.Methods enum
 
-    :param chunks: Specify the chunking used in each output scale.
+    :param chunks: Specify the chunking used in each output scale. The default is 128 for 3D images and 256 for 2D images.
     :type  chunks: Dask array chunking specification, optional
 
     :param cache: Cache intermediate results to disk to limit memory consumption. If None, the default, determine based on ngff_zarr.config.memory_target.
