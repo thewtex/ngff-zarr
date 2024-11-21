@@ -231,7 +231,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/61/bf/fd60001b3abc5222d8eaa4a204cd8c0ae78e75adc688f33ce4bf25b7fafa/fasteners-0.19-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c6/b2/454d6e7f0158951d8a78c2e1eb4f69ae81beb8dca5fee9809c6c99e9d0d0/fsspec-2024.10.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/6a/4604f9ae2fa62ef47b9de2fa5ad599589d28c9fd1d335f32759813dfa91e/importlib_resources-6.4.5-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/bd/a5/329525eeaf0ac895a37b0a498b311e6d2991d47c827804908a815ae088f3/itkwasm-1.0b180-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/86/b2/4a92227a1afada5b5c062fe75b749d445a783263d08b61f9aa56ebd43c90/itkwasm-1.0b183-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/95/7aee976ebd939c105aa2ed549770932d97971018ec5183e5436d999e40a1/itkwasm_downsample-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6f/c1/9cd278d3a698cf1c202a8c4aa10786edf0db33af8031c03abcc671196498/itkwasm_downsample_wasi-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/db/bc/83e112abc66cd466c6b83f99118035867cecd41802f8d044638aa78a106e/locket-1.0.0-py2.py3-none-any.whl
@@ -246,7 +246,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/25/45/54b95bb72bb17c27a7252bee5034955020b5869a33918b660ffc29cbf608/rich_argparse-1.6.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/5c/ba/f551b829378d65d0e0494fdb492942a0ed2dc7f40681b2438a47d1f4af86/wasmtime-25.0.0-py3-none-manylinux1_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/21/b3/90e10056f92f187b0d30647b154fcd1b322055688baceca9f26e768c1672/wasmtime-27.0.0-py3-none-manylinux1_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/ed/c9/142095e654c2b97133ff71df60979422717b29738b08bc8a1709a5d5e0d0/zarr-2.18.3-py3-none-any.whl
       - pypi: .
       linux-aarch64:
@@ -282,7 +282,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/61/bf/fd60001b3abc5222d8eaa4a204cd8c0ae78e75adc688f33ce4bf25b7fafa/fasteners-0.19-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c6/b2/454d6e7f0158951d8a78c2e1eb4f69ae81beb8dca5fee9809c6c99e9d0d0/fsspec-2024.10.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/6a/4604f9ae2fa62ef47b9de2fa5ad599589d28c9fd1d335f32759813dfa91e/importlib_resources-6.4.5-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/bd/a5/329525eeaf0ac895a37b0a498b311e6d2991d47c827804908a815ae088f3/itkwasm-1.0b180-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/86/b2/4a92227a1afada5b5c062fe75b749d445a783263d08b61f9aa56ebd43c90/itkwasm-1.0b183-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/95/7aee976ebd939c105aa2ed549770932d97971018ec5183e5436d999e40a1/itkwasm_downsample-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6f/c1/9cd278d3a698cf1c202a8c4aa10786edf0db33af8031c03abcc671196498/itkwasm_downsample_wasi-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/db/bc/83e112abc66cd466c6b83f99118035867cecd41802f8d044638aa78a106e/locket-1.0.0-py2.py3-none-any.whl
@@ -297,7 +297,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/25/45/54b95bb72bb17c27a7252bee5034955020b5869a33918b660ffc29cbf608/rich_argparse-1.6.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/b7/36/5e83b5f7858fe1003cbb89d0d5716f628b9a00fafc3762665f06ca4ef75d/wasmtime-25.0.0-py3-none-manylinux2014_aarch64.whl
+      - pypi: https://files.pythonhosted.org/packages/dd/0a/c088d20e6910db555c3a82a14e79810ddf59c8f89210ce183e31b926e735/wasmtime-27.0.0-py3-none-manylinux2014_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/ed/c9/142095e654c2b97133ff71df60979422717b29738b08bc8a1709a5d5e0d0/zarr-2.18.3-py3-none-any.whl
       - pypi: .
       osx-64:
@@ -327,7 +327,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/61/bf/fd60001b3abc5222d8eaa4a204cd8c0ae78e75adc688f33ce4bf25b7fafa/fasteners-0.19-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c6/b2/454d6e7f0158951d8a78c2e1eb4f69ae81beb8dca5fee9809c6c99e9d0d0/fsspec-2024.10.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/6a/4604f9ae2fa62ef47b9de2fa5ad599589d28c9fd1d335f32759813dfa91e/importlib_resources-6.4.5-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/bd/a5/329525eeaf0ac895a37b0a498b311e6d2991d47c827804908a815ae088f3/itkwasm-1.0b180-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/86/b2/4a92227a1afada5b5c062fe75b749d445a783263d08b61f9aa56ebd43c90/itkwasm-1.0b183-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/95/7aee976ebd939c105aa2ed549770932d97971018ec5183e5436d999e40a1/itkwasm_downsample-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6f/c1/9cd278d3a698cf1c202a8c4aa10786edf0db33af8031c03abcc671196498/itkwasm_downsample_wasi-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/db/bc/83e112abc66cd466c6b83f99118035867cecd41802f8d044638aa78a106e/locket-1.0.0-py2.py3-none-any.whl
@@ -342,7 +342,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/25/45/54b95bb72bb17c27a7252bee5034955020b5869a33918b660ffc29cbf608/rich_argparse-1.6.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/3f/d3/18db03cea097067eef07b655b2357b47da4f27ed909e97d4e3e13b25115f/wasmtime-25.0.0-py3-none-macosx_10_13_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/bc/70/0d28d5418f444a013fa489591dff8fa03ff325c6572e9401c9921b320939/wasmtime-27.0.0-py3-none-macosx_10_13_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/ed/c9/142095e654c2b97133ff71df60979422717b29738b08bc8a1709a5d5e0d0/zarr-2.18.3-py3-none-any.whl
       - pypi: .
       osx-arm64:
@@ -372,7 +372,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/61/bf/fd60001b3abc5222d8eaa4a204cd8c0ae78e75adc688f33ce4bf25b7fafa/fasteners-0.19-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c6/b2/454d6e7f0158951d8a78c2e1eb4f69ae81beb8dca5fee9809c6c99e9d0d0/fsspec-2024.10.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/6a/4604f9ae2fa62ef47b9de2fa5ad599589d28c9fd1d335f32759813dfa91e/importlib_resources-6.4.5-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/bd/a5/329525eeaf0ac895a37b0a498b311e6d2991d47c827804908a815ae088f3/itkwasm-1.0b180-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/86/b2/4a92227a1afada5b5c062fe75b749d445a783263d08b61f9aa56ebd43c90/itkwasm-1.0b183-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/95/7aee976ebd939c105aa2ed549770932d97971018ec5183e5436d999e40a1/itkwasm_downsample-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6f/c1/9cd278d3a698cf1c202a8c4aa10786edf0db33af8031c03abcc671196498/itkwasm_downsample_wasi-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/db/bc/83e112abc66cd466c6b83f99118035867cecd41802f8d044638aa78a106e/locket-1.0.0-py2.py3-none-any.whl
@@ -387,7 +387,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/25/45/54b95bb72bb17c27a7252bee5034955020b5869a33918b660ffc29cbf608/rich_argparse-1.6.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/cc/f0/d415d6b31ba69cfca04b2d5e83fbb5fc05335323712fd91948a1a53d13be/wasmtime-25.0.0-py3-none-macosx_11_0_arm64.whl
+      - pypi: https://files.pythonhosted.org/packages/a3/00/7cbd94ebeeedc3fbdfde22d129927e254045849c954560a00fddba505465/wasmtime-27.0.0-py3-none-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/ed/c9/142095e654c2b97133ff71df60979422717b29738b08bc8a1709a5d5e0d0/zarr-2.18.3-py3-none-any.whl
       - pypi: .
       win-64:
@@ -420,7 +420,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/61/bf/fd60001b3abc5222d8eaa4a204cd8c0ae78e75adc688f33ce4bf25b7fafa/fasteners-0.19-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/c6/b2/454d6e7f0158951d8a78c2e1eb4f69ae81beb8dca5fee9809c6c99e9d0d0/fsspec-2024.10.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/6a/4604f9ae2fa62ef47b9de2fa5ad599589d28c9fd1d335f32759813dfa91e/importlib_resources-6.4.5-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/bd/a5/329525eeaf0ac895a37b0a498b311e6d2991d47c827804908a815ae088f3/itkwasm-1.0b180-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/86/b2/4a92227a1afada5b5c062fe75b749d445a783263d08b61f9aa56ebd43c90/itkwasm-1.0b183-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/95/7aee976ebd939c105aa2ed549770932d97971018ec5183e5436d999e40a1/itkwasm_downsample-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6f/c1/9cd278d3a698cf1c202a8c4aa10786edf0db33af8031c03abcc671196498/itkwasm_downsample_wasi-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/db/bc/83e112abc66cd466c6b83f99118035867cecd41802f8d044638aa78a106e/locket-1.0.0-py2.py3-none-any.whl
@@ -435,7 +435,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/25/45/54b95bb72bb17c27a7252bee5034955020b5869a33918b660ffc29cbf608/rich_argparse-1.6.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/03/98/eb27cc78ad3af8e302c9d8ff4977f5026676e130d28dd7578132a457170c/toolz-1.0.0-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/1b/21/c0f3e031efe5f009215975eb7dbea86b55a69c4f02420965d1f45f43865e/wasmtime-25.0.0-py3-none-win_amd64.whl
+      - pypi: https://files.pythonhosted.org/packages/00/82/d7d7939a7b8d1383dde67954fc3b37c0deb7dbcaaef396fb116536ec0740/wasmtime-27.0.0-py3-none-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/ed/c9/142095e654c2b97133ff71df60979422717b29738b08bc8a1709a5d5e0d0/zarr-2.18.3-py3-none-any.whl
       - pypi: .
   docs:
@@ -1068,7 +1068,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/bb/23/06d0a850a7e525ede537e3e37fd8efd7f5858e261d6170d6f0697cb663dd/itk_filtering-5.4.0-cp311-abi3-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/11/61/cfd1cc04d2cd6c603c0abcd1f4bc0d65bff6ee9b84ebcbd828277b807887/itk_io-5.4.0-cp311-abi3-manylinux_2_28_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/8a/0b/46eaffa04ac7a15d2bea1f40e179df6152c00bf709f8d08b81c5514a9e12/itk_numerics-5.4.0-cp311-abi3-manylinux_2_28_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/bd/a5/329525eeaf0ac895a37b0a498b311e6d2991d47c827804908a815ae088f3/itkwasm-1.0b180-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/86/b2/4a92227a1afada5b5c062fe75b749d445a783263d08b61f9aa56ebd43c90/itkwasm-1.0b183-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/95/7aee976ebd939c105aa2ed549770932d97971018ec5183e5436d999e40a1/itkwasm_downsample-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6f/c1/9cd278d3a698cf1c202a8c4aa10786edf0db33af8031c03abcc671196498/itkwasm_downsample_wasi-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/af/32/f3f5cce3071842b9999faf68e80aa17533ede558ff63d350c3220110ae18/itkwasm_image_io-1.3.1-py3-none-any.whl
@@ -1109,7 +1109,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/22/d4/54f9d12668b58336bd30defe0307e6c61589a3e687b05c366f804b7faaf0/tornado-6.4.1-cp38-abi3-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a6/ab/7e5f53c3b9d14972843a647d8d7a853969a58aecc7559cb3267302c94774/tzdata-2024.2-py2.py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/5c/ba/f551b829378d65d0e0494fdb492942a0ed2dc7f40681b2438a47d1f4af86/wasmtime-25.0.0-py3-none-manylinux1_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/21/b3/90e10056f92f187b0d30647b154fcd1b322055688baceca9f26e768c1672/wasmtime-27.0.0-py3-none-manylinux1_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/ed/c9/142095e654c2b97133ff71df60979422717b29738b08bc8a1709a5d5e0d0/zarr-2.18.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/80/ab/11a76c1e2126084fde2639514f24e6111b789b0bfa4fc6264a8975c7e1f1/zict-3.0.0-py2.py3-none-any.whl
       - pypi: .
@@ -1175,7 +1175,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/8d/f0/0fb8ad41cddcd0580689450d304757211a19f8e3426ae42d30577d10ac19/itk_filtering-5.4.0-cp311-abi3-manylinux_2_28_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/d6/79/acd142f3052c408eb41f5e6934b954decb49b6129370262647cfda343208/itk_io-5.4.0-cp311-abi3-manylinux_2_28_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/2d/7f/b28465e289ce6217b3e1fbebb9956e73e334a5c5f76a6426ba6843310943/itk_numerics-5.4.0-cp311-abi3-manylinux_2_28_aarch64.whl
-      - pypi: https://files.pythonhosted.org/packages/bd/a5/329525eeaf0ac895a37b0a498b311e6d2991d47c827804908a815ae088f3/itkwasm-1.0b180-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/86/b2/4a92227a1afada5b5c062fe75b749d445a783263d08b61f9aa56ebd43c90/itkwasm-1.0b183-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/95/7aee976ebd939c105aa2ed549770932d97971018ec5183e5436d999e40a1/itkwasm_downsample-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6f/c1/9cd278d3a698cf1c202a8c4aa10786edf0db33af8031c03abcc671196498/itkwasm_downsample_wasi-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/af/32/f3f5cce3071842b9999faf68e80aa17533ede558ff63d350c3220110ae18/itkwasm_image_io-1.3.1-py3-none-any.whl
@@ -1216,7 +1216,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/13/cf/786b8f1e6fe1c7c675e79657448178ad65e41c1c9765ef82e7f6f765c4c5/tornado-6.4.1-cp38-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a6/ab/7e5f53c3b9d14972843a647d8d7a853969a58aecc7559cb3267302c94774/tzdata-2024.2-py2.py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/b7/36/5e83b5f7858fe1003cbb89d0d5716f628b9a00fafc3762665f06ca4ef75d/wasmtime-25.0.0-py3-none-manylinux2014_aarch64.whl
+      - pypi: https://files.pythonhosted.org/packages/dd/0a/c088d20e6910db555c3a82a14e79810ddf59c8f89210ce183e31b926e735/wasmtime-27.0.0-py3-none-manylinux2014_aarch64.whl
       - pypi: https://files.pythonhosted.org/packages/ed/c9/142095e654c2b97133ff71df60979422717b29738b08bc8a1709a5d5e0d0/zarr-2.18.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/80/ab/11a76c1e2126084fde2639514f24e6111b789b0bfa4fc6264a8975c7e1f1/zict-3.0.0-py2.py3-none-any.whl
       - pypi: .
@@ -1275,7 +1275,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/54/86/04b9883e79a9b13e845971efe16599955f2b90084f933ddf51cfbc946799/itk_filtering-5.4.0-cp311-abi3-macosx_10_9_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/ba/8f/14c86be78042d08e23c60c5d4df2698d245c5c5f02ce5d7ebcd07b8dcde3/itk_io-5.4.0-cp311-abi3-macosx_10_9_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/9c/a3/ebddbbf9ac37b9bd5797b68ac3a0ff46c121a65f6a22e533a1f1fcf2387e/itk_numerics-5.4.0-cp311-abi3-macosx_10_9_x86_64.whl
-      - pypi: https://files.pythonhosted.org/packages/bd/a5/329525eeaf0ac895a37b0a498b311e6d2991d47c827804908a815ae088f3/itkwasm-1.0b180-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/86/b2/4a92227a1afada5b5c062fe75b749d445a783263d08b61f9aa56ebd43c90/itkwasm-1.0b183-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/95/7aee976ebd939c105aa2ed549770932d97971018ec5183e5436d999e40a1/itkwasm_downsample-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6f/c1/9cd278d3a698cf1c202a8c4aa10786edf0db33af8031c03abcc671196498/itkwasm_downsample_wasi-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/af/32/f3f5cce3071842b9999faf68e80aa17533ede558ff63d350c3220110ae18/itkwasm_image_io-1.3.1-py3-none-any.whl
@@ -1316,7 +1316,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/2e/0f/721e113a2fac2f1d7d124b3279a1da4c77622e104084f56119875019ffab/tornado-6.4.1-cp38-abi3-macosx_10_9_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a6/ab/7e5f53c3b9d14972843a647d8d7a853969a58aecc7559cb3267302c94774/tzdata-2024.2-py2.py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/3f/d3/18db03cea097067eef07b655b2357b47da4f27ed909e97d4e3e13b25115f/wasmtime-25.0.0-py3-none-macosx_10_13_x86_64.whl
+      - pypi: https://files.pythonhosted.org/packages/bc/70/0d28d5418f444a013fa489591dff8fa03ff325c6572e9401c9921b320939/wasmtime-27.0.0-py3-none-macosx_10_13_x86_64.whl
       - pypi: https://files.pythonhosted.org/packages/ed/c9/142095e654c2b97133ff71df60979422717b29738b08bc8a1709a5d5e0d0/zarr-2.18.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/80/ab/11a76c1e2126084fde2639514f24e6111b789b0bfa4fc6264a8975c7e1f1/zict-3.0.0-py2.py3-none-any.whl
       - pypi: .
@@ -1375,7 +1375,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/cb/49/098970cb18aa7f84c6d41ece00c8dd2072d3a890973ae4e2a069fe9d8cc2/itk_filtering-5.4.0-cp311-abi3-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/51/61/45c8709b872d28bb37c0cdbf9f1cd87772f0a0198564d7af39f0d98438f6/itk_io-5.4.0-cp311-abi3-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/3b/b8/5f1269e17191228c7702cd81fc6e83f1814ab49a235fcba62230bac81cb4/itk_numerics-5.4.0-cp311-abi3-macosx_11_0_arm64.whl
-      - pypi: https://files.pythonhosted.org/packages/bd/a5/329525eeaf0ac895a37b0a498b311e6d2991d47c827804908a815ae088f3/itkwasm-1.0b180-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/86/b2/4a92227a1afada5b5c062fe75b749d445a783263d08b61f9aa56ebd43c90/itkwasm-1.0b183-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/95/7aee976ebd939c105aa2ed549770932d97971018ec5183e5436d999e40a1/itkwasm_downsample-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6f/c1/9cd278d3a698cf1c202a8c4aa10786edf0db33af8031c03abcc671196498/itkwasm_downsample_wasi-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/af/32/f3f5cce3071842b9999faf68e80aa17533ede558ff63d350c3220110ae18/itkwasm_image_io-1.3.1-py3-none-any.whl
@@ -1416,7 +1416,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/00/d9/c33be3c1a7564f7d42d87a8d186371a75fd142097076767a5c27da941fef/tornado-6.4.1-cp38-abi3-macosx_10_9_universal2.whl
       - pypi: https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a6/ab/7e5f53c3b9d14972843a647d8d7a853969a58aecc7559cb3267302c94774/tzdata-2024.2-py2.py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/cc/f0/d415d6b31ba69cfca04b2d5e83fbb5fc05335323712fd91948a1a53d13be/wasmtime-25.0.0-py3-none-macosx_11_0_arm64.whl
+      - pypi: https://files.pythonhosted.org/packages/a3/00/7cbd94ebeeedc3fbdfde22d129927e254045849c954560a00fddba505465/wasmtime-27.0.0-py3-none-macosx_11_0_arm64.whl
       - pypi: https://files.pythonhosted.org/packages/ed/c9/142095e654c2b97133ff71df60979422717b29738b08bc8a1709a5d5e0d0/zarr-2.18.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/80/ab/11a76c1e2126084fde2639514f24e6111b789b0bfa4fc6264a8975c7e1f1/zict-3.0.0-py2.py3-none-any.whl
       - pypi: .
@@ -1478,7 +1478,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/16/33/4d3617f48f853878750dc249d84bbfe4509469e82df58908a8612d469b2c/itk_filtering-5.4.0-cp311-abi3-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/1d/5d/e542c16e7647a544fd51ced24c6ca8d8c154a4f62d42bcd6bfa65b5c1a12/itk_io-5.4.0-cp311-abi3-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/2b/3e/d1dfc24f22415a35c743fdd8dc8b8315454f4bcee6ecbb740aa9d440baa0/itk_numerics-5.4.0-cp311-abi3-win_amd64.whl
-      - pypi: https://files.pythonhosted.org/packages/bd/a5/329525eeaf0ac895a37b0a498b311e6d2991d47c827804908a815ae088f3/itkwasm-1.0b180-py3-none-any.whl
+      - pypi: https://files.pythonhosted.org/packages/86/b2/4a92227a1afada5b5c062fe75b749d445a783263d08b61f9aa56ebd43c90/itkwasm-1.0b183-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/e1/95/7aee976ebd939c105aa2ed549770932d97971018ec5183e5436d999e40a1/itkwasm_downsample-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/6f/c1/9cd278d3a698cf1c202a8c4aa10786edf0db33af8031c03abcc671196498/itkwasm_downsample_wasi-1.4.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/af/32/f3f5cce3071842b9999faf68e80aa17533ede558ff63d350c3220110ae18/itkwasm_image_io-1.3.1-py3-none-any.whl
@@ -1519,7 +1519,7 @@ environments:
       - pypi: https://files.pythonhosted.org/packages/d9/2f/3f2f05e84a7aff787a96d5fb06821323feb370fe0baed4db6ea7b1088f32/tornado-6.4.1-cp38-abi3-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/a6/ab/7e5f53c3b9d14972843a647d8d7a853969a58aecc7559cb3267302c94774/tzdata-2024.2-py2.py3-none-any.whl
-      - pypi: https://files.pythonhosted.org/packages/1b/21/c0f3e031efe5f009215975eb7dbea86b55a69c4f02420965d1f45f43865e/wasmtime-25.0.0-py3-none-win_amd64.whl
+      - pypi: https://files.pythonhosted.org/packages/00/82/d7d7939a7b8d1383dde67954fc3b37c0deb7dbcaaef396fb116536ec0740/wasmtime-27.0.0-py3-none-win_amd64.whl
       - pypi: https://files.pythonhosted.org/packages/ed/c9/142095e654c2b97133ff71df60979422717b29738b08bc8a1709a5d5e0d0/zarr-2.18.3-py3-none-any.whl
       - pypi: https://files.pythonhosted.org/packages/80/ab/11a76c1e2126084fde2639514f24e6111b789b0bfa4fc6264a8975c7e1f1/zict-3.0.0-py2.py3-none-any.whl
       - pypi: .
@@ -2869,11 +2869,10 @@ packages:
   requires_python: '>=3.8'
 - kind: pypi
   name: itkwasm
-  version: 1.0b180
-  url: https://files.pythonhosted.org/packages/bd/a5/329525eeaf0ac895a37b0a498b311e6d2991d47c827804908a815ae088f3/itkwasm-1.0b180-py3-none-any.whl
-  sha256: d2ca6988f64ba779679981b73164dfdc3adbc06eb52f235dca4092ce390d6ebe
+  version: 1.0b183
+  url: https://files.pythonhosted.org/packages/86/b2/4a92227a1afada5b5c062fe75b749d445a783263d08b61f9aa56ebd43c90/itkwasm-1.0b183-py3-none-any.whl
+  sha256: 07a6b85eee396fd9f305db520451d6a099957541c390f771f15abc8edced7856
   requires_dist:
-  - dask[array]>=2024.11.2,<2025
   - importlib-metadata ; python_full_version < '3.10'
   - numpy
   - platformdirs ; sys_platform != 'emscripten'
@@ -3860,13 +3859,13 @@ packages:
   timestamp: 1724658603042
 - kind: pypi
   name: ngff-zarr
-  version: 0.8.7
+  version: 0.9.0
   path: .
-  sha256: 8233de28bc699069f6c4c5dd1ca8e0f84fc13d0bc021fc8c5725a9d22260faee
+  sha256: fb5078b88586062dd9a22335f40be8cf423e8e2e5ea98c2e0f04c82fc85947b4
   requires_dist:
   - dask[array]
   - itkwasm-downsample>=1.2.0
-  - itkwasm>=1.0b171
+  - itkwasm>=1.0b183
   - numpy
   - platformdirs
   - psutil ; sys_platform != 'emscripten'
@@ -6528,9 +6527,9 @@ packages:
   timestamp: 1731710685291
 - kind: pypi
   name: wasmtime
-  version: 25.0.0
-  url: https://files.pythonhosted.org/packages/1b/21/c0f3e031efe5f009215975eb7dbea86b55a69c4f02420965d1f45f43865e/wasmtime-25.0.0-py3-none-win_amd64.whl
-  sha256: f8a2a213b9179965db2d2eedececd69a37e287e902330509afae51c71a3a6842
+  version: 27.0.0
+  url: https://files.pythonhosted.org/packages/00/82/d7d7939a7b8d1383dde67954fc3b37c0deb7dbcaaef396fb116536ec0740/wasmtime-27.0.0-py3-none-win_amd64.whl
+  sha256: 1272d4e29fc919179d6d4df4d8e80bd064b084fcd5e7100bb23579e1469198c7
   requires_dist:
   - importlib-resources>=5.10
   - coverage ; extra == 'testing'
@@ -6538,12 +6537,12 @@ packages:
   - pycparser ; extra == 'testing'
   - pytest-mypy ; extra == 'testing'
   - componentize-py ; extra == 'testing'
-  requires_python: '>=3.8'
+  requires_python: '>=3.9'
 - kind: pypi
   name: wasmtime
-  version: 25.0.0
-  url: https://files.pythonhosted.org/packages/3f/d3/18db03cea097067eef07b655b2357b47da4f27ed909e97d4e3e13b25115f/wasmtime-25.0.0-py3-none-macosx_10_13_x86_64.whl
-  sha256: 13e9a718e9d580c1738782cc19f4dcb9fb068f7e51778ea621fd664f4433525b
+  version: 27.0.0
+  url: https://files.pythonhosted.org/packages/21/b3/90e10056f92f187b0d30647b154fcd1b322055688baceca9f26e768c1672/wasmtime-27.0.0-py3-none-manylinux1_x86_64.whl
+  sha256: b2fb57aabb040f68808e781abe978bf03ccba7925d36b8a7da1d5482c4d14484
   requires_dist:
   - importlib-resources>=5.10
   - coverage ; extra == 'testing'
@@ -6551,12 +6550,12 @@ packages:
   - pycparser ; extra == 'testing'
   - pytest-mypy ; extra == 'testing'
   - componentize-py ; extra == 'testing'
-  requires_python: '>=3.8'
+  requires_python: '>=3.9'
 - kind: pypi
   name: wasmtime
-  version: 25.0.0
-  url: https://files.pythonhosted.org/packages/5c/ba/f551b829378d65d0e0494fdb492942a0ed2dc7f40681b2438a47d1f4af86/wasmtime-25.0.0-py3-none-manylinux1_x86_64.whl
-  sha256: b4364e14d44e3b7afe6a40bf608e9d0d2c40b09dece441d20f4f6e31906b729c
+  version: 27.0.0
+  url: https://files.pythonhosted.org/packages/a3/00/7cbd94ebeeedc3fbdfde22d129927e254045849c954560a00fddba505465/wasmtime-27.0.0-py3-none-macosx_11_0_arm64.whl
+  sha256: 1c5e04a9150388b37521e34639694bdff91a040aea85bfc90a86efff4e3baa4c
   requires_dist:
   - importlib-resources>=5.10
   - coverage ; extra == 'testing'
@@ -6564,12 +6563,12 @@ packages:
   - pycparser ; extra == 'testing'
   - pytest-mypy ; extra == 'testing'
   - componentize-py ; extra == 'testing'
-  requires_python: '>=3.8'
+  requires_python: '>=3.9'
 - kind: pypi
   name: wasmtime
-  version: 25.0.0
-  url: https://files.pythonhosted.org/packages/b7/36/5e83b5f7858fe1003cbb89d0d5716f628b9a00fafc3762665f06ca4ef75d/wasmtime-25.0.0-py3-none-manylinux2014_aarch64.whl
-  sha256: a07445073cf36a6e5d1dc28246a897dcbdaa537ba8be8805be65422ecca297eb
+  version: 27.0.0
+  url: https://files.pythonhosted.org/packages/bc/70/0d28d5418f444a013fa489591dff8fa03ff325c6572e9401c9921b320939/wasmtime-27.0.0-py3-none-macosx_10_13_x86_64.whl
+  sha256: 825b8987f2c7fda5db1014d04f39a832eb6e0cfb1133da4a287ba81e05e9f98c
   requires_dist:
   - importlib-resources>=5.10
   - coverage ; extra == 'testing'
@@ -6577,12 +6576,12 @@ packages:
   - pycparser ; extra == 'testing'
   - pytest-mypy ; extra == 'testing'
   - componentize-py ; extra == 'testing'
-  requires_python: '>=3.8'
+  requires_python: '>=3.9'
 - kind: pypi
   name: wasmtime
-  version: 25.0.0
-  url: https://files.pythonhosted.org/packages/cc/f0/d415d6b31ba69cfca04b2d5e83fbb5fc05335323712fd91948a1a53d13be/wasmtime-25.0.0-py3-none-macosx_11_0_arm64.whl
-  sha256: 5bdf1214ee3ee78a4a8a92da339f4c4c8c109e65af881b37f4adfc05d02af426
+  version: 27.0.0
+  url: https://files.pythonhosted.org/packages/dd/0a/c088d20e6910db555c3a82a14e79810ddf59c8f89210ce183e31b926e735/wasmtime-27.0.0-py3-none-manylinux2014_aarch64.whl
+  sha256: 75cca42c89da036b7c46754ca7803e35ca07a7deaa8270926644763a4846cff3
   requires_dist:
   - importlib-resources>=5.10
   - coverage ; extra == 'testing'
@@ -6590,7 +6589,7 @@ packages:
   - pycparser ; extra == 'testing'
   - pytest-mypy ; extra == 'testing'
   - componentize-py ; extra == 'testing'
-  requires_python: '>=3.8'
+  requires_python: '>=3.9'
 - kind: pypi
   name: watchfiles
   version: 0.24.0
