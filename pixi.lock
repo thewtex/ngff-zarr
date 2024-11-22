@@ -3859,7 +3859,7 @@ packages:
   timestamp: 1724658603042
 - kind: pypi
   name: ngff-zarr
-  version: 0.9.0
+  version: 0.9.1
   path: .
   sha256: fb5078b88586062dd9a22335f40be8cf423e8e2e5ea98c2e0f04c82fc85947b4
   requires_dist:
