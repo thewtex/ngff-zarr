@@ -1,21 +1,25 @@
-import json
-
 import numpy as np
 import zarr
-from ngff_zarr import Multiscales, to_multiscales, to_ngff_zarr, validate
+from ngff_zarr import (
+    Multiscales,
+    to_multiscales,
+    to_ngff_zarr,
+    validate,
+    from_ngff_zarr,
+)
 
 
 def check_valid_ngff(multiscale: Multiscales):
     store = zarr.storage.MemoryStore(dimension_separator="/")
     store = zarr.storage.DirectoryStore("/tmp/test.zarr", dimension_separator="/")
     to_ngff_zarr(store, multiscale)
-    zarr.convenience.consolidate_metadata(store)
-    metadata = json.loads(store.get(".zmetadata"))["metadata"]
-    ngff = metadata[".zattrs"]
+    root = zarr.open_group(store, mode="r")
 
-    validate(ngff)
+    validate(root.attrs.asdict())
     # Need to add NGFF metadata property
     # validate(ngff, strict=True)
+
+    from_ngff_zarr(store, validate=True)
 
 
 def test_y_x_valid_ngff():

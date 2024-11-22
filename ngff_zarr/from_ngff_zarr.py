@@ -9,10 +9,12 @@ from zarr.storage import BaseStore
 from .ngff_image import NgffImage
 from .to_multiscales import Multiscales
 from .zarr_metadata import Axis, Dataset, Metadata, Scale, Translation
+from .validate import validate as validate_ngff
 
 
 def from_ngff_zarr(
     store: Union[MutableMapping, str, Path, BaseStore],
+    validate: bool = False,
 ) -> Multiscales:
     """
     Read an OME-Zarr NGFF Multiscales data structure from a Zarr store.
@@ -20,6 +22,8 @@ def from_ngff_zarr(
     store : MutableMapping, str or Path, zarr.storage.BaseStore
         Store or path to directory in file system.
 
+    validate : bool
+        If True, validate the NGFF metadata against the schema.
 
     Returns
     -------
@@ -29,6 +33,8 @@ def from_ngff_zarr(
     """
 
     root = zarr.open_group(store, mode="r")
+    if validate:
+        validate_ngff(root.attrs.asdict())
     metadata = root.attrs["multiscales"][0]
 
     dims = [a["name"] for a in metadata["axes"]]
