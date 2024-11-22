@@ -59,10 +59,32 @@ def _prep_for_to_zarr(
     )
 
 
+def _write_with_tensorstore(store_path: str, array, region, chunks) -> None:
+    """Write array using tensorstore backend"""
+    import tensorstore as ts
+
+    spec = {
+        "driver": "zarr",
+        "kvstore": {
+            "driver": "file",
+            "path": store_path,
+        },
+        "metadata": {
+            "chunks": chunks,
+            "shape": array.shape,
+            "dtype": array.dtype.str,
+            "dimension_separator": "/",
+        },
+    }
+    dataset = ts.open(spec, create=True, dtype=array.dtype).result()
+    dataset[...] = array[region]
+
+
 def to_ngff_zarr(
     store: Union[MutableMapping, str, Path, BaseStore],
     multiscales: Multiscales,
     overwrite: bool = True,
+    use_tensorstore: bool = False,
     chunk_store: Optional[Union[MutableMapping, str, Path, BaseStore]] = None,
     progress: Optional[Union[NgffProgress, NgffProgressCallback]] = None,
     **kwargs,
@@ -79,6 +101,9 @@ def to_ngff_zarr(
     :param overwrite: If True, delete any pre-existing data in `store` before creating groups.
     :type  overwrite: bool, optional
 
+    :param use_tensorstore: If True, write array using tensorstore backend.
+    :type  use_tensorstore: bool, optional
+
     :param chunk_store: Separate storage for chunks. If not provided, `store` will be used
         for storage of both chunks and metadata.
     :type  chunk_store: MutableMapping, str or Path, zarr.storage.BaseStore, optional
@@ -88,6 +113,12 @@ def to_ngff_zarr(
 
     :param **kwargs: Passed to the zarr.creation.create() function, e.g., compression options.
     """
+
+    if use_tensorstore:
+        if isinstance(store, (str, Path)):
+            store_path = str(store)
+        else:
+            raise ValueError("Tensorstore requires a path-like store")
 
     metadata_dict = asdict(multiscales.metadata)
     metadata_dict = _pop_metadata_optionals(metadata_dict)
@@ -262,33 +293,50 @@ def to_ngff_zarr(
                         arr_region.chunks,
                         meta=arr_region,
                     )
-                    dask.array.to_zarr(
-                        optimized,
-                        zarr_array,
-                        region=region,
-                        component=path,
-                        overwrite=False,
-                        compute=True,
-                        return_stored=False,
-                        dimension_separator="/",
-                        **kwargs,
-                    )
+                    if use_tensorstore:
+                        scale_path = f"{store_path}/{path}"
+                        _write_with_tensorstore(
+                            scale_path,
+                            optimized,
+                            region,
+                            [c[0] for c in arr_region.chunks],
+                            **kwargs,
+                        )
+                    else:
+                        dask.array.to_zarr(
+                            optimized,
+                            zarr_array,
+                            region=region,
+                            component=path,
+                            overwrite=False,
+                            compute=True,
+                            return_stored=False,
+                            dimension_separator="/",
+                            **kwargs,
+                        )
         else:
             if isinstance(progress, NgffProgressCallback):
                 progress.add_callback_task(
                     f"[green]Writing scale {index+1} of {nscales}"
                 )
-            arr = _prep_for_to_zarr(store, arr)
-            dask.array.to_zarr(
-                arr,
-                store,
-                component=path,
-                overwrite=False,
-                compute=True,
-                return_stored=False,
-                dimension_separator="/",
-                **kwargs,
-            )
+            if use_tensorstore:
+                scale_path = f"{store_path}/{path}"
+                region = tuple([slice(arr.shape[i]) for i in range(arr.ndim)])
+                _write_with_tensorstore(
+                    scale_path, arr, region, [c[0] for c in arr.chunks], **kwargs
+                )
+            else:
+                arr = _prep_for_to_zarr(store, arr)
+                dask.array.to_zarr(
+                    arr,
+                    store,
+                    component=path,
+                    overwrite=False,
+                    compute=True,
+                    return_stored=False,
+                    dimension_separator="/",
+                    **kwargs,
+                )
 
         # Minimize task graph depth
         if (

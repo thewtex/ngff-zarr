@@ -68,6 +68,7 @@ cli = [
   "tifffile>=2024.7.24",
   "imagecodecs",
 ]
+tensorstore = ["tensorstore"]
 test = [
   "pytest >=6",
   "pooch",
@@ -170,7 +171,7 @@ ngff-zarr = { path = ".", editable = true }
 
 [tool.pixi.environments]
 default = { solve-group = "default" }
-test = { features = ["test", "dask-image", "itk", "cli", "validate"], solve-group = "default" }
+test = { features = ["test", "dask-image", "itk", "cli", "validate", "tensorstore"], solve-group = "default" }
 lint = { features = ["lint"], no-default-feature = true, solve-group = "default" }
 docs = { features = ["docs"], no-default-feature = true, solve-group = "default" }
 data = { features = ["data"], no-default-feature = true, solve-group = "default" }
