@@ -3861,9 +3861,10 @@ packages:
   name: ngff-zarr
   version: 0.9.1
   path: .
-  sha256: 13cc27417a4a3ef94909bfe45bc24de55d65e2cd67e05cc67e2f66bb3e87caf6
+  sha256: 81c96cc182a91de87121bcca24f808a7787a1ab2ffcaa78073fecbda67a24b7a
   requires_dist:
   - dask[array]
+  - importlib-resources
   - itkwasm-downsample>=1.2.0
   - itkwasm>=1.0b183
   - numpy

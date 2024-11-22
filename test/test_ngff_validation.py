@@ -1,14 +1,13 @@
 import json
 from typing import Dict
+from pathlib import Path
 
 import numpy as np
-import urllib3
 import zarr
 from jsonschema import Draft202012Validator
 from ngff_zarr import Multiscales, to_multiscales, to_ngff_zarr
 from referencing import Registry, Resource
-
-HTTP = urllib3.PoolManager()
+from importlib_resources import files as file_resources
 
 NGFF_URI = "https://ngff.openmicroscopy.org"
 
@@ -17,10 +16,14 @@ def load_schema(version: str = "0.4", strict: bool = False) -> Dict:
     strict_str = ""
     if strict:
         strict_str = "strict_"
-    response = HTTP.request(
-        "GET", f"{NGFF_URI}/{version}/schemas/{strict_str}image.schema"
+    schema = (
+        file_resources("ngff_zarr")
+        .joinpath(
+            Path("spec") / Path(version) / Path("schemas") / f"{strict_str}image.schema"
+        )
+        .read_text()
     )
-    return json.loads(response.data.decode())
+    return json.loads(schema)
 
 
 def check_valid_ngff(multiscale: Multiscales):
