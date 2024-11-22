@@ -92,13 +92,14 @@ def test_label_image_isotropic_scale_factors(input_images):
     image = input_images[dataset_name]
     baseline_name = "2_4/ITKWASM_LABEL_IMAGE.zarr"
     multiscales = to_multiscales(image, [2, 4], method=Methods.ITKWASM_LABEL_IMAGE)
-    verify_against_baseline(dataset_name, baseline_name, multiscales)
+    version = "0.4"
+    verify_against_baseline(dataset_name, baseline_name, multiscales, version=version)
 
     dataset_name = "2th_cthead1"
     image = input_images[dataset_name]
     baseline_name = "2_3/ITKWASM_LABEL_IMAGE.zarr"
     multiscales = to_multiscales(image, [2, 3], method=Methods.ITKWASM_LABEL_IMAGE)
-    verify_against_baseline(dataset_name, baseline_name, multiscales)
+    verify_against_baseline(dataset_name, baseline_name, multiscales, version=version)
 
 
 # def test_label_image_anisotropic_scale_factors(input_images):

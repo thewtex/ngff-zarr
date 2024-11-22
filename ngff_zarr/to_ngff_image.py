@@ -4,11 +4,15 @@ from typing import Hashable, Mapping, Optional, Sequence, Union
 import dask
 from dask.array.core import Array as DaskArray
 from numpy.typing import ArrayLike
-from zarr.core import Array as ZarrArray
+
+try:
+    from zarr.core import Array as ZarrArray
+except ImportError:
+    from zarr.core.array import Array as ZarrArray
 
 from .methods._support import _spatial_dims
 from .ngff_image import NgffImage
-from .zarr_metadata import SupportedDims, Units
+from .v04.zarr_metadata import SupportedDims, Units
 
 
 def to_ngff_image(

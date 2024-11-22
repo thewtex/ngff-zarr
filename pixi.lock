@@ -3939,9 +3939,9 @@ packages:
   name: ngff-zarr
   version: 0.9.1
   path: .
-  sha256: 496ef9944dd92d1a0e0aa6d7cd6df7385e48edc1cb0b4789599f25e2901db941
+  sha256: 5f77dc6f14d95afc78a19dffdf50b40efe73af36cde60ccac19751d8304bf05f
   requires_dist:
-  - dask[array]
+  - dask[array]>=2024.11.2
   - importlib-resources
   - itkwasm-downsample>=1.2.0
   - itkwasm>=1.0b183
@@ -3951,7 +3951,7 @@ packages:
   - rich
   - rich-argparse
   - typing-extensions
-  - zarr
+  - zarr>=2.18.3
   - dask-image ; extra == 'cli'
   - dask[distributed] ; extra == 'cli'
   - imagecodecs ; extra == 'cli'

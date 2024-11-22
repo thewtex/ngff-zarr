@@ -1,5 +1,6 @@
 import pytest
 from ngff_zarr import Methods, to_multiscales, to_ngff_zarr
+from ngff_zarr._zarr_kwargs import zarr_kwargs
 
 pytest.importorskip("kvikio")
 pytest.importorskip("itkwasm_downsample_cucim")
@@ -13,7 +14,7 @@ def test_bin_shrink_isotropic_scale_factors(input_images, tmp_path):
 
     from kvikio.zarr import GDSStore
 
-    store = GDSStore(tmp_path / baseline_name, dimension_separator="/")
+    store = GDSStore(tmp_path / baseline_name, **zarr_kwargs)
     from kvikio.nvcomp_codec import NvCompBatchCodec
 
     compressor = NvCompBatchCodec("lz4")
@@ -28,7 +29,7 @@ def test_gaussian_isotropic_scale_factors(input_images, tmp_path):
 
     from kvikio.zarr import GDSStore
 
-    store = GDSStore(tmp_path / baseline_name, dimension_separator="/")
+    store = GDSStore(tmp_path / baseline_name, **zarr_kwargs)
     from kvikio.nvcomp_codec import NvCompBatchCodec
 
     compressor = NvCompBatchCodec("zstd")
