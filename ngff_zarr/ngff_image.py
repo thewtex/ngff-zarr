@@ -3,7 +3,7 @@ from typing import Callable, Dict, List, Mapping, Optional, Sequence
 
 from dask.array.core import Array as DaskArray
 
-from .zarr_metadata import Units
+from .v04.zarr_metadata import Units
 
 ComputedCallback = Callable[[], None]
 

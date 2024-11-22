@@ -19,7 +19,7 @@ def test_large_image_serialization(input_images):
     multiscales = to_multiscales(image)
     # baseline_name = "auto/memory_target_1e6.zarr"
     # store_new_multiscales(dataset_name, baseline_name, multiscales)
-    test_store = MemoryStore(dimension_separator="/")
+    test_store = MemoryStore()
     to_ngff_zarr(test_store, multiscales)
     # verify_against_baseline(dataset_name, baseline_name, multiscales)
 

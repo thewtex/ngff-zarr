@@ -18,7 +18,7 @@ from .to_multiscales import to_multiscales
 from .to_ngff_image import to_ngff_image
 from .to_ngff_zarr import to_ngff_zarr
 from .validate import validate
-from .zarr_metadata import (
+from .v04.zarr_metadata import (
     AxesType,
     SpatialDims,
     SupportedDims,

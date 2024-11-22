@@ -1,6 +1,12 @@
+import pytest
+import zarr
+from packaging import version
+
 from ngff_zarr import ConversionBackend, cli_input_to_ngff_image
 
 from ._data import test_data_dir
+
+zarr_version = version.parse(zarr.__version__)
 
 
 def test_cli_input_to_ngff_image_itk(input_images):  # noqa: ARG001
@@ -29,6 +35,10 @@ def test_cli_input_to_ngff_image_itk_list(input_images):  # noqa: ARG001
     assert image.dims == ("z", "y", "x")
 
 
+@pytest.mark.skipif(
+    zarr_version >= version.parse("3.0.0b1"),
+    reason="Skipping because Zarr version is greater than 3, ZarrTiffStore not yet supported",
+)
 def test_cli_input_to_ngff_image_tifffile(input_images):  # noqa: ARG001
     input = [
         test_data_dir / "input" / "bat-cochlea-volume.tif",

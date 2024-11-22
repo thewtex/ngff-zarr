@@ -21,6 +21,7 @@ def test_bin_shrink_isotropic_scale_factors(input_images):
         # todo: re-enable this test
         return
     multiscales = to_multiscales(image, [2, 4], method=Methods.ITKWASM_BIN_SHRINK)
+    # store_new_multiscales(dataset_name, baseline_name, multiscales)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
     if _HAVE_CUCIM:
@@ -28,6 +29,7 @@ def test_bin_shrink_isotropic_scale_factors(input_images):
     else:
         baseline_name = "auto/ITKWASM_BIN_SHRINK.zarr"
     multiscales = to_multiscales(image, method=Methods.ITKWASM_BIN_SHRINK)
+    # store_new_multiscales(dataset_name, baseline_name, multiscales)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
 
@@ -39,6 +41,7 @@ def test_gaussian_isotropic_scale_factors(input_images):
     else:
         baseline_name = "2_4/ITKWASM_GAUSSIAN.zarr"
     multiscales = to_multiscales(image, [2, 4], method=Methods.ITKWASM_GAUSSIAN)
+    # store_new_multiscales(dataset_name, baseline_name, multiscales)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
     if _HAVE_CUCIM:
@@ -46,6 +49,7 @@ def test_gaussian_isotropic_scale_factors(input_images):
     else:
         baseline_name = "auto/ITKWASM_GAUSSIAN.zarr"
     multiscales = to_multiscales(image, method=Methods.ITKWASM_GAUSSIAN)
+    # store_new_multiscales(dataset_name, baseline_name, multiscales)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
     dataset_name = "cthead1"
@@ -55,6 +59,7 @@ def test_gaussian_isotropic_scale_factors(input_images):
     else:
         baseline_name = "2_3/ITKWASM_GAUSSIAN.zarr"
     multiscales = to_multiscales(image, [2, 3], method=Methods.ITKWASM_GAUSSIAN)
+    # store_new_multiscales(dataset_name, baseline_name, multiscales)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
     dataset_name = "MR-head"
@@ -64,6 +69,7 @@ def test_gaussian_isotropic_scale_factors(input_images):
     else:
         baseline_name = "2_3_4/ITKWASM_GAUSSIAN.zarr"
     multiscales = to_multiscales(image, [2, 3, 4], method=Methods.ITKWASM_GAUSSIAN)
+    # store_new_multiscales(dataset_name, baseline_name, multiscales)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
 
 
@@ -92,13 +98,16 @@ def test_label_image_isotropic_scale_factors(input_images):
     image = input_images[dataset_name]
     baseline_name = "2_4/ITKWASM_LABEL_IMAGE.zarr"
     multiscales = to_multiscales(image, [2, 4], method=Methods.ITKWASM_LABEL_IMAGE)
-    verify_against_baseline(dataset_name, baseline_name, multiscales)
+    version = "0.4"
+    # store_new_multiscales(dataset_name, baseline_name, multiscales)
+    verify_against_baseline(dataset_name, baseline_name, multiscales, version=version)
 
     dataset_name = "2th_cthead1"
     image = input_images[dataset_name]
     baseline_name = "2_3/ITKWASM_LABEL_IMAGE.zarr"
     multiscales = to_multiscales(image, [2, 3], method=Methods.ITKWASM_LABEL_IMAGE)
-    verify_against_baseline(dataset_name, baseline_name, multiscales)
+    # store_new_multiscales(dataset_name, baseline_name, multiscales)
+    verify_against_baseline(dataset_name, baseline_name, multiscales, version=version)
 
 
 # def test_label_image_anisotropic_scale_factors(input_images):

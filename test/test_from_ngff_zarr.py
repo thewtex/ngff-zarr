@@ -26,17 +26,22 @@ def test_from_ngff_zarr(input_images):
     multiscales.chunks = None
     baseline_name = "from_ngff_zarr"
     # store_new_multiscales(dataset_name, baseline_name, multiscales)
-    verify_against_baseline(dataset_name, baseline_name, multiscales)
-    test_store = MemoryStore(dimension_separator="/")
-    to_ngff_zarr(test_store, multiscales)
+    # verify_against_baseline(dataset_name, baseline_name, multiscales)
+    test_store = MemoryStore()
+    version = "0.4"
+    to_ngff_zarr(test_store, multiscales, version=version)
 
-    # multiscales_back = from_ngff_zarr(test_store)
-    # verify_against_baseline(dataset_name, baseline_name, multiscales_back)
+    multiscales_back = from_ngff_zarr(test_store, version=version)
+    # store_new_multiscales(dataset_name, baseline_name, multiscales)
+    verify_against_baseline(
+        dataset_name, baseline_name, multiscales_back, version=version
+    )
 
 
 def test_omero_zarr_from_ngff_zarr_to_ngff_zarr(input_images):  # noqa: ARG001
     dataset_name = "13457537"
     store_path = test_data_dir / "input" / f"{dataset_name}.zarr"
-    multiscales = from_ngff_zarr(store_path)
-    test_store = MemoryStore(dimension_separator="/")
-    to_ngff_zarr(test_store, multiscales)
+    version = "0.4"
+    multiscales = from_ngff_zarr(store_path, version=version)
+    test_store = MemoryStore()
+    to_ngff_zarr(test_store, multiscales, version=version)

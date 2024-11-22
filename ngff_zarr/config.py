@@ -2,9 +2,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import dask.config
-import zarr
 from platformdirs import user_cache_dir
 from zarr.storage import StoreLike
+from ._zarr_kwargs import zarr_kwargs
 
 if dask.config.get("temporary-directory") is not None:
     _store_dir = dask.config.get("temporary-directory")
@@ -13,7 +13,14 @@ else:
 
 
 def default_store_factory():
-    return zarr.storage.DirectoryStore(_store_dir, dimension_separator="/")
+    try:
+        from zarr.storage import DirectoryStore
+
+        return DirectoryStore(_store_dir, **zarr_kwargs)
+    except ImportError:
+        from zarr.storage import LocalStore
+
+        return LocalStore(_store_dir)
 
 
 try:
