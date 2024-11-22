@@ -8,7 +8,7 @@ jobs:
     strategy:
       max-parallel: 5
       matrix:
-        os: [ubuntu-22.04, windows-2022]
+        os: [ubuntu-22.04, macos-13]
 
     steps:
       - uses: actions/checkout@v4

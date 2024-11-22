@@ -8,7 +8,7 @@ jobs:
     strategy:
       max-parallel: 5
       matrix:
-        os: [ubuntu-22.04, windows-2022, macos-12, macos-14]
+        os: [ubuntu-22.04, windows-2022, macos-13]
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
@@ -24,8 +24,15 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e ".[test,dask-image,itk,cli,validate]"
 
+      - name: Install tensorstore
+        if:
+          ${{ matrix.python-version != '3.13' && matrix.os != 'macos-12' &&
+          matrix.os != 'windows-2022' }}
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[tensorstore]"
+
       - name: Test with pytest
-        if: ${{ matrix.os != 'ubuntu-22.04' && matrix.os != 'macos-14' }}
         run: |
           pytest --junitxml=junit/test-results.xml
 

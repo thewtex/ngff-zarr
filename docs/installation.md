@@ -30,3 +30,7 @@ Optional dependencies include:
 `dask-image` : Multiscale generation with `dask-image` methods.
 
 `itk` : Multiscale generation with `itk` methods.
+
+`tensorstore` : Support writing with `tensorstore`.
+
+`validate` : Support metadata validation when reading.
