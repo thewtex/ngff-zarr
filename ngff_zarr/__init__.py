@@ -17,6 +17,7 @@ from .task_count import task_count
 from .to_multiscales import to_multiscales
 from .to_ngff_image import to_ngff_image
 from .to_ngff_zarr import to_ngff_zarr
+from .validate import validate
 from .zarr_metadata import (
     AxesType,
     SpatialDims,
@@ -51,6 +52,7 @@ __all__ = [
     "detect_cli_io_backend",
     "ConversionBackend",
     "cli_input_to_ngff_image",
+    "validate",
     "Metadata",
     "AxesType",
     "SpatialDims",
