@@ -41,7 +41,8 @@ from .rich_dask_progress import NgffProgress, NgffProgressCallback
 from .to_multiscales import to_multiscales
 from .to_ngff_image import to_ngff_image
 from .to_ngff_zarr import to_ngff_zarr
-from .zarr_metadata import is_unit_supported
+from .v04.zarr_metadata import is_unit_supported
+from ._zarr_kwargs import zarr_kwargs
 
 
 def _multiscales_to_ngff_zarr(
@@ -235,9 +236,7 @@ def main():
         cache_dir = Path(args.cache_dir).resolve()
         if not cache_dir.exists():
             Path.makedirs(cache_dir, parents=True)
-        config.cache_store = zarr.storage.DirectoryStore(
-            cache_dir, dimension_separator="/"
-        )
+        config.cache_store = zarr.storage.DirectoryStore(cache_dir, **zarr_kwargs)
 
     console = Console()
     progress = RichProgress(
@@ -304,7 +303,7 @@ def main():
         )
     output_store = None
     if args.output and output_backend is ConversionBackend.NGFF_ZARR:
-        output_store = DirectoryStore(args.output, dimension_separator="/")
+        output_store = DirectoryStore(args.output, **zarr_kwargs)
 
     subtitle = "[red]generation"
     if not args.output:

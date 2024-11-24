@@ -18,8 +18,9 @@ def test_memory_usage():
     image = to_ngff_image(arr)
     multiscales = to_multiscales(image, scale_factors=[], chunks=2)
     store = zarr.storage.MemoryStore()
-    to_ngff_zarr(store, multiscales)
-    multiscales = from_ngff_zarr(store)
+    version = "0.4"
+    to_ngff_zarr(store, multiscales, version=version)
+    multiscales = from_ngff_zarr(store, version=version)
 
     image = multiscales.images[0]
     arr = image.data

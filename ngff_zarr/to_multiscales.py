@@ -11,7 +11,14 @@ import numpy as np
 import zarr
 from dask.array.core import Array as DaskArray
 from numpy.typing import ArrayLike
-from zarr.core import Array as ZarrArray
+
+try:
+    from zarr.core import Array as ZarrArray
+except ImportError:
+    from zarr.core.array import Array as ZarrArray
+from ._zarr_kwargs import zarr_kwargs
+from ._zarr_open_array import open_array
+import zarr.storage
 
 from .config import config
 from .memory_usage import memory_usage
@@ -30,7 +37,7 @@ from .multiscales import Multiscales
 from .ngff_image import NgffImage
 from .rich_dask_progress import NgffProgress, NgffProgressCallback
 from .to_ngff_image import to_ngff_image
-from .zarr_metadata import Axis, Dataset, Metadata, Scale, Translation
+from .v04.zarr_metadata import Axis, Dataset, Metadata, Scale, Translation
 
 
 def _ngff_image_scale_factors(ngff_image, min_length, out_chunks):
@@ -82,8 +89,16 @@ def _large_image_serialization(
     def remove_from_cache_store(sig_id, frame):  # noqa: ARG001
         nonlocal base_path_removed
         if not base_path_removed:
-            if isinstance(cache_store, zarr.storage.DirectoryStore):
+            if hasattr(zarr.storage, "DirectoryStore") and isinstance(
+                cache_store, zarr.storage.DirectoryStore
+            ):
                 full_path = Path(cache_store.dir_path()) / base_path
+                if full_path.exists():
+                    shutil.rmtree(full_path, ignore_errors=True)
+            elif hasattr(zarr.storage, "LocalStore") and isinstance(
+                cache_store, zarr.storage.LocalStore
+            ):
+                full_path = Path(cache_store.root) / base_path
                 if full_path.exists():
                     shutil.rmtree(full_path, ignore_errors=True)
             else:
@@ -129,14 +144,14 @@ def _large_image_serialization(
             slabs.chunks,
             meta=slabs,
         )
-        zarr_array = zarr.creation.open_array(
+        zarr_array = open_array(
             shape=data.shape,
             chunks=chunks,
             dtype=data.dtype,
             store=cache_store,
             path=path,
             mode="a",
-            dimension_separator="/",
+            **zarr_kwargs,
         )
 
         n_slabs = int(np.ceil(data.shape[z_index] / slab_slices))
@@ -164,7 +179,7 @@ def _large_image_serialization(
                 overwrite=False,
                 compute=True,
                 return_stored=False,
-                dimension_separator="/",
+                **zarr_kwargs,
             )
         data = dask.array.from_zarr(cache_store, component=path)
         if optimized_chunks < data.shape[z_index] and slab_slices < optimized_chunks:
@@ -173,14 +188,14 @@ def _large_image_serialization(
             path = f"{base_path}/optimized_chunks"
             chunks = tuple([c[0] for c in optimized.chunks])
             data = data.rechunk(chunks)
-            zarr_array = zarr.creation.open_array(
+            zarr_array = open_array(
                 shape=data.shape,
                 chunks=chunks,
                 dtype=data.dtype,
                 store=cache_store,
                 path=path,
                 mode="a",
-                dimension_separator="/",
+                **zarr_kwargs,
             )
             n_slabs = int(np.ceil(data.shape[z_index] / optimized_chunks))
             for slab_index in range(n_slabs):
@@ -205,7 +220,7 @@ def _large_image_serialization(
                     overwrite=False,
                     compute=True,
                     return_stored=False,
-                    dimension_separator="/",
+                    **zarr_kwargs,
                 )
             data = dask.array.from_zarr(cache_store, component=path)
         else:
@@ -223,7 +238,7 @@ def _large_image_serialization(
             overwrite=False,
             compute=True,
             return_stored=False,
-            dimension_separator="/",
+            **zarr_kwargs,
         )
         data = dask.array.from_zarr(cache_store, component=path)
 
