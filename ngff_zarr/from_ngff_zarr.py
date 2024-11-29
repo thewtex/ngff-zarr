@@ -75,7 +75,7 @@ def from_ngff_zarr(
 
         dims = list(reversed(supported_dims))
     else:
-        dims = [a["name"] for a in metadata["axes"]]
+        dims = [a["name"] if "name" in a else a for a in metadata["axes"]]
 
     name = "image"
     if name in metadata:
@@ -119,7 +119,18 @@ def from_ngff_zarr(
 
     metadata.pop("@type", None)
     if "axes" in metadata:
-        axes = [Axis(**axis) for axis in metadata["axes"]]
+        if "name" in metadata["axes"][0]:
+            axes = [Axis(**axis) for axis in metadata["axes"]]
+        else:
+            # v0.3
+            type_dict = {
+                "t": "time",
+                "c": "channel",
+                "z": "space",
+                "y": "space",
+                "x": "space",
+            }
+            axes = [Axis(name=axis, type=type_dict[axis]) for axis in metadata["axes"]]
     else:
         axes = [
             Axis(name="t", type="time"),
