@@ -195,6 +195,10 @@ def to_ngff_zarr(
             **format_kwargs,
         )
     else:
+        if zarr_version_major < 3:
+            raise ValueError(
+                "zarr-python version >= 3.0.0b2 required for OME-Zarr version >= 0.5"
+            )
         # For version >= 0.5, open root with Zarr v3
         root = zarr.open_group(
             store,
