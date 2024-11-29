@@ -1,7 +1,7 @@
 from collections.abc import MutableMapping
 from pathlib import Path
 from typing import Union, Optional
-from packaging import version
+import packaging.version
 
 import dask.array
 import zarr
@@ -18,7 +18,7 @@ from .to_multiscales import Multiscales
 from .v04.zarr_metadata import Axis, Dataset, Scale, Translation
 from .validate import validate as validate_ngff
 
-zarr_version = version.parse(zarr.__version__)
+zarr_version = packaging.version.parse(zarr.__version__)
 zarr_version_major = zarr_version.major
 
 
@@ -48,7 +48,11 @@ def from_ngff_zarr(
 
     format_kwargs = {}
     if version and zarr_version_major >= 3:
-        format_kwargs = {"zarr_format": 2} if version == "0.4" else {"zarr_format": 3}
+        format_kwargs = (
+            {"zarr_format": 2}
+            if packaging.version.parse(version) < packaging.version.parse("0.5")
+            else {"zarr_format": 3}
+        )
     root = zarr.open_group(store, mode="r", **format_kwargs)
     root_attrs = root.attrs.asdict()
 
@@ -66,16 +70,22 @@ def from_ngff_zarr(
     else:
         metadata = root.attrs["multiscales"][0]
 
-    dims = [a["name"] for a in metadata["axes"]]
+    if "axes" not in metadata:
+        from .v04.zarr_metadata import supported_dims
+
+        dims = list(reversed(supported_dims))
+    else:
+        dims = [a["name"] for a in metadata["axes"]]
 
     name = "image"
     if name in metadata:
         name = metadata["name"]
 
     units = {d: None for d in dims}
-    for axis in metadata["axes"]:
-        if "unit" in axis:
-            units[axis["name"]] = axis["unit"]
+    if "axes" in metadata:
+        for axis in metadata["axes"]:
+            if "unit" in axis:
+                units[axis["name"]] = axis["unit"]
 
     images = []
     datasets = []
@@ -85,17 +95,18 @@ def from_ngff_zarr(
         scale = {d: 1.0 for d in dims}
         translation = {d: 0.0 for d in dims}
         coordinateTransformations = []
-        for transformation in dataset["coordinateTransformations"]:
-            if "scale" in transformation:
-                scale = transformation["scale"]
-                scale = dict(zip(dims, scale))
-                coordinateTransformations.append(Scale(transformation["scale"]))
-            elif "translation" in transformation:
-                translation = transformation["translation"]
-                translation = dict(zip(dims, translation))
-                coordinateTransformations.append(
-                    Translation(transformation["translation"])
-                )
+        if "coordinateTransformations" in dataset:
+            for transformation in dataset["coordinateTransformations"]:
+                if "scale" in transformation:
+                    scale = transformation["scale"]
+                    scale = dict(zip(dims, scale))
+                    coordinateTransformations.append(Scale(transformation["scale"]))
+                elif "translation" in transformation:
+                    translation = transformation["translation"]
+                    translation = dict(zip(dims, translation))
+                    coordinateTransformations.append(
+                        Translation(transformation["translation"])
+                    )
         datasets.append(
             Dataset(
                 path=dataset["path"],
@@ -107,7 +118,16 @@ def from_ngff_zarr(
         images.append(ngff_image)
 
     metadata.pop("@type", None)
-    axes = [Axis(**axis) for axis in metadata["axes"]]
+    if "axes" in metadata:
+        axes = [Axis(**axis) for axis in metadata["axes"]]
+    else:
+        axes = [
+            Axis(name="t", type="time"),
+            Axis(name="c", type="channel"),
+            Axis(name="z", type="space"),
+            Axis(name="y", type="space"),
+            Axis(name="x", type="space"),
+        ]
     coordinateTransformations = None
     if "coordinateTransformations" in metadata:
         coordinateTransformations = metadata["coordinateTransformations"]
