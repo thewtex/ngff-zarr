@@ -71,23 +71,66 @@ def _prep_for_to_zarr(store: StoreLike, arr: dask.array.Array) -> dask.array.Arr
     )
 
 
-def _write_with_tensorstore(store_path: str, array, region, chunks) -> None:
+def _numpy_to_zarr_dtype(dtype):
+    dtype_map = {
+        "bool": "bool",
+        "int8": "int8",
+        "int16": "int16",
+        "int32": "int32",
+        "int64": "int64",
+        "uint8": "uint8",
+        "uint16": "uint16",
+        "uint32": "uint32",
+        "uint64": "uint64",
+        "float16": "float16",
+        "float32": "float32",
+        "float64": "float64",
+        "complex64": "complex64",
+        "complex128": "complex128",
+    }
+
+    dtype_str = str(dtype)
+
+    # Handle endianness - strip byte order chars
+    if dtype_str.startswith(("<", ">", "|")):
+        dtype_str = dtype_str[1:]
+
+    # Look up corresponding zarr dtype
+    try:
+        return dtype_map[dtype_str]
+    except KeyError:
+        raise ValueError(f"dtype {dtype} cannot be mapped to Zarr v3 core dtype")
+
+
+def _write_with_tensorstore(
+    store_path: str, array, region, chunks, zarr_format
+) -> None:
     """Write array using tensorstore backend"""
     import tensorstore as ts
 
     spec = {
-        "driver": "zarr",
         "kvstore": {
             "driver": "file",
             "path": store_path,
         },
         "metadata": {
-            "chunks": chunks,
             "shape": array.shape,
-            "dtype": array.dtype.str,
-            "dimension_separator": "/",
         },
     }
+    if zarr_format == 2:
+        spec["driver"] = "zarr"
+        spec["metadata"]["chunks"] = chunks
+        spec["metadata"]["dimension_separator"] = "/"
+        spec["metadata"]["dtype"] = array.dtype.str
+    elif zarr_format == 3:
+        spec["driver"] = "zarr3"
+        spec["metadata"]["chunk_grid"] = {
+            "name": "regular",
+            "configuration": {"chunk_shape": chunks},
+        }
+        spec["metadata"]["data_type"] = _numpy_to_zarr_dtype(array.dtype)
+    else:
+        raise ValueError(f"Unsupported zarr format: {zarr_format}")
     dataset = ts.open(spec, create=True, dtype=array.dtype).result()
     dataset[...] = array[region]
 
@@ -134,7 +177,7 @@ def to_ngff_zarr(
         if isinstance(store, (str, Path)):
             store_path = str(store)
         else:
-            raise ValueError("Tensorstore requires a path-like store")
+            raise ValueError("use_tensorstore currently requires a path-like store")
 
     if version != "0.4" and version != "0.5":
         raise ValueError(f"Unsupported version: {version}")
@@ -145,7 +188,6 @@ def to_ngff_zarr(
     zarr_format = 2 if version == "0.4" else 3
     format_kwargs = {"zarr_format": zarr_format} if zarr_version_major >= 3 else {}
     if version == "0.4":
-        # root = zarr.group(store, overwrite=overwrite, chunk_store=chunk_store)
         root = zarr.open_group(
             store,
             mode="w" if overwrite else "a",
@@ -153,6 +195,10 @@ def to_ngff_zarr(
             **format_kwargs,
         )
     else:
+        if zarr_version_major < 3:
+            raise ValueError(
+                "zarr-python version >= 3.0.0b2 required for OME-Zarr version >= 0.5"
+            )
         # For version >= 0.5, open root with Zarr v3
         root = zarr.open_group(
             store,
@@ -342,6 +388,7 @@ def to_ngff_zarr(
                             optimized,
                             region,
                             [c[0] for c in arr_region.chunks],
+                            zarr_format=zarr_format,
                             **kwargs,
                         )
                     else:
@@ -365,7 +412,12 @@ def to_ngff_zarr(
                 scale_path = f"{store_path}/{path}"
                 region = tuple([slice(arr.shape[i]) for i in range(arr.ndim)])
                 _write_with_tensorstore(
-                    scale_path, arr, region, [c[0] for c in arr.chunks], **kwargs
+                    scale_path,
+                    arr,
+                    region,
+                    [c[0] for c in arr.chunks],
+                    zarr_format=zarr_format,
+                    **kwargs,
                 )
             else:
                 arr = _prep_for_to_zarr(store, arr)

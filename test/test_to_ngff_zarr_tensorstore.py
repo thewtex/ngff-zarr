@@ -1,10 +1,14 @@
 import tempfile
+from packaging import version
 
 import pytest
+import zarr
 
 from ngff_zarr import Methods, to_multiscales, to_ngff_zarr, from_ngff_zarr
 
 from ._data import verify_against_baseline
+
+zarr_version = version.parse(zarr.__version__)
 
 
 def test_gaussian_isotropic_scale_factors(input_images):
