@@ -13,7 +13,7 @@ from ._data import verify_against_baseline
 zarr_version = version.parse(zarr.__version__)
 
 # Skip tests if zarr version is less than 3.0.0b1
-pytest.mark.skipif(
+pytestmark = pytest.mark.skipif(
     zarr_version < version.parse("3.0.0b1"), reason="zarr version < 3.0.0b1"
 )
 
