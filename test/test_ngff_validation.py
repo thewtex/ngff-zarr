@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 import zarr
 from ngff_zarr import (
@@ -34,6 +36,39 @@ def test_y_x_valid_ngff():
     multiscale = to_multiscales(array, [2, 4])
 
     check_valid_ngff(multiscale)
+
+
+def test_validate_0_1():
+    test_store = Path(__file__).parent / "data" / "input" / "v01" / "6001251.zarr"
+    multiscales = from_ngff_zarr(test_store, validate=True, version="0.1")
+    print(multiscales)
+
+
+def test_validate_0_1_no_version():
+    test_store = Path(__file__).parent / "data" / "input" / "v01" / "6001251.zarr"
+    from_ngff_zarr(test_store, validate=True, version="0.1")
+
+
+def test_validate_0_2():
+    test_store = Path(__file__).parent / "data" / "input" / "v02" / "6001240.zarr"
+    multiscales = from_ngff_zarr(test_store, validate=True, version="0.2")
+    print(multiscales)
+
+
+def test_validate_0_2_no_version():
+    test_store = Path(__file__).parent / "data" / "input" / "v02" / "6001240.zarr"
+    from_ngff_zarr(test_store, validate=True)
+
+
+def test_validate_0_3():
+    test_store = Path(__file__).parent / "data" / "input" / "v03" / "9528933.zarr"
+    multiscales = from_ngff_zarr(test_store, validate=True, version="0.3")
+    print(multiscales)
+
+
+def test_validate_0_3_no_version():
+    test_store = Path(__file__).parent / "data" / "input" / "v03" / "9528933.zarr"
+    from_ngff_zarr(test_store, validate=True)
 
 
 # def test_z_y_x_valid_ngff():
