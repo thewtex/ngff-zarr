@@ -7,19 +7,26 @@ from ngff_zarr import (
     validate,
     from_ngff_zarr,
 )
+from packaging import version
+
+zarr_version = version.parse(zarr.__version__)
+zarr_version_major = zarr_version.major
 
 
 def check_valid_ngff(multiscale: Multiscales):
-    store = zarr.storage.MemoryStore(dimension_separator="/")
-    store = zarr.storage.DirectoryStore("/tmp/test.zarr", dimension_separator="/")
-    to_ngff_zarr(store, multiscale)
-    root = zarr.open_group(store, mode="r")
+    store = zarr.storage.MemoryStore()
+    version = "0.4"
+    to_ngff_zarr(store, multiscale, version=version)
+    format_kwargs = {}
+    if version and zarr_version_major >= 3:
+        format_kwargs = {"zarr_format": 2} if version == "0.4" else {"zarr_format": 3}
+    root = zarr.open_group(store, mode="r", **format_kwargs)
 
     validate(root.attrs.asdict())
     # Need to add NGFF metadata property
     # validate(ngff, strict=True)
 
-    from_ngff_zarr(store, validate=True)
+    from_ngff_zarr(store, validate=True, version=version)
 
 
 def test_y_x_valid_ngff():

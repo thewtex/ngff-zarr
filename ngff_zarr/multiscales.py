@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple, Union
 
 from .methods import Methods
 from .ngff_image import NgffImage
-from .zarr_metadata import Metadata
+from .v04.zarr_metadata import Metadata
 
 
 @dataclass

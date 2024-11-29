@@ -3,6 +3,7 @@ from collections.abc import MutableMapping
 from dataclasses import asdict
 from pathlib import Path, PurePosixPath
 from typing import Optional, Union
+from packaging import version
 
 if sys.version_info < (3, 10):
     import importlib_metadata
@@ -11,9 +12,19 @@ else:
 
 import dask.array
 import numpy as np
-import zarr
 from itkwasm import array_like_to_numpy_array
-from zarr.storage import BaseStore
+
+import zarr
+import zarr.storage
+from ._zarr_open_array import open_array
+
+# Zarr Python 3
+if hasattr(zarr.storage, "StoreLike"):
+    StoreLike = zarr.storage.StoreLike
+else:
+    StoreLike = Union[MutableMapping, str, Path, zarr.storage.BaseStore]
+from ._zarr_kwargs import zarr_kwargs
+
 
 from .config import config
 from .memory_usage import memory_usage
@@ -21,6 +32,9 @@ from .methods._support import _dim_scale_factors
 from .multiscales import Multiscales
 from .rich_dask_progress import NgffProgress, NgffProgressCallback
 from .to_multiscales import to_multiscales
+
+zarr_version = version.parse(zarr.__version__)
+zarr_version_major = zarr_version.major
 
 
 def _pop_metadata_optionals(metadata_dict):
@@ -34,9 +48,7 @@ def _pop_metadata_optionals(metadata_dict):
     return metadata_dict
 
 
-def _prep_for_to_zarr(
-    store: Union[MutableMapping, str, Path, BaseStore], arr: dask.array.Array
-) -> dask.array.Array:
+def _prep_for_to_zarr(store: StoreLike, arr: dask.array.Array) -> dask.array.Array:
     try:
         importlib_metadata.distribution("kvikio")
         _KVIKIO_AVAILABLE = True
@@ -81,11 +93,12 @@ def _write_with_tensorstore(store_path: str, array, region, chunks) -> None:
 
 
 def to_ngff_zarr(
-    store: Union[MutableMapping, str, Path, BaseStore],
+    store: StoreLike,
     multiscales: Multiscales,
+    version: str = "0.4",
     overwrite: bool = True,
     use_tensorstore: bool = False,
-    chunk_store: Optional[Union[MutableMapping, str, Path, BaseStore]] = None,
+    chunk_store: Optional[StoreLike] = None,
     progress: Optional[Union[NgffProgress, NgffProgressCallback]] = None,
     **kwargs,
 ) -> None:
@@ -93,10 +106,13 @@ def to_ngff_zarr(
     Write an image pixel array and metadata to a Zarr store with the OME-NGFF standard data model.
 
     :param store: Store or path to directory in file system.
-    :type  store: MutableMapping, str or Path, zarr.storage.BaseStore
+    :type  store: StoreLike
 
     :param multiscales: Multiscales OME-NGFF image pixel data and metadata. Can be generated with ngff_zarr.to_multiscales.
     :type  multiscales: Multiscales
+
+    :param version: OME-Zarr specification version.
+    :type  version: str, optional
 
     :param overwrite: If True, delete any pre-existing data in `store` before creating groups.
     :type  overwrite: bool, optional
@@ -106,7 +122,7 @@ def to_ngff_zarr(
 
     :param chunk_store: Separate storage for chunks. If not provided, `store` will be used
         for storage of both chunks and metadata.
-    :type  chunk_store: MutableMapping, str or Path, zarr.storage.BaseStore, optional
+    :type  chunk_store: StoreLike, optional
 
     :type  progress: RichDaskProgress
     :param progress: Optional progress logger
@@ -120,11 +136,36 @@ def to_ngff_zarr(
         else:
             raise ValueError("Tensorstore requires a path-like store")
 
+    if version != "0.4" and version != "0.5":
+        raise ValueError(f"Unsupported version: {version}")
+
     metadata_dict = asdict(multiscales.metadata)
     metadata_dict = _pop_metadata_optionals(metadata_dict)
     metadata_dict["@type"] = "ngff:Image"
-    root = zarr.group(store, overwrite=overwrite, chunk_store=chunk_store)
-    root.attrs["multiscales"] = [metadata_dict]
+    zarr_format = 2 if version == "0.4" else 3
+    format_kwargs = {"zarr_format": zarr_format} if zarr_version_major >= 3 else {}
+    if version == "0.4":
+        # root = zarr.group(store, overwrite=overwrite, chunk_store=chunk_store)
+        root = zarr.open_group(
+            store,
+            mode="w" if overwrite else "a",
+            chunk_store=chunk_store,
+            **format_kwargs,
+        )
+    else:
+        # For version >= 0.5, open root with Zarr v3
+        root = zarr.open_group(
+            store,
+            mode="w" if overwrite else "a",
+            chunk_store=chunk_store,
+            **format_kwargs,
+        )
+
+    if version != "0.4":
+        # RFC 2, Zarr 3
+        root.attrs["ome"] = {"version": version, "multiscales": [metadata_dict]}
+    else:
+        root.attrs["multiscales"] = [metadata_dict]
 
     nscales = len(multiscales.images)
     if progress:
@@ -160,14 +201,15 @@ def to_ngff_zarr(
                     shrink_factors.append(1)
 
             chunks = tuple([c[0] for c in arr.chunks])
-            zarr_array = zarr.creation.open_array(
+
+            zarr_array = open_array(
                 shape=arr.shape,
                 chunks=chunks,
                 dtype=arr.dtype,
                 store=store,
                 path=path,
                 mode="a",
-                dimension_separator="/",
+                **zarr_kwargs,
             )
 
             shape = image.data.shape
@@ -311,7 +353,7 @@ def to_ngff_zarr(
                             overwrite=False,
                             compute=True,
                             return_stored=False,
-                            dimension_separator="/",
+                            **zarr_kwargs,
                             **kwargs,
                         )
         else:
@@ -334,7 +376,7 @@ def to_ngff_zarr(
                     overwrite=False,
                     compute=True,
                     return_stored=False,
-                    dimension_separator="/",
+                    **zarr_kwargs,
                     **kwargs,
                 )
 
@@ -383,4 +425,4 @@ def to_ngff_zarr(
             callback()
         image.computed_callbacks = []
 
-    zarr.consolidate_metadata(store)
+    zarr.consolidate_metadata(store, **format_kwargs)
