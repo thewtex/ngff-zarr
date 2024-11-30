@@ -29,7 +29,7 @@ A lean and kind
 
 quick_start.md
 installation.md
-array_api.md
+python.md
 cli.md
 itk.md
 methods.md
