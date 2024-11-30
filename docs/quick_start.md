@@ -20,5 +20,6 @@ import numpy as np
 
 data = np.random.randint(0, 256, int(1e6)).reshape((1000, 1000))
 multiscales = nz.to_multiscales(data)
+
 nz.to_ngff_zarr('example.ome.zarr', multiscales)
 ```
