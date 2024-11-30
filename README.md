@@ -8,8 +8,9 @@
 
 ---
 
-A lean and kind Open Microscopy Environment (OME) Next Generation File Format
-(NGFF) Zarr implementation.
+A lean and kind
+[Open Microscopy Environment (OME) Next Generation File Format (NGFF) Zarr](https://ngff.openmicroscopy.org)
+implementation.
 
 ## ✨ Features
 
@@ -17,10 +18,13 @@ A lean and kind Open Microscopy Environment (OME) Next Generation File Format
 - Work with arbitrary Zarr store types
 - Lazy, parallel, and web ready -- no local filesystem required
 - Process extremely large datasets
+- Conversion of most bioimaging file formats
 - Multiple downscaling methods
-- Supports Python>=3.8
-- Implements version 0.4 of the
-  [OME-Zarr NGFF specification](https://github.com/ome/ngff)
+- Supports Python>=3.9
+- Reads OME-Zarr v0.1 to v0.5 into simple Python data classes with Dask arrays
+- Optional OME-Zarr data model validation during reading
+- Writes OME-Zarr v0.4 to v0.5
+- Optional writing via [tensorstore](https://google.github.io/tensorstore/)
 
 ## Documentation
 
