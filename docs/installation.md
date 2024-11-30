@@ -10,7 +10,9 @@ pip install ngff-zarr
 
 :::
 
-:::{tab-item} Browser via Pyodide, e.g. the [Pyodide REPL] or [JupyterLite]
+:::{tab-item} Browser via Pyodide
+
+With, for example, the [Pyodide REPL] or [JupyterLite]
 
 ```python
 import micropip
@@ -20,6 +22,8 @@ await micropip.install('ngff-zarr')
 :::
 
 ::::
+
+## Optional dependencies
 
 Optional extras dependencies include:
 
@@ -40,3 +44,17 @@ Optional extras dependencies include:
 [dask-image]: https://image.dask.org/en/latest/
 [itk]: https://docs.itk.org/en/latest/learn/python_quick_start.html
 [tensorstore]: https://google.github.io/tensorstore/
+
+### Install all optional dependencies
+
+To install all optional dependencies:
+
+```shell
+pip install "ngff-zarr[cli,dask-image,itk,tensorstore,validate]"
+```
+
+which is equivalent to:
+
+```shell
+pip install "ngff-zarr[all]"
+```
