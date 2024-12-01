@@ -165,6 +165,26 @@ To read an OME-Zarr file, use [`from_ngff_zarr`], which returns the
 >>> multiscales = nz.from_ngff_zarr('cthead1.ome.zarr')
 ```
 
+OME-Zarr version 0.1 to 0.5 is supported.
+
+## Validate OME-Zarr metadata
+
+To validate that an OME-Zarr's metadata following the specification's data
+model, which is used by all the programming languages in the community, use the
+`validate` optional dependency and kwarg to [`from_ngff_zarr`].
+
+```shell
+pip install "ngff-zarr[validate]"
+```
+
+```python
+>>> multiscales = nz.from_ngff_zarr('cthead1.ome.zarr', validate=True)
+```
+
+If the metadata does not follow the data model, an error will be raised.
+
+Metadata validation is supported for OME-Zarr version 0.1 to 0.5.
+
 ## Write an OME-Zarr
 
 To write the multiscales to OME-Zarr, use [`to_ngff_zarr`].
