@@ -152,13 +152,22 @@ chunksize=(64, 64), chunktype=numpy.ndarray>,
 )
 ```
 
-The `Multiscales` dataclass stores all the images and their metadata for each
+The [`Multiscales`] dataclass stores all the images and their metadata for each
 scale according the OME-Zarr data model. Note that the correct `scale` and
 `translation` for each scale are automatically computed.
 
-## Write to Zarr
+## Read an OME-Zarr
 
-To write the multiscales to Zarr, use [`to_ngff_zarr`].
+To read an OME-Zarr file, use [`from_ngff_zarr`], which returns the
+[`Multiscales`] dataclass.
+
+```python
+>>> multiscales = nz.from_ngff_zarr('cthead1.ome.zarr')
+```
+
+## Write an OME-Zarr
+
+To write the multiscales to OME-Zarr, use [`to_ngff_zarr`].
 
 ```python
 nz.to_ngff_zarr('cthead1.ome.zarr', multiscales)
@@ -177,7 +186,9 @@ The multiscales will be computed and written out-of-core, limiting memory usage.
 [Dask arrays]: https://docs.dask.org/en/stable/array.html
 [Python Array API Standard]: https://data-apis.org/array-api/latest/
 [UDUNITS-2 identifiers]: https://ngff.openmicroscopy.org/latest/#axes-md
+[`Multiscales`]: ./apidocs/ngff_zarr/ngff_zarr.multiscales.md
 [`NgffImage`]: ./apidocs/ngff_zarr/ngff_zarr.ngff_image.md
 [`to_ngff_zarr`]: ./apidocs/ngff_zarr/ngff_zarr.to_ngff_zarr.md
 [`to_ngff_image`]: ./apidocs/ngff_zarr/ngff_zarr.to_ngff_image.md
 [`to_multiscales`]: ./apidocs/ngff_zarr/ngff_zarr.to_multiscales.md
+[`from_ngff_zarr`]: ./apidocs/ngff_zarr/ngff_zarr.from_ngff_zarr.md
