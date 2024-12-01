@@ -8,7 +8,7 @@ Bidirectional type conversion that preserves spatial metadata is available with
 Once represented as an `NgffImage`, a multiscale representation can be generated
 with `to_multiscales`. And an OME-Zarr can be generated from the multiscales
 with `to_ngff_zarr`. For more information, see the
-[Python Array API documentation](./array_api.md).
+[Python interface documentation](./python.md).
 
 ## ITK Python
 

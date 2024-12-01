@@ -3987,7 +3987,7 @@ packages:
   name: ngff-zarr
   version: 0.9.1
   path: .
-  sha256: 496ef9944dd92d1a0e0aa6d7cd6df7385e48edc1cb0b4789599f25e2901db941
+  sha256: d8f01f63ea17ad4d8e7fa6bd0afd6cf5d84ee41cbc6d65dc1d82ad1ac13eaffb
   requires_dist:
   - dask[array]
   - importlib-resources
@@ -4000,6 +4000,27 @@ packages:
   - rich-argparse
   - typing-extensions
   - zarr
+  - dask-image ; extra == 'all'
+  - dask[distributed] ; extra == 'all'
+  - deepdiff ; extra == 'all'
+  - furo<2025,>=2024.7.18 ; extra == 'all'
+  - imagecodecs ; extra == 'all'
+  - imageio ; extra == 'all'
+  - itk-filtering>=5.3.0 ; extra == 'all'
+  - itk-io>=5.3.0 ; extra == 'all'
+  - itkwasm-image-io ; extra == 'all'
+  - jsonschema ; extra == 'all'
+  - myst-parser<4,>=3.0.1 ; extra == 'all'
+  - pooch ; extra == 'all'
+  - pytest>=6 ; extra == 'all'
+  - sphinx-autobuild<2025,>=2024.4.16 ; extra == 'all'
+  - sphinx-autodoc2<0.6,>=0.5.0 ; extra == 'all'
+  - sphinx-copybutton<0.6,>=0.5.2 ; extra == 'all'
+  - sphinx-design<0.7,>=0.6.0 ; extra == 'all'
+  - sphinx<8,>=7.4.7 ; extra == 'all'
+  - sphinxext-opengraph<0.10,>=0.9.1 ; extra == 'all'
+  - tensorstore ; extra == 'all'
+  - tifffile>=2024.7.24 ; extra == 'all'
   - dask-image ; extra == 'cli'
   - dask[distributed] ; extra == 'cli'
   - imagecodecs ; extra == 'cli'

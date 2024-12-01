@@ -1,15 +1,22 @@
-# 🐍 Python Array API
+# 🐍 Python Interface
 
-NGFF-Zarr supports conversion of any NumPy array-like object that follows the
-[Python Array API Standard](https://data-apis.org/array-api/latest/) into
-OME-Zarr. This includes such objects an NumPy `ndarray`'s, Dask Arrays, PyTorch
-Tensors, CuPy arrays, Zarr array, etc.
+NGFF-Zarr is a Python library that provides a simple, natural interface for
+working with OME-Zarr data structures, creating chunked, multiscale OME-Zarr
+image pyramids, and reading and writing OME-Zarr multiscale image files.
+
+NGFF-Zarr's interface, which reflects the OME-Zarr data model, is built on
+Python's built-in [dataclasses] and [Dask arrays]. It is designed to be simple,
+flexible, and easy to use.
 
 ## Array to NGFF Image
 
-Convert the array to an `NgffImage`, which is a standard
-[Python dataclass](https://docs.python.org/3/library/dataclasses.html) that
-represents an OME-Zarr image for a single scale.
+NGFF-Zarr supports conversion of any NumPy array-like object that follows the
+[Python Array API Standard] into the OME-Zarr data model. This includes such
+objects an NumPy `ndarray`'s, Dask Arrays, PyTorch Tensors, CuPy arrays, Zarr
+array, etc.
+
+Convert the array to an [`NgffImage`], which is a standard Python [dataclass]
+that represents an OME-Zarr image for a single scale.
 
 When creating the image from the array, you can specify
 
@@ -17,8 +24,7 @@ When creating the image from the array, you can specify
 - the `scale`, the pixel spacing for the spatial dims
 - the `translation`, the origin or offset of the center of the first pixel
 - a `name` for the image
-- and `axes_units` with
-  [UDUNITS-2 identifiers](https://ngff.openmicroscopy.org/latest/#axes-md)
+- and `axes_units` with [UDUNITS-2 identifiers]
 
 ```python
 >>> # Load an image as a NumPy array
@@ -28,7 +34,7 @@ When creating the image from the array, you can specify
 <class 'numpy.ndarray'>
 ```
 
-Specify optional additional metadata with `to_ngff_zarr`.
+Specify optional additional metadata with [`to_ngff_image`].
 
 ```python
 >>> import ngff_zarr as nz
@@ -50,16 +56,16 @@ chunksize=(256, 256), chunktype=numpy.ndarray>,
 )
 ```
 
-The image data is nested in a lazy `dask.array` and chucked.
+The image data is nested in a lazy `dask.Array` and chucked.
 
 If `dims`, `scale`, or `translation` are not specified, NumPy-compatible
 defaults are used.
 
-## Generate multiscales
+## Generate Multiscales
 
 OME-Zarr represents images in a chunked, multiscale data structure. Use
-`to_multiscales` to build a task graph that will produce a chunked, multiscale
-image pyramid. `to_multiscales` has optional `scale_factors` and `chunks`
+[`to_multiscales`] to build a task graph that will produce a chunked, multiscale
+image pyramid. [`to_multiscales`] has optional `scale_factors` and `chunks`
 parameters. An [antialiasing method](./methods.md) can also be prescribed.
 
 ```python
@@ -152,7 +158,7 @@ scale according the OME-Zarr data model. Note that the correct `scale` and
 
 ## Write to Zarr
 
-To write the multiscales to Zarr, use `to_ngff_zarr`.
+To write the multiscales to Zarr, use [`to_ngff_zarr`].
 
 ```python
 nz.to_ngff_zarr('cthead1.ome.zarr', multiscales)
@@ -165,3 +171,13 @@ Any other
 also be used.
 
 The multiscales will be computed and written out-of-core, limiting memory usage.
+
+[dataclass]: https://docs.python.org/3/library/dataclasses.html
+[dataclasses]: https://docs.python.org/3/library/dataclasses.html
+[Dask arrays]: https://docs.dask.org/en/stable/array.html
+[Python Array API Standard]: https://data-apis.org/array-api/latest/
+[UDUNITS-2 identifiers]: https://ngff.openmicroscopy.org/latest/#axes-md
+[`NgffImage`]: ./apidocs/ngff_zarr/ngff_zarr.ngff_image.md
+[`to_ngff_zarr`]: ./apidocs/ngff_zarr/ngff_zarr.to_ngff_zarr.md
+[`to_ngff_image`]: ./apidocs/ngff_zarr/ngff_zarr.to_ngff_image.md
+[`to_multiscales`]: ./apidocs/ngff_zarr/ngff_zarr.to_multiscales.md
