@@ -201,6 +201,19 @@ also be used.
 
 The multiscales will be computed and written out-of-core, limiting memory usage.
 
+### Writing with Tensorstore
+
+To write with [tensorstore], which may provide better performance, use the
+`tensorstore` optional dependency.
+
+```shell
+pip install "ngff-zarr[tensorstore]"
+```
+
+```python
+nz.to_ngff_zarr('cthead1.ome.zarr', multiscales, use_tensorstore=True)
+```
+
 [dataclass]: https://docs.python.org/3/library/dataclasses.html
 [dataclasses]: https://docs.python.org/3/library/dataclasses.html
 [Dask arrays]: https://docs.dask.org/en/stable/array.html
@@ -212,3 +225,4 @@ The multiscales will be computed and written out-of-core, limiting memory usage.
 [`to_ngff_image`]: ./apidocs/ngff_zarr/ngff_zarr.to_ngff_image.md
 [`to_multiscales`]: ./apidocs/ngff_zarr/ngff_zarr.to_multiscales.md
 [`from_ngff_zarr`]: ./apidocs/ngff_zarr/ngff_zarr.from_ngff_zarr.md
+[tensorstore]: https://google.github.io/tensorstore/
