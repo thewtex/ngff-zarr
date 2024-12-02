@@ -25,7 +25,12 @@ from rich.progress import (
 )
 from rich.spinner import Spinner
 from rich_argparse import RichHelpFormatter
-from zarr.storage import DirectoryStore
+import zarr.storage
+
+if hasattr(zarr.storage, "DirectoryStore"):
+    LocalStore = zarr.storage.DirectoryStore
+else:
+    LocalStore = zarr.storage.LocalStore
 
 from .cli_input_to_ngff_image import cli_input_to_ngff_image
 from .config import config
@@ -236,7 +241,7 @@ def main():
         cache_dir = Path(args.cache_dir).resolve()
         if not cache_dir.exists():
             Path.makedirs(cache_dir, parents=True)
-        config.cache_store = zarr.storage.DirectoryStore(cache_dir, **zarr_kwargs)
+        config.cache_store = LocalStore(cache_dir, **zarr_kwargs)
 
     console = Console()
     progress = RichProgress(
@@ -303,7 +308,7 @@ def main():
         )
     output_store = None
     if args.output and output_backend is ConversionBackend.NGFF_ZARR:
-        output_store = DirectoryStore(args.output, **zarr_kwargs)
+        output_store = LocalStore(args.output, **zarr_kwargs)
 
     subtitle = "[red]generation"
     if not args.output:
@@ -332,7 +337,7 @@ def main():
             return
 
         if input_backend is ConversionBackend.NGFF_ZARR:
-            store = zarr.storage.DirectoryStore(args.input[0])
+            store = LocalStore(args.input[0])
             multiscales = from_ngff_zarr(store)
             _multiscales_to_ngff_zarr(
                 live, args, output_store, rich_dask_progress, multiscales
