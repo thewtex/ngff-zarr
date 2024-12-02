@@ -25,7 +25,12 @@ from rich.progress import (
 )
 from rich.spinner import Spinner
 from rich_argparse import RichHelpFormatter
-from zarr.storage import DirectoryStore
+import zarr.storage
+
+if hasattr(zarr.storage, "DirectoryStore"):
+    LocalStore = zarr.storage.DirectoryStore
+else:
+    LocalStore = zarr.storage.LocalStore
 
 from .cli_input_to_ngff_image import cli_input_to_ngff_image
 from .config import config
@@ -61,7 +66,18 @@ def _multiscales_to_ngff_zarr(
                 )
             )
         return
-    to_ngff_zarr(output_store, multiscales, progress=rich_dask_progress)
+    if args.use_tensorstore:
+        if hasattr(output_store, "root"):
+            output_store = output_store.root
+        else:
+            output_store = output_store.path
+    to_ngff_zarr(
+        output_store,
+        multiscales,
+        progress=rich_dask_progress,
+        use_tensorstore=args.use_tensorstore,
+        version=args.ome_zarr_version,
+    )
 
 
 def _ngff_image_to_multiscales(
@@ -191,6 +207,12 @@ def main():
         type=int,
         default=0,
     )
+    metadata_group.add_argument(
+        "--ome-zarr-version",
+        help="OME-Zarr version",
+        default="0.4",
+        choices=["0.4", "0.5"],
+    )
 
     processing_group = parser.add_argument_group("processing", "Processing options")
     processing_group.add_argument(
@@ -226,6 +248,11 @@ def main():
     processing_group.add_argument(
         "--cache-dir", help="Directory to use for caching with large datasets"
     )
+    processing_group.add_argument(
+        "--use-tensorstore",
+        action="store_true",
+        help="Use the TensorStore library for I/O",
+    )
 
     args = parser.parse_args()
 
@@ -236,7 +263,7 @@ def main():
         cache_dir = Path(args.cache_dir).resolve()
         if not cache_dir.exists():
             Path.makedirs(cache_dir, parents=True)
-        config.cache_store = zarr.storage.DirectoryStore(cache_dir, **zarr_kwargs)
+        config.cache_store = LocalStore(cache_dir, **zarr_kwargs)
 
     console = Console()
     progress = RichProgress(
@@ -303,7 +330,7 @@ def main():
         )
     output_store = None
     if args.output and output_backend is ConversionBackend.NGFF_ZARR:
-        output_store = DirectoryStore(args.output, **zarr_kwargs)
+        output_store = LocalStore(args.output, **zarr_kwargs)
 
     subtitle = "[red]generation"
     if not args.output:
@@ -332,7 +359,7 @@ def main():
             return
 
         if input_backend is ConversionBackend.NGFF_ZARR:
-            store = zarr.storage.DirectoryStore(args.input[0])
+            store = LocalStore(args.input[0])
             multiscales = from_ngff_zarr(store)
             _multiscales_to_ngff_zarr(
                 live, args, output_store, rich_dask_progress, multiscales
