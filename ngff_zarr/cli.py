@@ -76,6 +76,7 @@ def _multiscales_to_ngff_zarr(
         multiscales,
         progress=rich_dask_progress,
         use_tensorstore=args.use_tensorstore,
+        version=args.ome_zarr_version,
     )
 
 
@@ -205,6 +206,12 @@ def main():
         help="Scale to pick from multiscale input for a single-scale output format",
         type=int,
         default=0,
+    )
+    metadata_group.add_argument(
+        "--ome-zarr-version",
+        help="OME-Zarr version",
+        default="0.4",
+        choices=["0.4", "0.5"],
     )
 
     processing_group = parser.add_argument_group("processing", "Processing options")
