@@ -66,7 +66,17 @@ def _multiscales_to_ngff_zarr(
                 )
             )
         return
-    to_ngff_zarr(output_store, multiscales, progress=rich_dask_progress)
+    if args.use_tensorstore:
+        if hasattr(output_store, "root"):
+            output_store = output_store.root
+        else:
+            output_store = output_store.path
+    to_ngff_zarr(
+        output_store,
+        multiscales,
+        progress=rich_dask_progress,
+        use_tensorstore=args.use_tensorstore,
+    )
 
 
 def _ngff_image_to_multiscales(
@@ -230,6 +240,11 @@ def main():
     processing_group.add_argument("--memory-target", help="Memory limit, e.g. 4GB")
     processing_group.add_argument(
         "--cache-dir", help="Directory to use for caching with large datasets"
+    )
+    processing_group.add_argument(
+        "--use-tensorstore",
+        action="store_true",
+        help="Use the TensorStore library for I/O",
     )
 
     args = parser.parse_args()
