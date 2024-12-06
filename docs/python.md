@@ -214,6 +214,24 @@ pip install "ngff-zarr[tensorstore]"
 nz.to_ngff_zarr('cthead1.ome.zarr', multiscales, use_tensorstore=True)
 ```
 
+## Convert OME-Zarr versions
+
+To convert from OME-Zarr version 0.4, which uses the Zarr Format Specification
+2, to 0.5, which uses the Zarr Format Specification 3, or vice version, specify
+the desired version when writing.
+
+```python
+# Convert from 0.4 to 0.5
+multiscales = from_ngff_zarr('cthead1.ome.zarr')
+to_ngff_zarr('cthead1_zarr3.ome.zarr', multiscales, version='0.5')
+```
+
+```python
+# Convert from 0.5 to 0.4
+multiscales = from_ngff_zarr('cthead1.ome.zarr')
+to_ngff_zarr('cthead1_zarr2.ome.zarr', multiscales, version='0.4')
+```
+
 [dataclass]: https://docs.python.org/3/library/dataclasses.html
 [dataclasses]: https://docs.python.org/3/library/dataclasses.html
 [Dask arrays]: https://docs.dask.org/en/stable/array.html
