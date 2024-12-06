@@ -1,4 +1,5 @@
 from pathlib import Path
+import sys
 
 import numpy as np
 import zarr
@@ -41,7 +42,10 @@ def test_y_x_valid_ngff():
 def test_validate_0_1():
     test_store = Path(__file__).parent / "data" / "input" / "v01" / "6001251.zarr"
     multiscales = from_ngff_zarr(test_store, validate=True, version="0.1")
-    print(multiscales)
+    if sys.byteorder == "little":
+        assert multiscales.images[0].data.dtype.byteorder == "<"
+    else:
+        assert multiscales.images[0].data.dtype.byteorder == ">"
 
 
 def test_validate_0_1_no_version():

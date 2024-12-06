@@ -2,6 +2,7 @@ from collections.abc import MutableMapping
 from pathlib import Path
 from typing import Union, Optional
 import packaging.version
+import sys
 
 import dask.array
 import zarr
@@ -91,6 +92,11 @@ def from_ngff_zarr(
     datasets = []
     for dataset in metadata["datasets"]:
         data = dask.array.from_zarr(store, component=dataset["path"])
+        # Convert endianness to native if needed
+        if (sys.byteorder == "little" and data.dtype.byteorder == ">") or (
+            sys.byteorder == "big" and data.dtype.byteorder == "<"
+        ):
+            data = data.astype(data.dtype.newbyteorder())
 
         scale = {d: 1.0 for d in dims}
         translation = {d: 0.0 for d in dims}
