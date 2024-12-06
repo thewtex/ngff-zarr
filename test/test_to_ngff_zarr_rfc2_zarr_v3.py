@@ -31,6 +31,11 @@ def test_gaussian_isotropic_scale_factors(input_images):
     # store_new_multiscales(dataset_name, baseline_name, multiscales, version=version)
     verify_against_baseline(dataset_name, baseline_name, multiscales, version=version)
 
+    array0 = zarr.open_array(store=store, path="scale0/image", mode="r", zarr_format=3)
+    dimension_names = array0.metadata.dimension_names
+    for idx, ax in enumerate(multiscales.metadata.axes):
+        assert ax.name == dimension_names[idx]
+
 
 def test_gaussian_isotropic_scale_factors_tensorstore(input_images):
     pytest.importorskip("tensorstore")
@@ -48,3 +53,10 @@ def test_gaussian_isotropic_scale_factors_tensorstore(input_images):
         verify_against_baseline(
             dataset_name, baseline_name, multiscales, version=version
         )
+
+        array0 = zarr.open_array(
+            store=tmpdir, path="scale0/image", mode="r", zarr_format=3
+        )
+        dimension_names = array0.metadata.dimension_names
+        for idx, ax in enumerate(multiscales.metadata.axes):
+            assert ax.name == dimension_names[idx]
