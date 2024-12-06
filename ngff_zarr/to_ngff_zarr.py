@@ -105,7 +105,7 @@ def _numpy_to_zarr_dtype(dtype):
 
 
 def _write_with_tensorstore(
-    store_path: str, array, region, chunks, zarr_format
+    store_path: str, array, region, chunks, zarr_format, dimension_names=None
 ) -> None:
     """Write array using tensorstore backend"""
     import tensorstore as ts
@@ -131,6 +131,8 @@ def _write_with_tensorstore(
             "configuration": {"chunk_shape": chunks},
         }
         spec["metadata"]["data_type"] = _numpy_to_zarr_dtype(array.dtype)
+        if dimension_names:
+            spec["metadata"]["dimension_names"] = dimension_names
     else:
         raise ValueError(f"Unsupported zarr format: {zarr_format}")
     dataset = ts.open(spec, create=True, dtype=array.dtype).result()
@@ -199,6 +201,10 @@ def to_ngff_zarr(
             coordinateTransformations=metadata.coordinateTransformations,
             name=metadata.name,
         )
+    dimension_names = tuple([ax.name for ax in metadata.axes])
+    dimension_names_kwargs = (
+        {"dimension_names": dimension_names} if version != "0.4" else {}
+    )
 
     metadata_dict = asdict(metadata)
     metadata_dict = _pop_metadata_optionals(metadata_dict)
@@ -274,6 +280,7 @@ def to_ngff_zarr(
                 path=path,
                 mode="a",
                 **zarr_kwargs,
+                **dimension_names_kwargs,
             )
 
             shape = image.data.shape
@@ -407,6 +414,7 @@ def to_ngff_zarr(
                             region,
                             [c[0] for c in arr_region.chunks],
                             zarr_format=zarr_format,
+                            dimension_names=dimension_names,
                             **kwargs,
                         )
                     else:
@@ -419,6 +427,7 @@ def to_ngff_zarr(
                             compute=True,
                             return_stored=False,
                             **zarr_kwargs,
+                            **dimension_names_kwargs,
                             **kwargs,
                         )
         else:
@@ -435,6 +444,7 @@ def to_ngff_zarr(
                     region,
                     [c[0] for c in arr.chunks],
                     zarr_format=zarr_format,
+                    dimension_names=dimension_names,
                     **kwargs,
                 )
             else:
@@ -447,6 +457,7 @@ def to_ngff_zarr(
                     compute=True,
                     return_stored=False,
                     **zarr_kwargs,
+                    **dimension_names_kwargs,
                     **kwargs,
                 )
 
