@@ -2140,7 +2140,7 @@ packages:
   version: 0.4.6
   url: https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl
   sha256: 4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6
-  requires_python: '!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7'
+  requires_python: '>=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*'
 - kind: pypi
   name: crc32c
   version: 2.7.1
@@ -2191,7 +2191,7 @@ packages:
   - lz4>=4.3.2 ; extra == 'complete'
   - dask[array] ; extra == 'dataframe'
   - pandas>=2.0 ; extra == 'dataframe'
-  - dask-expr<1.2,>=1.1 ; extra == 'dataframe'
+  - dask-expr>=1.1,<1.2 ; extra == 'dataframe'
   - bokeh>=3.1.0 ; extra == 'diagnostics'
   - jinja2>=2.10.3 ; extra == 'diagnostics'
   - distributed==2024.11.2 ; extra == 'distributed'
@@ -2388,10 +2388,10 @@ packages:
   - pytest-recording ; extra == 'test'
   - pytest-rerunfailures ; extra == 'test'
   - requests ; extra == 'test'
-  - aiobotocore<3.0.0,>=2.5.4 ; extra == 'test-downstream'
+  - aiobotocore>=2.5.4,<3.0.0 ; extra == 'test-downstream'
   - dask-expr ; extra == 'test-downstream'
   - dask[dataframe,test] ; extra == 'test-downstream'
-  - moto[server]<5,>4 ; extra == 'test-downstream'
+  - moto[server]>4,<5 ; extra == 'test-downstream'
   - pytest-timeout ; extra == 'test-downstream'
   - xarray ; extra == 'test-downstream'
   - adlfs ; extra == 'test-full'
@@ -2441,7 +2441,7 @@ packages:
   sha256: 6cd97c58b47813d3619e63e9081169880fbe331f0ca883c871ff1f3f11814f5c
   requires_dist:
   - beautifulsoup4
-  - sphinx<9.0,>=6.0
+  - sphinx>=6.0,<9.0
   - sphinx-basic-ng>=1.0.0b2
   - pygments>=2.7
   requires_python: '>=3.8'
@@ -2754,7 +2754,7 @@ packages:
   - sphinx-lint ; extra == 'doc'
   - jaraco-tidelift>=1.4 ; extra == 'doc'
   - pytest-enabler>=2.2 ; extra == 'enabler'
-  - pytest!=8.1.*,>=6 ; extra == 'test'
+  - pytest>=6,!=8.1.* ; extra == 'test'
   - zipp>=3.17 ; extra == 'test'
   - jaraco-test>=5.4 ; extra == 'test'
   - pytest-mypy ; extra == 'type'
@@ -4003,22 +4003,22 @@ packages:
   - dask-image ; extra == 'all'
   - dask[distributed] ; extra == 'all'
   - deepdiff ; extra == 'all'
-  - furo<2025,>=2024.7.18 ; extra == 'all'
+  - furo>=2024.7.18,<2025 ; extra == 'all'
   - imagecodecs ; extra == 'all'
   - imageio ; extra == 'all'
   - itk-filtering>=5.3.0 ; extra == 'all'
   - itk-io>=5.3.0 ; extra == 'all'
   - itkwasm-image-io ; extra == 'all'
   - jsonschema ; extra == 'all'
-  - myst-parser<4,>=3.0.1 ; extra == 'all'
+  - myst-parser>=3.0.1,<4 ; extra == 'all'
   - pooch ; extra == 'all'
   - pytest>=6 ; extra == 'all'
-  - sphinx-autobuild<2025,>=2024.4.16 ; extra == 'all'
-  - sphinx-autodoc2<0.6,>=0.5.0 ; extra == 'all'
-  - sphinx-copybutton<0.6,>=0.5.2 ; extra == 'all'
-  - sphinx-design<0.7,>=0.6.0 ; extra == 'all'
-  - sphinx<8,>=7.4.7 ; extra == 'all'
-  - sphinxext-opengraph<0.10,>=0.9.1 ; extra == 'all'
+  - sphinx-autobuild>=2024.4.16,<2025 ; extra == 'all'
+  - sphinx-autodoc2>=0.5.0,<0.6 ; extra == 'all'
+  - sphinx-copybutton>=0.5.2,<0.6 ; extra == 'all'
+  - sphinx-design>=0.6.0,<0.7 ; extra == 'all'
+  - sphinx>=7.4.7,<8 ; extra == 'all'
+  - sphinxext-opengraph>=0.9.1,<0.10 ; extra == 'all'
   - tensorstore ; extra == 'all'
   - tifffile>=2024.7.24 ; extra == 'all'
   - dask-image ; extra == 'cli'
@@ -4030,14 +4030,14 @@ packages:
   - itkwasm-image-io ; extra == 'cli'
   - tifffile>=2024.7.24 ; extra == 'cli'
   - dask-image ; extra == 'dask-image'
-  - furo<2025,>=2024.7.18 ; extra == 'docs'
-  - myst-parser<4,>=3.0.1 ; extra == 'docs'
-  - sphinx-autobuild<2025,>=2024.4.16 ; extra == 'docs'
-  - sphinx-autodoc2<0.6,>=0.5.0 ; extra == 'docs'
-  - sphinx-copybutton<0.6,>=0.5.2 ; extra == 'docs'
-  - sphinx-design<0.7,>=0.6.0 ; extra == 'docs'
-  - sphinx<8,>=7.4.7 ; extra == 'docs'
-  - sphinxext-opengraph<0.10,>=0.9.1 ; extra == 'docs'
+  - furo>=2024.7.18,<2025 ; extra == 'docs'
+  - myst-parser>=3.0.1,<4 ; extra == 'docs'
+  - sphinx-autobuild>=2024.4.16,<2025 ; extra == 'docs'
+  - sphinx-autodoc2>=0.5.0,<0.6 ; extra == 'docs'
+  - sphinx-copybutton>=0.5.2,<0.6 ; extra == 'docs'
+  - sphinx-design>=0.6.0,<0.7 ; extra == 'docs'
+  - sphinx>=7.4.7,<8 ; extra == 'docs'
+  - sphinxext-opengraph>=0.9.1,<0.10 ; extra == 'docs'
   - itk-filtering>=5.3.0 ; extra == 'itk'
   - tensorstore ; extra == 'tensorstore'
   - deepdiff ; extra == 'test'
@@ -4077,7 +4077,7 @@ packages:
   - pydata-sphinx-theme ; extra == 'docs'
   - numpydoc ; extra == 'docs'
   - msgpack ; extra == 'msgpack'
-  - pcodec<0.3,>=0.2 ; extra == 'pcodec'
+  - pcodec>=0.2,<0.3 ; extra == 'pcodec'
   - coverage ; extra == 'test'
   - pytest ; extra == 'test'
   - pytest-cov ; extra == 'test'
@@ -4103,7 +4103,7 @@ packages:
   - msgpack ; extra == 'msgpack'
   - zfpy>=1.0.0 ; extra == 'zfpy'
   - numpy<2.0.0 ; extra == 'zfpy'
-  - pcodec<0.3,>=0.2 ; extra == 'pcodec'
+  - pcodec>=0.2,<0.3 ; extra == 'pcodec'
   - crc32c>=2.7 ; extra == 'crc32c'
   requires_python: '>=3.11'
 - kind: pypi
@@ -4124,7 +4124,7 @@ packages:
   - msgpack ; extra == 'msgpack'
   - zfpy>=1.0.0 ; extra == 'zfpy'
   - numpy<2.0.0 ; extra == 'zfpy'
-  - pcodec<0.3,>=0.2 ; extra == 'pcodec'
+  - pcodec>=0.2,<0.3 ; extra == 'pcodec'
   - crc32c>=2.7 ; extra == 'crc32c'
   requires_python: '>=3.11'
 - kind: pypi
@@ -4145,7 +4145,7 @@ packages:
   - msgpack ; extra == 'msgpack'
   - zfpy>=1.0.0 ; extra == 'zfpy'
   - numpy<2.0.0 ; extra == 'zfpy'
-  - pcodec<0.3,>=0.2 ; extra == 'pcodec'
+  - pcodec>=0.2,<0.3 ; extra == 'pcodec'
   - crc32c>=2.7 ; extra == 'crc32c'
   requires_python: '>=3.11'
 - kind: pypi
@@ -4166,7 +4166,7 @@ packages:
   - msgpack ; extra == 'msgpack'
   - zfpy>=1.0.0 ; extra == 'zfpy'
   - numpy<2.0.0 ; extra == 'zfpy'
-  - pcodec<0.3,>=0.2 ; extra == 'pcodec'
+  - pcodec>=0.2,<0.3 ; extra == 'pcodec'
   - crc32c>=2.7 ; extra == 'crc32c'
   requires_python: '>=3.11'
 - kind: pypi
@@ -5268,7 +5268,7 @@ packages:
   requires_dist:
   - iniconfig
   - packaging
-  - pluggy<2,>=1.5
+  - pluggy>=1.5,<2
   - exceptiongroup>=1.0.0rc8 ; python_full_version < '3.11'
   - tomli>=1 ; python_full_version < '3.11'
   - colorama ; sys_platform == 'win32'
@@ -5433,7 +5433,7 @@ packages:
   sha256: a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427
   requires_dist:
   - six>=1.5
-  requires_python: '!=3.0.*,!=3.1.*,!=3.2.*,>=2.7'
+  requires_python: '>=2.7,!=3.0.*,!=3.1.*,!=3.2.*'
 - kind: conda
   name: python_abi
   version: '3.13'
@@ -5777,7 +5777,7 @@ packages:
   url: https://files.pythonhosted.org/packages/50/ef/ac98346db016ff18a6ad7626a35808f37074d25796fd0234c2bb0ed1e054/scipy-1.14.1-cp313-cp313-macosx_10_13_x86_64.whl
   sha256: 1729560c906963fc8389f6aac023739ff3983e727b1a4d87696b7bf108316a79
   requires_dist:
-  - numpy<2.3,>=1.23.5
+  - numpy>=1.23.5,<2.3
   - pytest ; extra == 'test'
   - pytest-cov ; extra == 'test'
   - pytest-timeout ; extra == 'test'
@@ -5793,7 +5793,7 @@ packages:
   - cython ; extra == 'test'
   - meson ; extra == 'test'
   - ninja ; sys_platform != 'emscripten' and extra == 'test'
-  - sphinx<=7.3.7,>=5.0.0 ; extra == 'doc'
+  - sphinx>=5.0.0,<=7.3.7 ; extra == 'doc'
   - pydata-sphinx-theme>=0.15.2 ; extra == 'doc'
   - sphinx-design>=0.4.0 ; extra == 'doc'
   - matplotlib>=3.5 ; extra == 'doc'
@@ -5819,7 +5819,7 @@ packages:
   url: https://files.pythonhosted.org/packages/56/46/2449e6e51e0d7c3575f289f6acb7f828938eaab8874dbccfeb0cd2b71a27/scipy-1.14.1-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
   sha256: 5149e3fd2d686e42144a093b206aef01932a0059c2a33ddfa67f5f035bdfe13e
   requires_dist:
-  - numpy<2.3,>=1.23.5
+  - numpy>=1.23.5,<2.3
   - pytest ; extra == 'test'
   - pytest-cov ; extra == 'test'
   - pytest-timeout ; extra == 'test'
@@ -5835,7 +5835,7 @@ packages:
   - cython ; extra == 'test'
   - meson ; extra == 'test'
   - ninja ; sys_platform != 'emscripten' and extra == 'test'
-  - sphinx<=7.3.7,>=5.0.0 ; extra == 'doc'
+  - sphinx>=5.0.0,<=7.3.7 ; extra == 'doc'
   - pydata-sphinx-theme>=0.15.2 ; extra == 'doc'
   - sphinx-design>=0.4.0 ; extra == 'doc'
   - matplotlib>=3.5 ; extra == 'doc'
@@ -5861,7 +5861,7 @@ packages:
   url: https://files.pythonhosted.org/packages/a7/2f/6c142b352ac15967744d62b165537a965e95d557085db4beab2a11f7943b/scipy-1.14.1-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl
   sha256: b99722ea48b7ea25e8e015e8341ae74624f72e5f21fc2abd45f3a93266de4c5d
   requires_dist:
-  - numpy<2.3,>=1.23.5
+  - numpy>=1.23.5,<2.3
   - pytest ; extra == 'test'
   - pytest-cov ; extra == 'test'
   - pytest-timeout ; extra == 'test'
@@ -5877,7 +5877,7 @@ packages:
   - cython ; extra == 'test'
   - meson ; extra == 'test'
   - ninja ; sys_platform != 'emscripten' and extra == 'test'
-  - sphinx<=7.3.7,>=5.0.0 ; extra == 'doc'
+  - sphinx>=5.0.0,<=7.3.7 ; extra == 'doc'
   - pydata-sphinx-theme>=0.15.2 ; extra == 'doc'
   - sphinx-design>=0.4.0 ; extra == 'doc'
   - matplotlib>=3.5 ; extra == 'doc'
@@ -5903,7 +5903,7 @@ packages:
   url: https://files.pythonhosted.org/packages/b9/cc/70948fe9f393b911b4251e96b55bbdeaa8cca41f37c26fd1df0232933b9e/scipy-1.14.1-cp313-cp313-macosx_12_0_arm64.whl
   sha256: 4079b90df244709e675cdc8b93bfd8a395d59af40b72e339c2287c91860deb8e
   requires_dist:
-  - numpy<2.3,>=1.23.5
+  - numpy>=1.23.5,<2.3
   - pytest ; extra == 'test'
   - pytest-cov ; extra == 'test'
   - pytest-timeout ; extra == 'test'
@@ -5919,7 +5919,7 @@ packages:
   - cython ; extra == 'test'
   - meson ; extra == 'test'
   - ninja ; sys_platform != 'emscripten' and extra == 'test'
-  - sphinx<=7.3.7,>=5.0.0 ; extra == 'doc'
+  - sphinx>=5.0.0,<=7.3.7 ; extra == 'doc'
   - pydata-sphinx-theme>=0.15.2 ; extra == 'doc'
   - sphinx-design>=0.4.0 ; extra == 'doc'
   - matplotlib>=3.5 ; extra == 'doc'
@@ -5945,7 +5945,7 @@ packages:
   url: https://files.pythonhosted.org/packages/f5/1b/6ee032251bf4cdb0cc50059374e86a9f076308c1512b61c4e003e241efb7/scipy-1.14.1-cp313-cp313-win_amd64.whl
   sha256: baff393942b550823bfce952bb62270ee17504d02a1801d7fd0719534dfb9c84
   requires_dist:
-  - numpy<2.3,>=1.23.5
+  - numpy>=1.23.5,<2.3
   - pytest ; extra == 'test'
   - pytest-cov ; extra == 'test'
   - pytest-timeout ; extra == 'test'
@@ -5961,7 +5961,7 @@ packages:
   - cython ; extra == 'test'
   - meson ; extra == 'test'
   - ninja ; sys_platform != 'emscripten' and extra == 'test'
-  - sphinx<=7.3.7,>=5.0.0 ; extra == 'doc'
+  - sphinx>=5.0.0,<=7.3.7 ; extra == 'doc'
   - pydata-sphinx-theme>=0.15.2 ; extra == 'doc'
   - sphinx-design>=0.4.0 ; extra == 'doc'
   - matplotlib>=3.5 ; extra == 'doc'
@@ -6242,7 +6242,7 @@ packages:
   url: https://files.pythonhosted.org/packages/96/00/2b325970b3060c7cecebab6d295afe763365822b1306a12eeab198f74323/starlette-0.41.3-py3-none-any.whl
   sha256: 44cedb2b7c77a9de33a8b74b2b90e9f50d11fcf25d8270ea525ad71a25374ff7
   requires_dist:
-  - anyio<5,>=3.4.0
+  - anyio>=3.4.0,<5
   - typing-extensions>=3.10.0 ; python_full_version < '3.10'
   - httpx>=0.22.0 ; extra == 'full'
   - itsdangerous ; extra == 'full'
@@ -6602,7 +6602,7 @@ packages:
   - httptools>=0.6.3 ; extra == 'standard'
   - python-dotenv>=0.13 ; extra == 'standard'
   - pyyaml>=5.1 ; extra == 'standard'
-  - uvloop!=0.15.0,!=0.15.1,>=0.14.0 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32' and extra == 'standard'
+  - uvloop>=0.14.0,!=0.15.0,!=0.15.1 ; platform_python_implementation != 'PyPy' and sys_platform != 'cygwin' and sys_platform != 'win32' and extra == 'standard'
   - watchfiles>=0.13 ; extra == 'standard'
   - websockets>=10.4 ; extra == 'standard'
   requires_python: '>=3.8'

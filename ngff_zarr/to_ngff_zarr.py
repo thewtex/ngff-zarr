@@ -17,6 +17,8 @@ from itkwasm import array_like_to_numpy_array
 import zarr
 import zarr.storage
 from ._zarr_open_array import open_array
+from .v04.zarr_metadata import Metadata as Metadata_v04
+from .v05.zarr_metadata import Metadata as Metadata_v05
 
 # Zarr Python 3
 if hasattr(zarr.storage, "StoreLike"):
@@ -182,7 +184,23 @@ def to_ngff_zarr(
     if version != "0.4" and version != "0.5":
         raise ValueError(f"Unsupported version: {version}")
 
-    metadata_dict = asdict(multiscales.metadata)
+    metadata = multiscales.metadata
+    if version == "0.4" and isinstance(metadata, Metadata_v05):
+        metadata = Metadata_v04(
+            axes=metadata.axes,
+            datasets=metadata.datasets,
+            coordinateTransformations=metadata.coordinateTransformations,
+            name=metadata.name,
+        )
+    if version == "0.5" and isinstance(metadata, Metadata_v04):
+        metadata = Metadata_v05(
+            axes=metadata.axes,
+            datasets=metadata.datasets,
+            coordinateTransformations=metadata.coordinateTransformations,
+            name=metadata.name,
+        )
+
+    metadata_dict = asdict(metadata)
     metadata_dict = _pop_metadata_optionals(metadata_dict)
     metadata_dict["@type"] = "ngff:Image"
     zarr_format = 2 if version == "0.4" else 3
@@ -224,7 +242,7 @@ def to_ngff_zarr(
             progress.update_multiscales_task_completed(index + 1)
         image = next_image
         arr = image.data
-        path = multiscales.metadata.datasets[index].path
+        path = metadata.datasets[index].path
         parent = str(PurePosixPath(path).parent)
         if parent not in (".", "/"):
             array_dims_group = root.create_group(parent)
