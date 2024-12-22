@@ -30,7 +30,6 @@ from .methods._itk import (
 )
 from .methods._itkwasm import (
     _downsample_itkwasm,
-    _downsample_itkwasm_bin_shrink,
 )
 from .methods._support import _spatial_dims
 from .multiscales import Multiscales
@@ -332,8 +331,8 @@ def to_multiscales(
             ngff_image, default_chunks, out_chunks, scale_factors, "label_image"
         )
     elif method is Methods.ITKWASM_BIN_SHRINK:
-        images = _downsample_itkwasm_bin_shrink(
-            ngff_image, default_chunks, out_chunks, scale_factors
+        images = _downsample_itkwasm(
+            ngff_image, default_chunks, out_chunks, scale_factors, "bin_shrink"
         )
     elif method is Methods.ITK_GAUSSIAN:
         images = _downsample_itk_gaussian(

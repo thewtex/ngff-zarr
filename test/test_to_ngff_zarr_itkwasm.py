@@ -1,4 +1,7 @@
-from ngff_zarr import Methods, to_multiscales
+import numpy as np
+from zarr.storage import MemoryStore
+
+from ngff_zarr import Methods, to_multiscales, to_ngff_image, to_ngff_zarr
 
 from ._data import verify_against_baseline
 
@@ -9,6 +12,99 @@ try:
     _HAVE_CUCIM = True
 except ImportError:
     pass
+
+
+def test_downsample_czyx():
+    data = np.random.randint(0, 256, 262144).reshape((2, 32, 64, 64)).astype(np.uint8)
+    image = to_ngff_image(data, dims=["c", "z", "y", "x"])
+    multiscales = to_multiscales(image, scale_factors=[2, 4], chunks=32)
+    store = MemoryStore()
+    to_ngff_zarr(store, multiscales)
+    assert multiscales.images[0].dims[0] == "c"
+    assert multiscales.images[1].data.shape[0] == 2
+    assert multiscales.images[1].data.shape[1] == 16
+
+
+def test_downsample_zycx():
+    data = np.random.randint(0, 256, 262144).reshape((32, 64, 2, 64)).astype(np.uint8)
+    image = to_ngff_image(data, dims=["z", "y", "c", "x"])
+    multiscales = to_multiscales(image, scale_factors=[2, 4], chunks=32)
+    store = MemoryStore()
+    to_ngff_zarr(store, multiscales)
+    assert multiscales.images[0].dims[0] == "z"
+    assert multiscales.images[0].dims[2] == "c"
+    assert multiscales.images[1].data.shape[0] == 16
+    assert multiscales.images[1].data.shape[2] == 2
+
+
+def test_downsample_cxyz():
+    data = np.random.randint(0, 256, 262144).reshape((2, 64, 64, 32)).astype(np.uint8)
+    image = to_ngff_image(data, dims=["c", "z", "y", "x"])
+    multiscales = to_multiscales(image, scale_factors=[2, 4], chunks=32)
+    store = MemoryStore()
+    to_ngff_zarr(store, multiscales)
+    assert multiscales.images[0].dims[0] == "c"
+    assert multiscales.images[1].data.shape[0] == 2
+    assert multiscales.images[1].data.shape[1] == 32
+
+
+def test_downsample_tczyx():
+    data = (
+        np.random.randint(0, 256, 524288).reshape((2, 2, 32, 64, 64)).astype(np.uint8)
+    )
+    image = to_ngff_image(data, dims=["t", "c", "z", "y", "x"])
+    multiscales = to_multiscales(image, scale_factors=[2, 4], chunks=32)
+    store = MemoryStore()
+    to_ngff_zarr(store, multiscales)
+    assert multiscales.images[0].dims[0] == "t"
+    assert multiscales.images[0].dims[1] == "c"
+    assert multiscales.images[1].data.shape[0] == 2
+    assert multiscales.images[1].data.shape[1] == 2
+    assert multiscales.images[1].data.shape[2] == 16
+
+
+def test_downsample_tzycx():
+    data = np.random.randint(0, 256, 524288).reshape((2, 32, 64, 2, 64))
+    image = to_ngff_image(data, dims=["t", "z", "y", "c", "x"])
+    multiscales = to_multiscales(image, scale_factors=[2, 4], chunks=32)
+    store = MemoryStore()
+    to_ngff_zarr(store, multiscales)
+    assert multiscales.images[0].dims[0] == "t"
+    assert multiscales.images[0].dims[1] == "z"
+    assert multiscales.images[0].dims[3] == "c"
+    assert multiscales.images[1].data.shape[0] == 2
+    assert multiscales.images[1].data.shape[1] == 16
+    assert multiscales.images[1].data.shape[3] == 2
+
+
+def test_downsample_tcxyz():
+    data = np.random.randint(0, 256, 524288).reshape((2, 2, 64, 64, 32))
+    image = to_ngff_image(data, dims=["t", "c", "z", "y", "x"])
+    multiscales = to_multiscales(image, scale_factors=[2, 4], chunks=32)
+    store = MemoryStore()
+    to_ngff_zarr(store, multiscales)
+    assert multiscales.images[0].dims[0] == "t"
+    assert multiscales.images[0].dims[1] == "c"
+    assert multiscales.images[1].data.shape[0] == 2
+    assert multiscales.images[1].data.shape[1] == 2
+    assert multiscales.images[1].data.shape[2] == 32
+
+
+def test_bin_shrink_tczyx():
+    data = (
+        np.random.randint(0, 256, 524288).reshape((2, 2, 32, 64, 64)).astype(np.uint8)
+    )
+    image = to_ngff_image(data, dims=["t", "c", "z", "y", "x"])
+    multiscales = to_multiscales(
+        image, scale_factors=[2, 4], chunks=32, method=Methods.ITKWASM_BIN_SHRINK
+    )
+    store = MemoryStore()
+    to_ngff_zarr(store, multiscales)
+    assert multiscales.images[0].dims[0] == "t"
+    assert multiscales.images[0].dims[1] == "c"
+    assert multiscales.images[1].data.shape[0] == 2
+    assert multiscales.images[1].data.shape[1] == 2
+    assert multiscales.images[1].data.shape[2] == 16
 
 
 def test_bin_shrink_isotropic_scale_factors(input_images):
