@@ -188,7 +188,7 @@ def _downsample_itkwasm(
             non_spatial_shapes = previous_image.data.shape[:output_chunks_start]
 
             # Collect results for each sub-block
-            aggregated_blocks = {}
+            aggregated_blocks = []
             for idx in product(*(range(s) for s in non_spatial_shapes)):
                 # Build the slice object for indexing
                 slice_obj = []
@@ -231,11 +231,24 @@ def _downsample_itkwasm(
                         trim=False,  # Overlapped region is trimmed in blur_and_downsample to output size
                         chunks=output_chunks,
                     )
-                aggregated_blocks[slice_obj] = downscaled_sub_block
+                aggregated_blocks.append(downscaled_sub_block)
             downscaled_array_shape = non_spatial_shapes + downscaled_sub_block.shape
             downscaled_array = dask.array.empty(downscaled_array_shape, dtype=dtype)
-            for slice_obj, block in aggregated_blocks.items():
-                downscaled_array[slice_obj] = block
+            for downscaled_sub_block in aggregated_blocks:
+                # Build the slice object for indexing
+                slice_obj = []
+                non_spatial_index = 0
+                for dim in previous_image.dims:
+                    if dim in non_spatial_dims:
+                        # Take a single index (like "t=0,1,...") for the non-spatial dimension
+                        slice_obj.append(idx[non_spatial_index])
+                        non_spatial_index += 1
+                    else:
+                        # Keep full slice for spatial/channel dims
+                        slice_obj.append(slice(None))
+
+                slice_obj = tuple(slice_obj)
+                downscaled_array[slice_obj] = downscaled_sub_block
         else:
             data = previous_image.data
             if smoothing == "bin_shrink":
