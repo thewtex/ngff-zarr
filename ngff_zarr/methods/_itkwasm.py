@@ -12,7 +12,7 @@ from ._support import (
     _dim_scale_factors,
     _get_block,
     _spatial_dims,
-    _spatial_dims_last,
+    _spatial_dims_last_zyx,
 )
 
 _image_dims: Tuple[str, str, str, str] = ("x", "y", "z", "t")
@@ -96,7 +96,7 @@ def _downsample_itkwasm(
         previous_dim_factors = dim_factors
         previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
         # Operate on a contiguous spatial block
-        previous_image = _spatial_dims_last(previous_image)
+        previous_image = _spatial_dims_last_zyx(previous_image)
         if previous_image.dims != dims:
             transposed_dims = True
             reorder = [previous_image.dims.index(dim) for dim in dims]
@@ -270,7 +270,7 @@ def _downsample_itkwasm(
                 out_chunks_list.append(1)
         downscaled_array = downscaled_array.rechunk(tuple(out_chunks_list))
 
-        # transpose back to original order if needed (_spatial_dims_last transposed the order)
+        # transpose back to original order if needed (_spatial_dims_zyx transposed the order)
         # breakpoint()
         if transposed_dims:
             downscaled_array = downscaled_array.transpose(reorder)

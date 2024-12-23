@@ -42,6 +42,44 @@ def _spatial_dims_last(ngff_image: NgffImage) -> NgffImage:
     return result
 
 
+def _spatial_dims_last_zyx(ngff_image: NgffImage) -> NgffImage:
+    dims = list(ngff_image.dims)
+    spatial_dims = [dim for dim in dims if dim in _spatial_dims]
+
+    # If spatial dimensions are already zyx, return the original image
+    if spatial_dims == ["z", "y", "x"] or spatial_dims == ["y", "x"]:
+        dims_spatial_channel = len(spatial_dims)
+        if dims[-1] == "c":
+            dims_spatial_channel += 1
+
+        # If spatial dimensions are already last (and 'c' can be last), return the original image
+        if all(dim in dims[-dims_spatial_channel:] for dim in spatial_dims + ["c"]):
+            return ngff_image
+
+    # Move spatial dimensions to the end, keeping 'c' as the last pre-spatial dimension if present
+    non_spatial_dims = [dim for dim in dims if dim not in _spatial_dims]
+    new_spatial_dims = ["z", "y", "x"][-len(spatial_dims) :]
+    if "c" in non_spatial_dims:
+        non_spatial_dims.remove("c")
+        new_dims = non_spatial_dims + ["c"] + new_spatial_dims
+    else:
+        new_dims = non_spatial_dims + new_spatial_dims
+
+    new_order = [dims.index(dim) for dim in new_dims]
+
+    if tuple(new_dims) == tuple(ngff_image.dims):
+        return ngff_image
+
+    # Reorder the data array
+    reordered_data = ngff_image.data.transpose(new_order)
+
+    result = copy.copy(ngff_image)
+    result.data = reordered_data
+    result.dims = tuple(new_dims)
+
+    return result
+
+
 def _channel_dim_last(ngff_image: NgffImage) -> NgffImage:
     if "c" not in ngff_image.dims or ngff_image.dims[-1] == "c":
         return ngff_image
