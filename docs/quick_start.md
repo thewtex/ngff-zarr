@@ -18,7 +18,9 @@ ngff-zarr -i ./cthead1.png -o ./cthead1.ome.zarr
 import ngff_zarr as nz
 import numpy as np
 
+# Generate pixel data (e.g. from a microscope, simulation, etc.)
 data = np.random.randint(0, 256, int(1e6)).reshape((1000, 1000))
+
 multiscales = nz.to_multiscales(data)
 
 nz.to_ngff_zarr('example.ome.zarr', multiscales)
