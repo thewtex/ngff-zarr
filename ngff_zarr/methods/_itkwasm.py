@@ -97,7 +97,7 @@ def _downsample_itkwasm(
         previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
         # Operate on a contiguous spatial block
         previous_image = _spatial_dims_last_zyx(previous_image)
-        if previous_image.dims != dims:
+        if tuple(previous_image.dims) != dims:
             transposed_dims = True
             reorder = [previous_image.dims.index(dim) for dim in dims]
 
@@ -234,7 +234,9 @@ def _downsample_itkwasm(
                 aggregated_blocks.append(downscaled_sub_block)
             downscaled_array_shape = non_spatial_shapes + downscaled_sub_block.shape
             downscaled_array = dask.array.empty(downscaled_array_shape, dtype=dtype)
-            for downscaled_sub_block in aggregated_blocks:
+            for sub_block_idx, idx in enumerate(
+                product(*(range(s) for s in non_spatial_shapes))
+            ):
                 # Build the slice object for indexing
                 slice_obj = []
                 non_spatial_index = 0
@@ -248,7 +250,7 @@ def _downsample_itkwasm(
                         slice_obj.append(slice(None))
 
                 slice_obj = tuple(slice_obj)
-                downscaled_array[slice_obj] = downscaled_sub_block
+                downscaled_array[slice_obj] = aggregated_blocks[sub_block_idx]
         else:
             data = previous_image.data
             if smoothing == "bin_shrink":
@@ -284,7 +286,6 @@ def _downsample_itkwasm(
         downscaled_array = downscaled_array.rechunk(tuple(out_chunks_list))
 
         # transpose back to original order if needed (_spatial_dims_zyx transposed the order)
-        # breakpoint()
         if transposed_dims:
             downscaled_array = downscaled_array.transpose(reorder)
 
