@@ -2,6 +2,7 @@ import numpy as np
 
 from .methods._support import _spatial_dims
 from .ngff_image import NgffImage
+from .methods._support import _channel_dim_last
 
 
 def _dtype_to_component_type(dtype):
@@ -37,6 +38,8 @@ def ngff_image_to_itk_image(
 ):
     from itkwasm import IntTypes, PixelTypes
 
+    ngff_image = _channel_dim_last(ngff_image)
+
     dims = ngff_image.dims
     dimension = 3 if "z" in dims else 2
 
@@ -63,7 +66,6 @@ def ngff_image_to_itk_image(
     origin = [ngff_image.translation[dim] for dim in spatial_dims]
     size = [ngff_image.data.shape[dims.index(d)] for d in spatial_dims]
 
-    # TODO: reorder as needed
     data = np.asarray(ngff_image.data)
 
     image_dict = {
