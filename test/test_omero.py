@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 from zarr.storage import MemoryStore
 from ngff_zarr import (
@@ -99,3 +100,17 @@ def test_write_omero():
     assert read_omero.channels[1].color == "0000FF"
     assert read_omero.channels[1].window.start == 30.0
     assert read_omero.channels[1].window.end == 200.0
+
+
+def test_validate_color():
+    valid_channel = OmeroChannel(
+        color="1A2B3C", window=OmeroWindow(min=0.0, max=255.0, start=0.0, end=100.0)
+    )
+    # This should not raise an error
+    valid_channel.validate_color()
+
+    invalid_channel = OmeroChannel(
+        color="ZZZZZZ", window=OmeroWindow(min=0.0, max=255.0, start=0.0, end=100.0)
+    )
+    with pytest.raises(ValueError, match=r"Invalid color 'ZZZZZZ'"):
+        invalid_channel.validate_color()
