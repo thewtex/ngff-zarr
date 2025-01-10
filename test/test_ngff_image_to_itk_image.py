@@ -1,7 +1,7 @@
 import itk
 import itkwasm
 import numpy as np
-from ngff_zarr import itk_image_to_ngff_image, ngff_image_to_itk_image
+from ngff_zarr import itk_image_to_ngff_image, ngff_image_to_itk_image, from_ngff_zarr
 
 from ._data import test_data_dir
 
@@ -62,3 +62,30 @@ def test_2d_itkwasm_image(input_images):  # noqa: ARG001
     assert np.array_equal(
         np.asarray(itkwasm_image.data), np.asarray(itkwasm_image_back.data)
     )
+
+
+def test_t_index(input_images):  # noqa: ARG001
+    dataset_name = "13457537"
+    store_path = test_data_dir / "input" / f"{dataset_name}.zarr"
+    multiscales = from_ngff_zarr(store_path)
+    ngff_image = multiscales.images[0]
+
+    itk_image = ngff_image_to_itk_image(ngff_image)
+
+    assert itk_image.imageType.dimension == 4
+    assert itk_image.imageType.components == 6
+    assert len(itk_image.size) == 4
+    assert len(itk_image.spacing) == 4
+    assert len(itk_image.origin) == 4
+    assert len(itk_image.direction) == 4
+    assert itk_image.data.shape == (18, 12, 223, 198, 6)
+
+    itk_image = ngff_image_to_itk_image(ngff_image, t_index=0)
+
+    assert itk_image.imageType.dimension == 3
+    assert itk_image.imageType.components == 6
+    assert len(itk_image.size) == 3
+    assert len(itk_image.spacing) == 3
+    assert len(itk_image.origin) == 3
+    assert len(itk_image.direction) == 3
+    assert itk_image.data.shape == (12, 223, 198, 6)

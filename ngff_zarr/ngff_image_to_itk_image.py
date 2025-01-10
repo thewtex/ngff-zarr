@@ -1,6 +1,8 @@
-import numpy as np
+from typing import Optional
 
-from .methods._support import _spatial_dims
+import numpy as np
+from dask.array.core import Array as DaskArray
+
 from .ngff_image import NgffImage
 from .methods._support import _channel_dim_last
 
@@ -35,13 +37,47 @@ def _dtype_to_component_type(dtype):
 def ngff_image_to_itk_image(
     ngff_image: NgffImage,
     wasm: bool = True,
+    t_index: Optional[int] = None,
 ):
+    """Convert a NgffImage to an ITK image."""
     from itkwasm import IntTypes, PixelTypes
+
+    if t_index is not None and "t" in ngff_image.dims:
+        t_dim_index = ngff_image.dims.index("t")
+        new_dims = list(ngff_image.dims)
+        new_dims.remove("t")
+        new_dims = tuple(new_dims)
+        new_scale = {dim: ngff_image.scale[dim] for dim in new_dims}
+        new_translation = {dim: ngff_image.translation[dim] for dim in new_dims}
+        new_axes_units = {dim: ngff_image.axes_units[dim] for dim in new_dims}
+        if isinstance(ngff_image.data, DaskArray):
+            from dask.array import take
+
+            new_data = take(ngff_image.data, t_index, axis=t_dim_index)
+        else:
+            new_data = ngff_image.data.take(t_index, axis=t_dim_index)
+        ngff_image = NgffImage(
+            data=new_data,
+            dims=new_dims,
+            name=ngff_image.name,
+            scale=new_scale,
+            translation=new_translation,
+            axes_units=new_axes_units,
+        )
 
     ngff_image = _channel_dim_last(ngff_image)
 
     dims = ngff_image.dims
-    dimension = 3 if "z" in dims else 2
+    itk_dimension_names = {"x", "y", "z", "t"}
+    itk_dims = [dim for dim in dims if dim in itk_dimension_names]
+    itk_dims.sort()
+    if "t" in itk_dims:
+        itk_dims.remove("t")
+        itk_dims.append("t")
+    spacing = [ngff_image.scale[dim] for dim in itk_dims]
+    origin = [ngff_image.translation[dim] for dim in itk_dims]
+    size = [ngff_image.data.shape[dims.index(d)] for d in itk_dims]
+    dimension = len(itk_dims)
 
     componentType = _dtype_to_component_type(ngff_image.data.dtype)
 
@@ -59,12 +95,6 @@ def ngff_image_to_itk_image(
         "pixelType": str(pixelType),
         "components": components,
     }
-
-    spatial_dims = [dim for dim in dims if dim in _spatial_dims]
-    spatial_dims.sort()
-    spacing = [ngff_image.scale[dim] for dim in spatial_dims]
-    origin = [ngff_image.translation[dim] for dim in spatial_dims]
-    size = [ngff_image.data.shape[dims.index(d)] for d in spatial_dims]
 
     data = np.asarray(ngff_image.data)
 
