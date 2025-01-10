@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from typing import List, Optional, Union
 
 from typing_extensions import Literal
+import re
 
 SupportedDims = Union[
     Literal["c"], Literal["x"], Literal["y"], Literal["z"], Literal["t"]
@@ -166,9 +167,33 @@ class Dataset:
 
 
 @dataclass
+class OmeroWindow:
+    min: float
+    max: float
+    start: float
+    end: float
+
+
+@dataclass
+class OmeroChannel:
+    color: str
+    window: OmeroWindow
+
+    def validate_color(self):
+        if not re.fullmatch(r"[0-9A-Fa-f]{6}", self.color):
+            raise ValueError(f"Invalid color '{self.color}'. Must be 6 hex digits.")
+
+
+@dataclass
+class Omero:
+    channels: List[OmeroChannel]
+
+
+@dataclass
 class Metadata:
     axes: List[Axis]
     datasets: List[Dataset]
     coordinateTransformations: Optional[List[Transform]]
+    omero: Optional[Omero] = None
     name: str = "image"
     version: str = "0.4"
