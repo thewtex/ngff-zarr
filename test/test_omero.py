@@ -1,4 +1,14 @@
-from ngff_zarr import from_ngff_zarr
+import numpy as np
+from zarr.storage import MemoryStore
+from ngff_zarr import (
+    Omero,
+    OmeroChannel,
+    OmeroWindow,
+    from_ngff_zarr,
+    to_ngff_image,
+    to_multiscales,
+    to_ngff_zarr,
+)
 
 from ._data import test_data_dir
 
@@ -53,3 +63,39 @@ def test_read_omero(input_images):  # noqa: ARG001
     assert omero.channels[5].window.max == 65535.0
     assert omero.channels[5].window.start == 0.0
     assert omero.channels[5].window.end == 100.0
+
+
+def test_write_omero():
+    data = np.random.randint(0, 256, 262144).reshape((2, 32, 64, 64)).astype(np.uint8)
+    image = to_ngff_image(data, dims=["c", "z", "y", "x"])
+    multiscales = to_multiscales(image, scale_factors=[2, 4], chunks=32)
+
+    omero = Omero(
+        channels=[
+            OmeroChannel(
+                color="008000",
+                window=OmeroWindow(min=0.0, max=255.0, start=10.0, end=150.0),
+            ),
+            OmeroChannel(
+                color="0000FF",
+                window=OmeroWindow(min=0.0, max=255.0, start=30.0, end=200.0),
+            ),
+        ]
+    )
+    multiscales.metadata.omero = omero
+
+    store = MemoryStore()
+    version = "0.4"
+    to_ngff_zarr(store, multiscales, version=version)
+
+    multiscales_read = from_ngff_zarr(store, validate=True, version=version)
+    read_omero = multiscales_read.metadata.omero
+
+    assert read_omero is not None
+    assert len(read_omero.channels) == 2
+    assert read_omero.channels[0].color == "008000"
+    assert read_omero.channels[0].window.start == 10.0
+    assert read_omero.channels[0].window.end == 150.0
+    assert read_omero.channels[1].color == "0000FF"
+    assert read_omero.channels[1].window.start == 30.0
+    assert read_omero.channels[1].window.end == 200.0
