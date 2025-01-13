@@ -32,6 +32,9 @@ from .v04.zarr_metadata import (
     Transform,
     Dataset,
     Metadata,
+    Omero,
+    OmeroChannel,
+    OmeroWindow,
 )
 
 __all__ = [
@@ -67,4 +70,7 @@ __all__ = [
     "Transform",
     "Dataset",
     "Metadata",
+    "Omero",
+    "OmeroChannel",
+    "OmeroWindow",
 ]

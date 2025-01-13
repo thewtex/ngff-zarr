@@ -47,6 +47,9 @@ def _pop_metadata_optionals(metadata_dict):
     if metadata_dict["coordinateTransformations"] is None:
         metadata_dict.pop("coordinateTransformations")
 
+    if metadata_dict["omero"] is None:
+        metadata_dict.pop("omero")
+
     return metadata_dict
 
 
@@ -230,6 +233,9 @@ def to_ngff_zarr(
             chunk_store=chunk_store,
             **format_kwargs,
         )
+
+    if "omero" in metadata_dict:
+        root.attrs["omero"] = metadata_dict.pop("omero")
 
     if version != "0.4":
         # RFC 2, Zarr 3

@@ -16,7 +16,15 @@ else:
 
 from .ngff_image import NgffImage
 from .to_multiscales import Multiscales
-from .v04.zarr_metadata import Axis, Dataset, Scale, Translation
+from .v04.zarr_metadata import (
+    Axis,
+    Dataset,
+    Scale,
+    Translation,
+    Omero,
+    OmeroChannel,
+    OmeroWindow,
+)
 from .validate import validate as validate_ngff
 
 zarr_version = packaging.version.parse(zarr.__version__)
@@ -145,9 +153,29 @@ def from_ngff_zarr(
             Axis(name="y", type="space"),
             Axis(name="x", type="space"),
         ]
+
     coordinateTransformations = None
     if "coordinateTransformations" in metadata:
         coordinateTransformations = metadata["coordinateTransformations"]
+
+    omero = None
+    if "omero" in root.attrs:
+        omero_data = root.attrs["omero"]
+        omero = Omero(
+            channels=[
+                OmeroChannel(
+                    color=channel["color"],
+                    window=OmeroWindow(
+                        min=channel["window"]["min"],
+                        max=channel["window"]["max"],
+                        start=channel["window"]["start"],
+                        end=channel["window"]["end"],
+                    ),
+                )
+                for channel in omero_data["channels"]
+            ]
+        )
+
     if version == "0.5":
         from .v05.zarr_metadata import Metadata
 
@@ -156,6 +184,7 @@ def from_ngff_zarr(
             datasets=datasets,
             name=name,
             coordinateTransformations=coordinateTransformations,
+            omero=omero,
         )
     else:
         from .v04.zarr_metadata import Metadata
@@ -166,6 +195,7 @@ def from_ngff_zarr(
             name=name,
             version=metadata["version"],
             coordinateTransformations=coordinateTransformations,
+            omero=omero,
         )
 
     return Multiscales(images, metadata)
