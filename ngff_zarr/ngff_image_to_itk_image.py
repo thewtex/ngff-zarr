@@ -38,6 +38,7 @@ def ngff_image_to_itk_image(
     ngff_image: NgffImage,
     wasm: bool = True,
     t_index: Optional[int] = None,
+    c_index: Optional[int] = None,
 ):
     """Convert a NgffImage to an ITK image."""
     from itkwasm import IntTypes, PixelTypes
@@ -56,6 +57,29 @@ def ngff_image_to_itk_image(
             new_data = take(ngff_image.data, t_index, axis=t_dim_index)
         else:
             new_data = ngff_image.data.take(t_index, axis=t_dim_index)
+        ngff_image = NgffImage(
+            data=new_data,
+            dims=new_dims,
+            name=ngff_image.name,
+            scale=new_scale,
+            translation=new_translation,
+            axes_units=new_axes_units,
+        )
+
+    if c_index is not None and "c" in ngff_image.dims:
+        c_dim_index = ngff_image.dims.index("c")
+        new_dims = list(ngff_image.dims)
+        new_dims.remove("c")
+        new_dims = tuple(new_dims)
+        new_scale = {dim: ngff_image.scale[dim] for dim in new_dims}
+        new_translation = {dim: ngff_image.translation[dim] for dim in new_dims}
+        new_axes_units = {dim: ngff_image.axes_units[dim] for dim in new_dims}
+        if isinstance(ngff_image.data, DaskArray):
+            from dask.array import take
+
+            new_data = take(ngff_image.data, c_index, axis=c_dim_index)
+        else:
+            new_data = ngff_image.data.take(c_index, axis=c_dim_index)
         ngff_image = NgffImage(
             data=new_data,
             dims=new_dims,
