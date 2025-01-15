@@ -5,8 +5,9 @@ import pytest
 
 import zarr.storage
 import zarr
+import numpy as np
 
-from ngff_zarr import Methods, to_multiscales, to_ngff_zarr, from_ngff_zarr
+from ngff_zarr import Methods, to_multiscales, to_ngff_zarr, from_ngff_zarr, NgffImage
 
 from ._data import verify_against_baseline
 
@@ -60,3 +61,17 @@ def test_gaussian_isotropic_scale_factors_tensorstore(input_images):
         dimension_names = array0.metadata.dimension_names
         for idx, ax in enumerate(multiscales.metadata.axes):
             assert ax.name == dimension_names[idx]
+
+
+def test_zarr_python3_ome_zarr_04():
+    arr = np.zeros((1, 1, 32, 64, 64))
+    dims = ["t", "c", "z", "y", "x"]
+    scale = {"t": 60, "c": 1, "z": 2, "y": 0.35, "x": 0.35}
+    translate = {"t": 0, "c": 0, "z": -10, "y": -20, "x": -30}
+    image = NgffImage(arr, dims, scale=scale, translation=translate)
+    multiscales = to_multiscales(image)
+    version = "0.4"
+    with tempfile.TemporaryDirectory() as tmpdir:
+        to_ngff_zarr(tmpdir, multiscales, version=version)
+        # Should be able to detect the Zarr version automatically
+        multiscales = from_ngff_zarr(tmpdir)
