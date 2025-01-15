@@ -287,6 +287,7 @@ def to_ngff_zarr(
                 mode="a",
                 **zarr_kwargs,
                 **dimension_names_kwargs,
+                **format_kwargs,
             )
 
             shape = image.data.shape
@@ -433,6 +434,7 @@ def to_ngff_zarr(
                             compute=True,
                             return_stored=False,
                             **zarr_kwargs,
+                            **format_kwargs,
                             **dimension_names_kwargs,
                             **kwargs,
                         )
@@ -463,6 +465,7 @@ def to_ngff_zarr(
                     compute=True,
                     return_stored=False,
                     **zarr_kwargs,
+                    **format_kwargs,
                     **dimension_names_kwargs,
                     **kwargs,
                 )
