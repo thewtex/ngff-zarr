@@ -35,6 +35,8 @@ autodoc2_packages = [
 ]
 autodoc2_render_plugin = "myst"
 
+maximum_signature_line_length = 80
+
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "itkwasm": ("https://itkwasm.readthedocs.io/en/latest/", None),
