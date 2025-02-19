@@ -385,7 +385,7 @@ def to_multiscales(
             if dim in image.translation:
                 translation.append(image.translation[dim])
             else:
-                translation.append(1.0)
+                translation.append(0.0)
         coordinateTransformations = [Scale(scale), Translation(translation)]
         dataset = Dataset(
             path=path, coordinateTransformations=coordinateTransformations
