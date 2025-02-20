@@ -3,7 +3,7 @@
 """
 # Multiscale transformation checks.
 
-This is a test to make sure that the transforms multiscales.
+This is a test to make sure that the transforms are propagated correctly to reduced scales in a multiscale representation.
 
 The coordnates represent the center of a pixel.
 The transform will transform a coordinate to "real space".
