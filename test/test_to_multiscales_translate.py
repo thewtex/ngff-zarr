@@ -15,7 +15,7 @@ p, pixel location. t is the translate portion of the transform. s is the scale.
 Each scale will have it's own set of pixels, transform, and scale. pi, ti, si respectivly.
 s0 is the original scale factor, it is often used to describe the size of a voxel.
 
-The downsampling factor is the ration or original pixels to scaled pixels.
+The downsampling factor is the ratio of original pixels to scaled pixels.
 
     f = ( D0/D1, H0/H1, W0/W1 )
  
