@@ -2,7 +2,7 @@ import sys
 from collections.abc import MutableMapping
 from dataclasses import asdict
 from pathlib import Path, PurePosixPath
-from typing import Optional, Union
+from typing import Optional, Union, Tuple, Mapping, Any
 from packaging import version
 
 if sys.version_info < (3, 10):
@@ -150,6 +150,14 @@ def to_ngff_zarr(
     use_tensorstore: bool = False,
     chunk_store: Optional[StoreLike] = None,
     progress: Optional[Union[NgffProgress, NgffProgressCallback]] = None,
+    chunks_per_shard: Optional[
+        Union[
+            int,
+            Tuple[int, ...],
+            Tuple[Tuple[int, ...], ...],
+            Mapping[Any, Union[None, int, Tuple[int, ...]]],
+        ]
+    ] = None,
     **kwargs,
 ) -> None:
     """
@@ -174,8 +182,11 @@ def to_ngff_zarr(
         for storage of both chunks and metadata.
     :type  chunk_store: StoreLike, optional
 
-    :type  progress: RichDaskProgress
     :param progress: Optional progress logger
+    :type  progress: RichDaskProgress
+
+    :param chunks_per_shard: Number of chunks along each axis in a shard. If None, no sharding. Requires zarr version >= 0.5.
+    :type  chunks_per_shard: int, tuple, or dict, optional
 
     :param **kwargs: Passed to the zarr.creation.create() function, e.g., compression options.
     """
@@ -188,6 +199,16 @@ def to_ngff_zarr(
 
     if version != "0.4" and version != "0.5":
         raise ValueError(f"Unsupported version: {version}")
+
+    if chunks_per_shard is not None:
+        if version == "0.4":
+            raise ValueError(
+                "Sharding is only supported for OME-Zarr version 0.5 and later"
+            )
+        if not use_tensorstore and zarr_version_major < 3:
+            raise ValueError(
+                "Sharding requires zarr-python version >= 3.0.0b1 for OME-Zarr version >= 0.5"
+            )
 
     metadata = multiscales.metadata
     if version == "0.4" and isinstance(metadata, Metadata_v05):
@@ -268,6 +289,39 @@ def to_ngff_zarr(
             dim_factors = {d: 1 for d in dims}
         previous_dim_factors = dim_factors
 
+        sharding_kwargs = {}
+        if chunks_per_shard is not None:
+            c0 = tuple([c[0] for c in arr.chunks])
+            if isinstance(chunks_per_shard, int):
+                shards = tuple([c * chunks_per_shard for c in c0])
+            elif isinstance(chunks_per_shard, (tuple, list)):
+                if len(chunks_per_shard) != arr.ndim:
+                    raise ValueError(
+                        f"chunks_per_shard must be a tuple of length {arr.ndim}"
+                    )
+                shards = tuple([c * c0[i] for i, c in enumerate(chunks_per_shard)])
+            elif isinstance(chunks_per_shard, dict):
+                shards = {d: c * chunks_per_shard.get(d, 1) for d, c in zip(dims, c0)}
+                shards = tuple([shards[d] for d in dims])
+            else:
+                raise ValueError("chunks_per_shard must be an int, tuple, or dict")
+            from zarr.codecs.sharding import ShardingCodec
+
+            if "codec" in kwargs:
+                nested_codec = kwargs.pop("codec")
+                sharding_codec = ShardingCodec(
+                    chunk_shape=c0,
+                    codec=nested_codec,
+                )
+            else:
+                sharding_codec = ShardingCodec(chunk_shape=c0)
+            if "codecs" in kwargs:
+                previous_codecs = kwargs.pop("codecs")
+                sharding_kwargs["codecs"] = previous_codecs.append(sharding_codec)
+            else:
+                sharding_kwargs["codecs"] = [sharding_codec]
+            arr = arr.rechunk(shards)
+
         if memory_usage(image) > config.memory_target and multiscales.scale_factors:
             shrink_factors = []
             for dim in dims:
@@ -285,6 +339,7 @@ def to_ngff_zarr(
                 store=store,
                 path=path,
                 mode="a",
+                **sharding_kwargs,
                 **zarr_kwargs,
                 **dimension_names_kwargs,
                 **format_kwargs,
@@ -433,6 +488,7 @@ def to_ngff_zarr(
                             overwrite=False,
                             compute=True,
                             return_stored=False,
+                            **sharding_kwargs,
                             **zarr_kwargs,
                             **format_kwargs,
                             **dimension_names_kwargs,
@@ -464,6 +520,7 @@ def to_ngff_zarr(
                     overwrite=False,
                     compute=True,
                     return_stored=False,
+                    **sharding_kwargs,
                     **zarr_kwargs,
                     **format_kwargs,
                     **dimension_names_kwargs,
