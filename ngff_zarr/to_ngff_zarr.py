@@ -2,7 +2,7 @@ import sys
 from collections.abc import MutableMapping
 from dataclasses import asdict
 from pathlib import Path, PurePosixPath
-from typing import Optional, Union, Tuple, Mapping, Any
+from typing import Optional, Union, Tuple, Dict
 from packaging import version
 
 if sys.version_info < (3, 10):
@@ -154,8 +154,7 @@ def to_ngff_zarr(
         Union[
             int,
             Tuple[int, ...],
-            Tuple[Tuple[int, ...], ...],
-            Mapping[Any, Union[None, int, Tuple[int, ...]]],
+            Dict[str, int],
         ]
     ] = None,
     **kwargs,
