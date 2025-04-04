@@ -317,7 +317,7 @@ def to_ngff_zarr(
                 sharding_codec = ShardingCodec(chunk_shape=c0)
             if "codecs" in kwargs:
                 previous_codecs = kwargs.pop("codecs")
-                sharding_kwargs["codecs"] = previous_codecs.append(sharding_codec)
+                sharding_kwargs["codecs"] = previous_codecs + [sharding_codec]
             else:
                 sharding_kwargs["codecs"] = [sharding_codec]
             arr = arr.rechunk(shards)
