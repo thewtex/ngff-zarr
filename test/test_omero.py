@@ -29,6 +29,7 @@ def test_read_omero(input_images):  # noqa: ARG001
     assert omero.channels[0].window.max == 65535.0
     assert omero.channels[0].window.start == 0.0
     assert omero.channels[0].window.end == 1200.0
+    assert omero.channels[0].label == "cy 1"
 
     # Channel 1
     assert omero.channels[1].color == "FFFFFF"
@@ -36,6 +37,7 @@ def test_read_omero(input_images):  # noqa: ARG001
     assert omero.channels[1].window.max == 65535.0
     assert omero.channels[1].window.start == 0.0
     assert omero.channels[1].window.end == 1200.0
+    assert omero.channels[1].label == "cy 2"
 
     # Channel 2
     assert omero.channels[2].color == "FFFFFF"
@@ -43,6 +45,7 @@ def test_read_omero(input_images):  # noqa: ARG001
     assert omero.channels[2].window.max == 65535.0
     assert omero.channels[2].window.start == 0.0
     assert omero.channels[2].window.end == 1200.0
+    assert omero.channels[2].label == "cy 3"
 
     # Channel 3
     assert omero.channels[3].color == "FFFFFF"
@@ -50,6 +53,7 @@ def test_read_omero(input_images):  # noqa: ARG001
     assert omero.channels[3].window.max == 65535.0
     assert omero.channels[3].window.start == 0.0
     assert omero.channels[3].window.end == 1200.0
+    assert omero.channels[3].label == "cy 4"
 
     # Channel 4
     assert omero.channels[4].color == "0000FF"
@@ -57,6 +61,7 @@ def test_read_omero(input_images):  # noqa: ARG001
     assert omero.channels[4].window.max == 65535.0
     assert omero.channels[4].window.start == 0.0
     assert omero.channels[4].window.end == 5000.0
+    assert omero.channels[4].label == "DAPI"
 
     # Channel 5
     assert omero.channels[5].color == "FF0000"
@@ -64,6 +69,7 @@ def test_read_omero(input_images):  # noqa: ARG001
     assert omero.channels[5].window.max == 65535.0
     assert omero.channels[5].window.start == 0.0
     assert omero.channels[5].window.end == 100.0
+    assert omero.channels[5].label == "Hyb probe"
 
 
 def test_write_omero():
@@ -76,10 +82,12 @@ def test_write_omero():
             OmeroChannel(
                 color="008000",
                 window=OmeroWindow(min=0.0, max=255.0, start=10.0, end=150.0),
+                label="Phalloidin",
             ),
             OmeroChannel(
                 color="0000FF",
                 window=OmeroWindow(min=0.0, max=255.0, start=30.0, end=200.0),
+                label="",
             ),
         ]
     )
@@ -97,9 +105,11 @@ def test_write_omero():
     assert read_omero.channels[0].color == "008000"
     assert read_omero.channels[0].window.start == 10.0
     assert read_omero.channels[0].window.end == 150.0
+    assert read_omero.channels[0].label == "Phalloidin"
     assert read_omero.channels[1].color == "0000FF"
     assert read_omero.channels[1].window.start == 30.0
     assert read_omero.channels[1].window.end == 200.0
+    assert read_omero.channels[1].label == ""
 
 
 def test_validate_color():
