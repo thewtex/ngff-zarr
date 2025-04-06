@@ -165,6 +165,7 @@ def from_ngff_zarr(
             channels=[
                 OmeroChannel(
                     color=channel["color"],
+                    label=channel.get("label", None),
                     window=OmeroWindow(
                         min=channel["window"]["min"],
                         max=channel["window"]["max"],
