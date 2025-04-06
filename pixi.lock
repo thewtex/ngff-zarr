@@ -1591,7 +1591,7 @@ packages:
   - pytest>=7.0 ; extra == 'test'
   - trustme ; extra == 'test'
   - truststore>=0.9.1 ; python_full_version >= '3.10' and extra == 'test'
-  - uvloop>=0.21 ; python_full_version < '3.14' and platform_python_implementation == 'CPython' and platform_system != 'Windows' and extra == 'test'
+  - uvloop>=0.21 ; python_full_version < '3.14' and platform_python_implementation == 'CPython' and sys_platform != 'win32' and extra == 'test'
   - packaging ; extra == 'doc'
   - sphinx~=7.4 ; extra == 'doc'
   - sphinx-rtd-theme ; extra == 'doc'
@@ -1959,7 +1959,7 @@ packages:
   version: 8.1.8
   sha256: 63c132bbbed01578a06712a2d1f497bb62d9c1c0d329b7903a866228027263b2
   requires_dist:
-  - colorama ; platform_system == 'Windows'
+  - colorama ; sys_platform == 'win32'
   - importlib-metadata ; python_full_version < '3.8'
   requires_python: '>=3.7'
 - pypi: https://files.pythonhosted.org/packages/7e/e8/64c37fadfc2816a7701fa8a6ed8d87327c7d54eacfbfb6edab14a2f2be75/cloudpickle-3.1.1-py3-none-any.whl
@@ -3495,7 +3495,7 @@ packages:
   timestamp: 1736683572099
 - pypi: .
   name: ngff-zarr
-  version: 0.11.0
+  version: 0.12.2
   sha256: d8f01f63ea17ad4d8e7fa6bd0afd6cf5d84ee41cbc6d65dc1d82ad1ac13eaffb
   requires_dist:
   - dask[array]
@@ -3573,19 +3573,19 @@ packages:
   sha256: 00a364924fd2d600bcce6e2ced96b47c40eb5f9d84bf4b0207aa208d9ce6cd1c
   requires_dist:
   - numpy>=1.24
-  - crc32c>=2.7 ; extra == 'crc32c'
   - sphinx ; extra == 'docs'
   - sphinx-issues ; extra == 'docs'
   - pydata-sphinx-theme ; extra == 'docs'
   - numpydoc ; extra == 'docs'
-  - msgpack ; extra == 'msgpack'
-  - pcodec>=0.2,<0.3 ; extra == 'pcodec'
   - coverage ; extra == 'test'
   - pytest ; extra == 'test'
   - pytest-cov ; extra == 'test'
   - importlib-metadata ; extra == 'test-extras'
+  - msgpack ; extra == 'msgpack'
   - zfpy>=1.0.0 ; extra == 'zfpy'
   - numpy<2.0.0 ; extra == 'zfpy'
+  - pcodec>=0.2,<0.3 ; extra == 'pcodec'
+  - crc32c>=2.7 ; extra == 'crc32c'
   requires_python: '>=3.11'
 - pypi: https://files.pythonhosted.org/packages/4b/e2/ac784ac4b6e5841e4bfb7d3e7e38497450df18eebff9465990a8ac9aecfc/numcodecs-0.14.1-cp313-cp313-win_amd64.whl
   name: numcodecs
