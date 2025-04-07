@@ -178,6 +178,7 @@ class OmeroWindow:
 class OmeroChannel:
     color: str
     window: OmeroWindow
+    label: Optional[str] = None
 
     def validate_color(self):
         if not re.fullmatch(r"[0-9A-Fa-f]{6}", self.color):
