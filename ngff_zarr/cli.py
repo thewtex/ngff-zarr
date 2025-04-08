@@ -51,7 +51,7 @@ from ._zarr_kwargs import zarr_kwargs
 
 
 def _multiscales_to_ngff_zarr(
-    live, args, output_store, rich_dask_progress, multiscales
+    live, args, output_store, rich_dask_progress, multiscales, chunks_per_shard=None
 ):
     if not args.output:
         if args.quiet:
@@ -74,6 +74,7 @@ def _multiscales_to_ngff_zarr(
     to_ngff_zarr(
         output_store,
         multiscales,
+        chunks_per_shard=chunks_per_shard,
         progress=rich_dask_progress,
         use_tensorstore=args.use_tensorstore,
         version=args.ome_zarr_version,
@@ -224,6 +225,13 @@ def main():
         metavar="CHUNKS",
     )
     processing_group.add_argument(
+        "--chunks-per-shard",
+        nargs="+",
+        type=int,
+        help="Number of chunks along each axis in a shard. If not set, no sharding. Either a single integer or integer per dimension, e.g. 64 or 8 16 32",
+        metavar="CHUNKS_PER_SHARD",
+    )
+    processing_group.add_argument(
         "-m",
         "--method",
         default="itkwasm_gaussian",
@@ -344,6 +352,17 @@ def main():
     if args.quiet:
         initial = None
     with Live(initial, console=console) as live:
+        chunks_per_shard = None
+        if args.chunks_per_shard:
+            if args.ome_zarr_version == "0.4":
+                live.console.print(
+                    "[red]Sharding is only supported for OME-Zarr version 0.5 and greater"
+                )
+                sys.exit(1)
+            if len(args.chunks_per_shard) == 1:
+                chunks_per_shard = args.chunks_per_shard[0]
+            else:
+                chunks_per_shard = tuple(args.chunks_per_shard)
         if args.output and output_backend is ConversionBackend.ITK:
             import itk
 
@@ -362,7 +381,12 @@ def main():
             store = LocalStore(args.input[0])
             multiscales = from_ngff_zarr(store)
             _multiscales_to_ngff_zarr(
-                live, args, output_store, rich_dask_progress, multiscales
+                live,
+                args,
+                output_store,
+                rich_dask_progress,
+                multiscales,
+                chunks_per_shard=chunks_per_shard,
             )
         elif input_backend is ConversionBackend.TIFFFILE:
             try:
@@ -382,7 +406,12 @@ def main():
                         method,
                     )
                     _multiscales_to_ngff_zarr(
-                        live, args, output_store, rich_dask_progress, multiscales
+                        live,
+                        args,
+                        output_store,
+                        rich_dask_progress,
+                        multiscales,
+                        chunks_per_shard=chunks_per_shard,
                     )
             except ImportError:
                 sys.stdout.write("[red]Please install the [i]tifffile[/i] package.\n")
@@ -394,7 +423,12 @@ def main():
                 live, ngff_image, args, progress, rich_dask_progress, subtitle, method
             )
             _multiscales_to_ngff_zarr(
-                live, args, output_store, rich_dask_progress, multiscales
+                live,
+                args,
+                output_store,
+                rich_dask_progress,
+                multiscales,
+                chunks_per_shard=chunks_per_shard,
             )
 
 
