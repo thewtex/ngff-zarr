@@ -108,7 +108,13 @@ def _numpy_to_zarr_dtype(dtype):
 
 
 def _write_with_tensorstore(
-    store_path: str, array, region, chunks, zarr_format, dimension_names=None
+    store_path: str,
+    array,
+    region,
+    chunks,
+    zarr_format,
+    dimension_names=None,
+    internal_chunk_shape=None,
 ) -> None:
     """Write array using tensorstore backend"""
     import tensorstore as ts
@@ -136,6 +142,13 @@ def _write_with_tensorstore(
         spec["metadata"]["data_type"] = _numpy_to_zarr_dtype(array.dtype)
         if dimension_names:
             spec["metadata"]["dimension_names"] = dimension_names
+        if internal_chunk_shape:
+            spec["metadata"]["codecs"] = [
+                {
+                    "name": "sharding_indexed",
+                    "configuration": {"chunk_shape": internal_chunk_shape},
+                }
+            ]
     else:
         raise ValueError(f"Unsupported zarr format: {zarr_format}")
     dataset = ts.open(spec, create=True, dtype=array.dtype).result()
@@ -319,6 +332,7 @@ def to_ngff_zarr(
                 sharding_kwargs["codecs"] = previous_codecs + [sharding_codec]
             else:
                 sharding_kwargs["codecs"] = [sharding_codec]
+            internal_chunk_shape = c0
             arr = arr.rechunk(shards)
 
         if memory_usage(image) > config.memory_target and multiscales.scale_factors:
@@ -469,15 +483,27 @@ def to_ngff_zarr(
                     )
                     if use_tensorstore:
                         scale_path = f"{store_path}/{path}"
-                        _write_with_tensorstore(
-                            scale_path,
-                            optimized,
-                            region,
-                            [c[0] for c in arr_region.chunks],
-                            zarr_format=zarr_format,
-                            dimension_names=dimension_names,
-                            **kwargs,
-                        )
+                        if chunks_per_shard is None:
+                            _write_with_tensorstore(
+                                scale_path,
+                                optimized,
+                                region,
+                                [c[0] for c in arr_region.chunks],
+                                zarr_format=zarr_format,
+                                dimension_names=dimension_names,
+                                **kwargs,
+                            )
+                        else:
+                            _write_with_tensorstore(
+                                scale_path,
+                                optimized,
+                                region,
+                                shards,
+                                zarr_format=zarr_format,
+                                dimension_names=dimension_names,
+                                internal_chunk_shape=internal_chunk_shape,
+                                **kwargs,
+                            )
                     else:
                         dask.array.to_zarr(
                             optimized,
@@ -501,15 +527,27 @@ def to_ngff_zarr(
             if use_tensorstore:
                 scale_path = f"{store_path}/{path}"
                 region = tuple([slice(arr.shape[i]) for i in range(arr.ndim)])
-                _write_with_tensorstore(
-                    scale_path,
-                    arr,
-                    region,
-                    [c[0] for c in arr.chunks],
-                    zarr_format=zarr_format,
-                    dimension_names=dimension_names,
-                    **kwargs,
-                )
+                if chunks_per_shard is None:
+                    _write_with_tensorstore(
+                        scale_path,
+                        arr,
+                        region,
+                        [c[0] for c in arr.chunks],
+                        zarr_format=zarr_format,
+                        dimension_names=dimension_names,
+                        **kwargs,
+                    )
+                else:  # Sharding
+                    _write_with_tensorstore(
+                        scale_path,
+                        arr,
+                        region,
+                        shards,
+                        zarr_format=zarr_format,
+                        dimension_names=dimension_names,
+                        internal_chunk_shape=internal_chunk_shape,
+                        **kwargs,
+                    )
             else:
                 arr = _prep_for_to_zarr(store, arr)
                 dask.array.to_zarr(
