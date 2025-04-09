@@ -4,6 +4,7 @@ from dataclasses import asdict
 from pathlib import Path, PurePosixPath
 from typing import Optional, Union, Tuple, Dict
 from packaging import version
+import warnings
 
 if sys.version_info < (3, 10):
     import importlib_metadata
@@ -197,7 +198,7 @@ def to_ngff_zarr(
     :param progress: Optional progress logger
     :type  progress: RichDaskProgress
 
-    :param chunks_per_shard: Number of chunks along each axis in a shard. If None, no sharding. Requires zarr version >= 0.5.
+    :param chunks_per_shard: Number of chunks along each axis in a shard. If None, no sharding. Requires OME-Zarr version >= 0.5.
     :type  chunks_per_shard: int, tuple, or dict, optional
 
     :param **kwargs: Passed to the zarr.creation.create() function, e.g., compression options.
@@ -609,4 +610,10 @@ def to_ngff_zarr(
             callback()
         image.computed_callbacks = []
 
-    zarr.consolidate_metadata(store, **format_kwargs)
+    if zarr_version_major >= 3:
+        with warnings.catch_warnings():
+            # Ignore consolidated metadata warning
+            warnings.filterwarnings("ignore", category=UserWarning)
+            zarr.consolidate_metadata(store, **format_kwargs)
+    else:
+        zarr.consolidate_metadata(store, **format_kwargs)
