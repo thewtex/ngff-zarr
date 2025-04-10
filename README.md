@@ -24,7 +24,8 @@ implementation.
 - Reads OME-Zarr v0.1 to v0.5 into simple Python data classes with Dask arrays
 - Optional OME-Zarr data model validation during reading
 - Writes OME-Zarr v0.4 to v0.5
-- Optional writing via [tensorstore](https://google.github.io/tensorstore/)
+- [Sharded Zarr] stores
+- Optional writing via [tensorstore]
 
 ## Documentation
 
@@ -46,3 +47,6 @@ how to contribute can be found in
 
 `ngff-zarr` is distributed under the terms of the
 [MIT](https://spdx.org/licenses/MIT.html) license.
+
+[Sharded Zarr]: https://zarr.dev/zeps/accepted/ZEP0002.html
+[tensorstore]: https://google.github.io/tensorstore/
