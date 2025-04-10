@@ -5,6 +5,7 @@
 [![Test](https://github.com/thewtex/ngff-zarr/actions/workflows/pixi-test.yml/badge.svg)](https://github.com/thewtex/ngff-zarr/actions/workflows/pixi-test.yml)
 [![DOI](https://zenodo.org/badge/541840158.svg)](https://zenodo.org/badge/latestdoi/541840158)
 [![Documentation Status](https://readthedocs.org/projects/ngff-zarr/badge/?version=latest)](https://ngff-zarr.readthedocs.io/en/latest/?badge=latest)
+[![Give it a star!](https://img.shields.io/github/stars/thewtex/ngff-zarr?style=social)](https://github.com/thewtex/ngff-zarr)
 
 A lean and kind
 [Open Microscopy Environment (OME) Next Generation File Format (NGFF) Zarr implementation](https://ngff.openmicroscopy.org/latest/),
