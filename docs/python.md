@@ -214,6 +214,60 @@ pip install "ngff-zarr[tensorstore]"
 nz.to_ngff_zarr('cthead1.ome.zarr', multiscales, use_tensorstore=True)
 ```
 
+### Write a sharded OME-Zarr store
+
+[Sharded Zarr] stores save multiple compressed chunks in a single file or blob.
+This can be useful for large datasets, as it can reduce the number of files in a
+directory.
+
+To generate a sharded OME-Zarr store, pass the `chunks_per_shard` kwarg to
+`to_ngff_zarr`. Sharding requires OME-Zarr version 0.5, which uses the Zarr
+Format Specification 3.
+
+This can be a single integer,
+
+```python
+version = '0.5'
+nz.to_ngff_zarr('lightsheet.ome.zarr',
+                multiscales,
+                chunks_per_shard=2,
+                version=version)
+```
+
+This will use 2 chunks per shard for all dimensions.
+
+Or, specify a tuple of integers for each dimension.
+
+```python
+nz.to_ngff_zarr('lightsheet.ome.zarr',
+                multiscales,
+                chunks_per_shard=(2, 2, 4),
+                version=version)
+```
+
+Or, specify a dictionary of integers for each dimension.
+
+```python
+nz.to_ngff_zarr('lightsheet.ome.zarr',
+                multiscales,
+                chunks_per_shard={'z':4, 'y':2, 'x':2},
+                version=version)
+```
+
+The resulting shard shape will be the product of the chunk shape and the
+`chunks_per_shard` shape. In this case the shard shape will be `(256, 128, 128)`
+for a chunk shape of `(64, 64, 64)`.
+
+Tensorstore can also be used with sharded OME-Zarr stores.
+
+```python
+nz.to_ngff_zarr('lightsheet.ome.zarr',
+                multiscales,
+                chunks_per_shard={'z':4, 'y':2, 'x':2},
+                use_tensorstore=True,
+                version=version)
+```
+
 ## Convert OME-Zarr versions
 
 To convert from OME-Zarr version 0.4, which uses the Zarr Format Specification
@@ -243,4 +297,5 @@ to_ngff_zarr('cthead1_zarr2.ome.zarr', multiscales, version='0.4')
 [`to_ngff_image`]: ./apidocs/ngff_zarr/ngff_zarr.to_ngff_image.md
 [`to_multiscales`]: ./apidocs/ngff_zarr/ngff_zarr.to_multiscales.md
 [`from_ngff_zarr`]: ./apidocs/ngff_zarr/ngff_zarr.from_ngff_zarr.md
+[Sharded Zarr]: https://zarr.dev/zeps/accepted/ZEP0002.html
 [tensorstore]: https://google.github.io/tensorstore/
