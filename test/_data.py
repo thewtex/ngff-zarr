@@ -32,7 +32,8 @@ def input_images():
         fname="data.tar.gz",
         path=test_dir,
         # url=f"https://itk.mypinata.cloud/ipfs/{test_data_ipfs_cid}/data.tar.gz",
-        url=f"https://{test_data_ipfs_cid}.ipfs.w3s.link/ipfs/{test_data_ipfs_cid}/data.tar.gz",
+        # url=f"https://{test_data_ipfs_cid}.ipfs.w3s.link/ipfs/{test_data_ipfs_cid}/data.tar.gz",
+        url=f"https://ipfs.io/ipfs/{test_data_ipfs_cid}/data.tar.gz",
         known_hash=f"sha256:{test_data_sha256}",
         processor=untar,
     )
