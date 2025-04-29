@@ -248,6 +248,9 @@ def to_ngff_zarr(
     metadata_dict["@type"] = "ngff:Image"
     zarr_format = 2 if version == "0.4" else 3
     format_kwargs = {"zarr_format": zarr_format} if zarr_version_major >= 3 else {}
+    _zarr_kwargs = zarr_kwargs.copy()
+    if zarr_format == 2 and zarr_version_major >= 3:
+        _zarr_kwargs["dimension_separator"] = "/"
     if version == "0.4":
         root = zarr.open_group(
             store,
@@ -354,7 +357,7 @@ def to_ngff_zarr(
                 path=path,
                 mode="a",
                 **sharding_kwargs,
-                **zarr_kwargs,
+                **_zarr_kwargs,
                 **dimension_names_kwargs,
                 **format_kwargs,
             )
@@ -515,7 +518,7 @@ def to_ngff_zarr(
                             compute=True,
                             return_stored=False,
                             **sharding_kwargs,
-                            **zarr_kwargs,
+                            **_zarr_kwargs,
                             **format_kwargs,
                             **dimension_names_kwargs,
                             **kwargs,
@@ -559,7 +562,7 @@ def to_ngff_zarr(
                     compute=True,
                     return_stored=False,
                     **sharding_kwargs,
-                    **zarr_kwargs,
+                    **_zarr_kwargs,
                     **format_kwargs,
                     **dimension_names_kwargs,
                     **kwargs,
