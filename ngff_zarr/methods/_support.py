@@ -113,6 +113,12 @@ def _dim_scale_factors(dims, scale_factor, previous_dim_factors):
         }
     return result_scale_factors
 
+def _update_previous_dim_factors(scale_factor, spatial_dims, previous_dim_factors):
+    if isinstance(scale_factor, int):
+        previous_dim_factors = { d : scale_factor for d in spatial_dims }
+    else:
+        previous_dim_factors = scale_factor
+    return previous_dim_factors
 
 def _align_chunks(previous_image, default_chunks, dim_factors):
     block_0_shape = [c[0] for c in previous_image.data.chunks]
