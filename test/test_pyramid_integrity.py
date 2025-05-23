@@ -24,13 +24,10 @@ def test_check_pyramid():
         )
         dims = image.data.shape
 
-        sf = -1
-        for image in multiscales.images:
-            if sf < 0:
-                sf += 1
+        for sf, image in enumerate(multiscales.images):
+            if sf == 0:
                 continue
             scales = [image.scale[k] for k in image.scale]
             for i, d in enumerate(dims):
                 assert d * 0.25 == scales[i]*image.data.shape[i]
-                assert scales[i] == scale_factors[sf] * 0.25
-            sf += 1
+                assert scales[i] == scale_factors[sf - 1] * 0.25
