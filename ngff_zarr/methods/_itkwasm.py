@@ -93,7 +93,7 @@ def _downsample_itkwasm(
     transposed_dims = False
     for scale_factor in scale_factors:
         dim_factors = _dim_scale_factors(dims, scale_factor, previous_dim_factors)
-        if isinstance( scale_factor, int ):
+        if isinstance(scale_factor, int):
             previous_dim_factors = { d : scale_factor for d in spatial_dims }
         else:
             previous_dim_factors = scale_factor

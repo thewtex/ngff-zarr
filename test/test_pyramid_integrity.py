@@ -1,14 +1,12 @@
-#!/usr/bin/env python3
-
 import dask.array as da
 from ngff_zarr import Multiscales, to_multiscales, NgffImage
 
-def test_checkPyramid():
+def test_check_pyramid():
     """
-        When creating downscaled versions of images, subsequent resolutions were
-        not correctly being calculated. This test checks that the image volume
-        occupies the same space, and it checks that the scale factors are consistent
-        with the provided scale factors.
+    When creating downscaled versions of images, subsequent resolutions were
+    not correctly being calculated. This test checks that the image volume
+    occupies the same space, and it checks that the scale factors are consistent
+    with the provided scale factors.
     """
     data = da.zeros(shape=(512, 512))
     image = NgffImage(
@@ -23,17 +21,14 @@ def test_checkPyramid():
         scale_factors=scale_factors,
     )
     dims = image.data.shape
-    
+
     sf = -1
     for image in multiscales.images:
         if sf < 0:
             sf += 1
             continue
         scales = [image.scale[k] for k in image.scale]
-        print(scales, image.data.shape)
         for i, d in enumerate(dims):
             assert d * 0.25 == scales[i]*image.data.shape[i]
             assert scales[i] == scale_factors[sf] * 0.25
         sf += 1
-        
-test_checkPyramid()
