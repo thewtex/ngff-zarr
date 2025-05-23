@@ -136,7 +136,10 @@ def _downsample_itk_bin_shrink(
     spatial_dims = _image_dims[: len(spatial_dims)]
     for scale_factor in scale_factors:
         dim_factors = _dim_scale_factors(dims, scale_factor, previous_dim_factors)
-        previous_dim_factors = dim_factors
+        if isinstance(scale_factor, int):
+            previous_dim_factors = { d : scale_factor for d in spatial_dims }
+        else:
+            previous_dim_factors = scale_factor
         previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
 
         shrink_factors = [dim_factors[sd] for sd in spatial_dims]
@@ -222,7 +225,10 @@ def _downsample_itk_gaussian(
     spatial_dims = _image_dims[: len(spatial_dims)]
     for scale_factor in scale_factors:
         dim_factors = _dim_scale_factors(dims, scale_factor, previous_dim_factors)
-        previous_dim_factors = dim_factors
+        if isinstance(scale_factor, int):
+            previous_dim_factors = { d : scale_factor for d in spatial_dims }
+        else:
+            previous_dim_factors = scale_factor
         previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
 
         shrink_factors = [dim_factors[sd] for sd in spatial_dims]
