@@ -116,9 +116,14 @@ def _write_with_tensorstore(
     zarr_format,
     dimension_names=None,
     internal_chunk_shape=None,
+    full_array_shape=None,
+    create_dataset=True,
 ) -> None:
     """Write array using tensorstore backend"""
     import tensorstore as ts
+
+    # Use full array shape if provided, otherwise use the region array shape
+    dataset_shape = full_array_shape if full_array_shape is not None else array.shape
 
     spec = {
         "kvstore": {
@@ -126,7 +131,7 @@ def _write_with_tensorstore(
             "path": store_path,
         },
         "metadata": {
-            "shape": array.shape,
+            "shape": dataset_shape,
         },
     }
     if zarr_format == 2:
@@ -152,8 +157,21 @@ def _write_with_tensorstore(
             ]
     else:
         raise ValueError(f"Unsupported zarr format: {zarr_format}")
-    dataset = ts.open(spec, create=True, dtype=array.dtype).result()
-    dataset[...] = array[region]
+
+    # Try to open existing dataset first, create only if needed
+    try:
+        if create_dataset:
+            dataset = ts.open(spec, create=True, dtype=array.dtype).result()
+        else:
+            dataset = ts.open(spec, create=False, dtype=array.dtype).result()
+    except Exception as e:
+        if "ALREADY_EXISTS" in str(e) and create_dataset:
+            # Dataset already exists, open it without creating
+            dataset = ts.open(spec, create=False, dtype=array.dtype).result()
+        else:
+            raise
+
+    dataset[region] = array
 
 
 def _validate_ngff_parameters(
@@ -317,6 +335,8 @@ def _write_array_with_tensorstore(
     zarr_format: int,
     dimension_names: Optional[Tuple[str, ...]],
     region: Tuple[slice, ...],
+    full_array_shape: Optional[Tuple[int, ...]] = None,
+    create_dataset: bool = True,
     **kwargs,
 ) -> None:
     """Write an array using the TensorStore backend."""
@@ -329,6 +349,8 @@ def _write_array_with_tensorstore(
             chunks,
             zarr_format=zarr_format,
             dimension_names=dimension_names,
+            full_array_shape=full_array_shape,
+            create_dataset=create_dataset,
             **kwargs,
         )
     else:  # Sharding
@@ -340,6 +362,8 @@ def _write_array_with_tensorstore(
             zarr_format=zarr_format,
             dimension_names=dimension_names,
             internal_chunk_shape=internal_chunk_shape,
+            full_array_shape=full_array_shape,
+            create_dataset=create_dataset,
             **kwargs,
         )
 
@@ -472,6 +496,8 @@ def _handle_large_array_writing(
                 zarr_format,
                 dimension_names,
                 region,
+                full_array_shape=arr.shape,
+                create_dataset=(region_index == 0),  # Only create on first region
                 **kwargs,
             )
         else:
@@ -854,6 +880,8 @@ def to_ngff_zarr(
                     zarr_format,
                     dimension_names,
                     region,
+                    full_array_shape=arr.shape,
+                    create_dataset=True,  # Always create for small arrays
                     **kwargs,
                 )
             else:
