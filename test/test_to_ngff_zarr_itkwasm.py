@@ -107,6 +107,39 @@ def test_bin_shrink_tczyx():
     assert multiscales.images[1].data.shape[2] == 16
 
 
+def test_bin_shrink_tzyxc():
+    import dask.array as da
+
+    test_array = da.ones(
+        (96, 256, 256, 256, 2), chunks=(1, 128, 128, 128, 1), dtype="uint16"
+    )
+    img = to_ngff_image(
+        test_array,
+        dims=list("tzyxc"),
+        scale={
+            "t": 100_000.0,
+            "z": 0.98,
+            "y": 0.98,
+            "x": 0.98,
+            "c": 1.0,
+        },
+        axes_units={
+            "t": "millisecond",
+            "z": "micrometer",
+            "y": "micrometer",
+            "x": "micrometer",
+        },
+        name="000x_000y_000z",
+    )
+
+    multiscales = to_multiscales(
+        img,
+        scale_factors=[{"z": 2, "y": 2, "x": 2}, {"z": 4, "y": 4, "x": 4}],
+        method=Methods.ITKWASM_BIN_SHRINK,
+    )
+    assert len(multiscales.images) == 3
+
+
 def test_bin_shrink_isotropic_scale_factors(input_images):
     dataset_name = "cthead1"
     image = input_images[dataset_name]
