@@ -1,9 +1,14 @@
 import tempfile
 from packaging import version
+import logging
+import pathlib
+import time
+import uuid
 
 import pytest
 import zarr
 from dask_image import imread
+import numpy as np
 
 from ngff_zarr import (
     Methods,
@@ -76,3 +81,65 @@ def test_large_image_serialization(input_images):
     with tempfile.TemporaryDirectory() as tmpdir:
         to_ngff_zarr(tmpdir, multiscales, use_tensorstore=True)
         config.memory_target = default_mem_target
+
+
+def test_tensorstore_already_exists_failure():
+    """
+    Demonstrates the ALREADY_EXISTS failure with use_tensorstore=True during Zarr writing.
+    This failure occurs with large data sizes that trigger regional writing.
+    """
+    pytest.importorskip("tensorstore")
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
+    logger = logging.getLogger("TensorstoreAlreadyExistsTest")
+
+    large_shape = (512, 512, 512)  # Large shape for TensorStore test
+    input_dtype = np.float32
+    pixel_size = 1.3
+
+    input_array = np.random.rand(*large_shape).astype(input_dtype)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        test_output_dir = pathlib.Path(tmpdir)
+        scan_id = str(uuid.uuid4())[:8]
+        zarr_path = test_output_dir / f"{scan_id}.zarr"
+        logger.info(f"Test output directory: {test_output_dir}")
+
+        # 1. Create NGFF Image
+        logger.info("  Creating NGFF image object...")
+        image = to_ngff_image(
+            input_array,
+            dims=("z", "y", "x"),
+            scale={"z": pixel_size, "y": pixel_size, "x": pixel_size},
+            axes_units={"z": "micrometer", "y": "micrometer", "x": "micrometer"},
+        )
+
+        # 2. Create Multiscales (Using a method known to work)
+        logger.info("  Creating multiscales...")
+        start_time_multiscale = time.time()
+        multiscales = to_multiscales(
+            image,
+            method=Methods.DASK_IMAGE_GAUSSIAN,
+            chunks=None,  # Default chunking
+            cache=False,
+        )
+        end_time_multiscale = time.time()
+        logger.info(
+            f"  Multiscales created in {end_time_multiscale - start_time_multiscale:.2f} seconds."
+        )
+
+        # 3. Write Zarr (This was failing)
+        logger.info("  Writing NGFF Zarr with TensorStore...")
+        start_time_write = time.time()
+        to_ngff_zarr(
+            store=zarr_path,
+            multiscales=multiscales,
+            use_tensorstore=True,  # Enable TensorStore
+        )
+        end_time_write = time.time()
+        logger.info(
+            f"  Zarr written in {end_time_write - start_time_write:.2f} seconds (UNEXPECTED SUCCESS)."
+        )
