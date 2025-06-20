@@ -1,6 +1,6 @@
 import pytest
 
-from ngff_zarr import Methods, to_multiscales
+from ngff_zarr import Methods, to_multiscales, to_ngff_image
 
 from ._data import verify_against_baseline
 import platform
@@ -18,6 +18,41 @@ def test_bin_shrink_isotropic_scale_factors(input_images):
     multiscales = to_multiscales(image, method=Methods.ITK_BIN_SHRINK)
     # store_new_multiscales(dataset_name, baseline_name, multiscales)
     verify_against_baseline(dataset_name, baseline_name, multiscales)
+
+
+def test_bin_shrink_tzyxc():
+    import dask.array as da
+
+    test_array = da.ones((96, 64, 64, 64, 2), chunks=(1, 64, 64, 64, 1), dtype="uint8")
+    img = to_ngff_image(
+        test_array,
+        dims=list("tzyxc"),
+        scale={
+            "t": 100_000.0,
+            "z": 0.98,
+            "y": 0.98,
+            "x": 0.98,
+            "c": 1.0,
+        },
+        axes_units={
+            "t": "millisecond",
+            "z": "micrometer",
+            "y": "micrometer",
+            "x": "micrometer",
+        },
+        name="000x_000y_000z",
+    )
+
+    # expect a ValueError
+    try:
+        to_multiscales(
+            img,
+            scale_factors=[{"z": 2, "y": 2, "x": 2}, {"z": 4, "y": 4, "x": 4}],
+            method=Methods.ITK_BIN_SHRINK,
+        )
+        assert False, "Expected ValueError for non-spatial dimensions"
+    except ValueError:
+        pass
 
 
 @pytest.mark.skipif(

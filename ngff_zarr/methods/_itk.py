@@ -149,6 +149,11 @@ def _downsample_itk_bin_shrink(
         # For consistency for now, do not utilize direction until there is standardized support for
         # direction cosines / orientation in OME-NGFF
         # block_0.attrs.pop("direction", None)
+        if "c" in previous_image.dims:
+            raise ValueError(
+                "Downsampling with ITK BinShrinkImageFilter does not support channel dimension 'c'. "
+                "Use ITK Gaussian downsampling instead."
+            )
         block_input = itk.image_from_array(np.ones_like(block_0))
         spacing = [previous_image.scale[d] for d in spatial_dims]
         block_input.SetSpacing(spacing)

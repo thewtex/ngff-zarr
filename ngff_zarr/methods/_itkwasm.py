@@ -146,7 +146,7 @@ def _downsample_itkwasm(
         ]
         assert all(
             block_output.size[dim] == computed_size[dim]
-            for dim in range(block_output.data.ndim)
+            for dim in range(len(block_output.size))
         )
         output_chunks = list(previous_image.data.chunks)
         output_chunks_start = 0
@@ -172,7 +172,7 @@ def _downsample_itkwasm(
         ]
         assert all(
             block_output.size[dim] == computed_size[dim]
-            for dim in range(block_output.data.ndim)
+            for dim in range(len(block_output.size))
         )
         for i in range(len(output_chunks)):
             output_chunks[i][-1] = block_output.data.shape[i]
@@ -181,7 +181,7 @@ def _downsample_itkwasm(
 
         non_spatial_dims = [d for d in dims if d not in _spatial_dims]
         if "c" in non_spatial_dims and previous_image.dims[-1] == "c":
-            non_spatial_dims.pop("c")
+            non_spatial_dims.remove("c")
 
         if output_chunks_start > 0:
             # We'll iterate over each index for the non-spatial dimensions, run the desired
