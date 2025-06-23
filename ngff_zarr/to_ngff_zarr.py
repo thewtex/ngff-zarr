@@ -118,12 +118,56 @@ def _write_with_tensorstore(
     internal_chunk_shape=None,
     full_array_shape=None,
     create_dataset=True,
+    original_chunks=None,  # Add parameter for consistent chunk tracking
 ) -> None:
     """Write array using tensorstore backend"""
     import tensorstore as ts
 
     # Use full array shape if provided, otherwise use the region array shape
     dataset_shape = full_array_shape if full_array_shape is not None else array.shape
+
+    # Use original chunks for consistency if provided, otherwise use current chunks
+    consistent_chunks = original_chunks if original_chunks is not None else chunks
+
+    if internal_chunk_shape is not None:
+        # When sharding is enabled, use the shard sizes (chunks) not the original chunks
+        spec_chunks = chunks  # chunks contains the shard sizes when sharding is enabled
+    else:
+        spec_chunks = consistent_chunks  # Use consistent chunks when no sharding
+
+    # Validate chunk shapes to prevent zero or negative values
+    validated_chunks = []
+    for i, chunk_size in enumerate(consistent_chunks):
+        if chunk_size <= 0:
+            # Fallback to minimum valid chunk size or array dimension
+            fallback_size = min(64, dataset_shape[i]) if dataset_shape else 64
+            validated_chunks.append(fallback_size)
+        else:
+            validated_chunks.append(chunk_size)
+    consistent_chunks = tuple(validated_chunks)
+
+    # Ensure region matches array shape when full_array_shape is provided
+    if full_array_shape is not None and region is not None:
+        # Compute array to check actual shape since dask metadata may be inconsistent
+        computed_array = array.compute() if hasattr(array, "compute") else array
+        # Validate that region dimensions are consistent with actual computed array shape
+        adjusted_region = []
+        for i, slice_obj in enumerate(region):
+            if isinstance(slice_obj, slice):
+                start = slice_obj.start if slice_obj.start is not None else 0
+                stop = (
+                    slice_obj.stop
+                    if slice_obj.stop is not None
+                    else computed_array.shape[i]
+                )
+                # Ensure stop doesn't exceed actual computed array shape
+                stop = min(stop, start + computed_array.shape[i])
+                adjusted_region.append(slice(start, stop, slice_obj.step))
+            else:
+                adjusted_region.append(slice_obj)
+        region = tuple(adjusted_region)
+        # Use the computed array for writing to ensure shape consistency
+        array = computed_array
 
     spec = {
         "kvstore": {
@@ -136,21 +180,19 @@ def _write_with_tensorstore(
     }
     if zarr_format == 2:
         spec["driver"] = "zarr" if zarr_version_major < 3 else "zarr2"
-        spec["metadata"]["chunks"] = chunks
+        spec["metadata"]["chunks"] = spec_chunks
         spec["metadata"]["dimension_separator"] = "/"
         spec["metadata"]["dtype"] = array.dtype.str
     elif zarr_format == 3:
         spec["driver"] = "zarr3"
         spec["metadata"]["chunk_grid"] = {
             "name": "regular",
-            "configuration": {"chunk_shape": chunks},
+            "configuration": {"chunk_shape": spec_chunks},
         }
         spec["metadata"]["data_type"] = _numpy_to_zarr_dtype(array.dtype)
-        spec['metadata']["chunk_key_encoding"] = {
+        spec["metadata"]["chunk_key_encoding"] = {
             "name": "default",
-            "configuration": {
-                "separator": "/"
-            }
+            "configuration": {"separator": "/"},
         }
         if dimension_names:
             spec["metadata"]["dimension_names"] = dimension_names
@@ -331,6 +373,7 @@ def _write_array_with_tensorstore(
     region: Tuple[slice, ...],
     full_array_shape: Optional[Tuple[int, ...]] = None,
     create_dataset: bool = True,
+    original_chunks: Optional[Tuple[int, ...]] = None,  # Add parameter
     **kwargs,
 ) -> None:
     """Write an array using the TensorStore backend."""
@@ -345,6 +388,7 @@ def _write_array_with_tensorstore(
             dimension_names=dimension_names,
             full_array_shape=full_array_shape,
             create_dataset=create_dataset,
+            original_chunks=original_chunks,
             **kwargs,
         )
     else:  # Sharding
@@ -352,12 +396,13 @@ def _write_array_with_tensorstore(
             scale_path,
             arr,
             region,
-            chunks,
+            shards,  # Use shard sizes as chunks for TensorStore when sharding
             zarr_format=zarr_format,
             dimension_names=dimension_names,
             internal_chunk_shape=internal_chunk_shape,
             full_array_shape=full_array_shape,
             create_dataset=create_dataset,
+            original_chunks=original_chunks,
             **kwargs,
         )
 
@@ -401,7 +446,9 @@ def _write_array_direct(
             array[:] = arr.compute()
     else:
         # All other cases: use dask.array.to_zarr
-        target = zarr_array if (region is not None and zarr_array is not None) else store
+        target = (
+            zarr_array if (region is not None and zarr_array is not None) else store
+        )
         dask.array.to_zarr(
             arr,
             target,
@@ -412,7 +459,6 @@ def _write_array_direct(
             return_stored=False,
             **to_zarr_kwargs,
         )
-
 
 
 def _handle_large_array_writing(
@@ -436,6 +482,7 @@ def _handle_large_array_writing(
     progress: Optional[Union[NgffProgress, NgffProgressCallback]],
     index: int,
     nscales: int,
+    original_chunks: Tuple[int, ...],  # Add parameter to track original chunks
     **kwargs,
 ) -> None:
     """Handle writing large arrays by splitting them into manageable pieces."""
@@ -499,6 +546,7 @@ def _handle_large_array_writing(
                 region,
                 full_array_shape=arr.shape,
                 create_dataset=(region_index == 0),  # Only create on first region
+                original_chunks=original_chunks,  # Pass original chunks for consistency
                 **kwargs,
             )
         else:
@@ -825,6 +873,9 @@ def to_ngff_zarr(
             dim_factors = {d: 1 for d in dims}
         previous_dim_factors = dim_factors
 
+        # Capture original chunks before any rechunking operations
+        original_chunks = tuple([c[0] for c in arr.chunks])
+
         # Configure sharding if needed
         sharding_kwargs, internal_chunk_shape, arr = _configure_sharding(
             arr, chunks_per_shard, dims, kwargs.copy()
@@ -834,14 +885,10 @@ def to_ngff_zarr(
         chunks = tuple([c[0] for c in arr.chunks])
         shards = None
         if chunks_per_shard is not None:
-            if isinstance(chunks_per_shard, int):
-                shards = tuple([c * chunks_per_shard for c in chunks])
-            elif isinstance(chunks_per_shard, (tuple, list)):
-                shards = tuple([c * chunks_per_shard[i] for i, c in enumerate(chunks)])
-            elif isinstance(chunks_per_shard, dict):
-                shards = tuple(
-                    [c * chunks_per_shard.get(dims[i], 1) for i, c in enumerate(chunks)]
-                )
+            # When sharding is enabled, _configure_sharding has already rechunked the array
+            # to shard sizes, so chunks now contains the shard sizes we want
+            shards = chunks
+            chunks = original_chunks  # Use original chunks for internal_chunk_shape reference
 
         # Determine write method based on memory requirements
         if memory_usage(image) > config.memory_target and multiscales.scale_factors:
@@ -866,6 +913,7 @@ def to_ngff_zarr(
                 progress,
                 index,
                 nscales,
+                original_chunks,  # Pass original chunks for consistency
                 **kwargs,
             )
         else:
@@ -889,6 +937,7 @@ def to_ngff_zarr(
                     region,
                     full_array_shape=arr.shape,
                     create_dataset=True,  # Always create for small arrays
+                    original_chunks=original_chunks,  # Pass original chunks for consistency
                     **kwargs,
                 )
             else:
