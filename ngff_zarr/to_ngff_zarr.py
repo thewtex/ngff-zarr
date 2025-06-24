@@ -118,12 +118,27 @@ def _write_with_tensorstore(
     internal_chunk_shape=None,
     full_array_shape=None,
     create_dataset=True,
+    original_chunks=None,  # Add parameter for consistent chunk tracking
 ) -> None:
     """Write array using tensorstore backend"""
     import tensorstore as ts
 
     # Use full array shape if provided, otherwise use the region array shape
     dataset_shape = full_array_shape if full_array_shape is not None else array.shape
+
+    # Use original chunks for consistency if provided, otherwise use current chunks
+    consistent_chunks = original_chunks if original_chunks is not None else chunks
+
+    # Validate chunk shapes to prevent zero or negative values
+    validated_chunks = []
+    for i, chunk_size in enumerate(consistent_chunks):
+        if chunk_size <= 0:
+            # Fallback to minimum valid chunk size or array dimension
+            fallback_size = min(64, dataset_shape[i]) if dataset_shape else 64
+            validated_chunks.append(fallback_size)
+        else:
+            validated_chunks.append(chunk_size)
+    consistent_chunks = tuple(validated_chunks)
 
     spec = {
         "kvstore": {
@@ -136,14 +151,14 @@ def _write_with_tensorstore(
     }
     if zarr_format == 2:
         spec["driver"] = "zarr"
-        spec["metadata"]["chunks"] = chunks
+        spec["metadata"]["chunks"] = consistent_chunks
         spec["metadata"]["dimension_separator"] = "/"
         spec["metadata"]["dtype"] = array.dtype.str
     elif zarr_format == 3:
         spec["driver"] = "zarr3"
         spec["metadata"]["chunk_grid"] = {
             "name": "regular",
-            "configuration": {"chunk_shape": chunks},
+            "configuration": {"chunk_shape": consistent_chunks},
         }
         spec["metadata"]["data_type"] = _numpy_to_zarr_dtype(array.dtype)
         if dimension_names:
@@ -337,6 +352,7 @@ def _write_array_with_tensorstore(
     region: Tuple[slice, ...],
     full_array_shape: Optional[Tuple[int, ...]] = None,
     create_dataset: bool = True,
+    original_chunks: Optional[Tuple[int, ...]] = None,  # Add parameter
     **kwargs,
 ) -> None:
     """Write an array using the TensorStore backend."""
@@ -351,6 +367,7 @@ def _write_array_with_tensorstore(
             dimension_names=dimension_names,
             full_array_shape=full_array_shape,
             create_dataset=create_dataset,
+            original_chunks=original_chunks,
             **kwargs,
         )
     else:  # Sharding
@@ -364,6 +381,7 @@ def _write_array_with_tensorstore(
             internal_chunk_shape=internal_chunk_shape,
             full_array_shape=full_array_shape,
             create_dataset=create_dataset,
+            original_chunks=original_chunks,
             **kwargs,
         )
 
@@ -435,6 +453,7 @@ def _handle_large_array_writing(
     progress: Optional[Union[NgffProgress, NgffProgressCallback]],
     index: int,
     nscales: int,
+    original_chunks: Tuple[int, ...],  # Add parameter to track original chunks
     **kwargs,
 ) -> None:
     """Handle writing large arrays by splitting them into manageable pieces."""
@@ -498,6 +517,7 @@ def _handle_large_array_writing(
                 region,
                 full_array_shape=arr.shape,
                 create_dataset=(region_index == 0),  # Only create on first region
+                original_chunks=original_chunks,  # Pass original chunks for consistency
                 **kwargs,
             )
         else:
@@ -818,6 +838,9 @@ def to_ngff_zarr(
             dim_factors = {d: 1 for d in dims}
         previous_dim_factors = dim_factors
 
+        # Capture original chunks before any rechunking operations
+        original_chunks = tuple([c[0] for c in arr.chunks])
+
         # Configure sharding if needed
         sharding_kwargs, internal_chunk_shape, arr = _configure_sharding(
             arr, chunks_per_shard, dims, kwargs.copy()
@@ -859,6 +882,7 @@ def to_ngff_zarr(
                 progress,
                 index,
                 nscales,
+                original_chunks,  # Pass original chunks for consistency
                 **kwargs,
             )
         else:
@@ -882,6 +906,7 @@ def to_ngff_zarr(
                     region,
                     full_array_shape=arr.shape,
                     create_dataset=True,  # Always create for small arrays
+                    original_chunks=original_chunks,  # Pass original chunks for consistency
                     **kwargs,
                 )
             else:
