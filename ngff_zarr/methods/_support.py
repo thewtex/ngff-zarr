@@ -193,3 +193,140 @@ def _get_block(previous_image: NgffImage, block_index: int):
             indexer.append(0)
     block = block[tuple(indexer)]
     return block
+
+
+def _compute_downsampled_block_metadata(
+    input_block,
+    shrink_factors: list,
+) -> tuple:
+    """
+    Compute output metadata for a downsampled block.
+
+    :param input_block: Input block (numpy array or ITKWasm image)
+    :param shrink_factors: Shrink factors for each spatial dimension
+
+    :return: Tuple of (output_shape, output_spacing, output_origin, scale_dict, translation_dict)
+    """
+    import math
+    import itkwasm
+
+    # Handle different input types
+    if hasattr(input_block, "GetSpacing") and hasattr(input_block, "GetOrigin"):
+        # This is an ITK image
+        import itk
+
+        input_size = list(itk.size(input_block))
+        input_spacing = list(input_block.GetSpacing())
+        input_origin = list(input_block.GetOrigin())
+        # Get the numpy array for shape calculation
+        input_array = itk.array_from_image(input_block)
+    elif hasattr(input_block, "size") and hasattr(input_block, "spacing"):
+        # This is already an ITKWasm image
+        input_image = input_block
+        # Get the image size, spacing, and origin
+        if hasattr(input_image.size, "__iter__"):
+            input_size = list(input_image.size)
+        else:
+            input_size = [input_image.size]
+
+        if hasattr(input_image.spacing, "__iter__"):
+            input_spacing = list(input_image.spacing)
+        else:
+            input_spacing = [input_image.spacing]
+
+        if hasattr(input_image.origin, "__iter__"):
+            input_origin = list(input_image.origin)
+        else:
+            input_origin = [input_image.origin]
+
+        # Use the input block shape if available, otherwise derive from ITKWasm image
+        if hasattr(input_block, "shape"):
+            input_array = input_block
+        else:
+            input_array = input_image.data if hasattr(input_image, "data") else None
+    else:
+        # This is a numpy array, convert to ITKWasm image
+        is_vector = (
+            len(input_block.shape) > 0 and input_block.shape[-1] < 10
+        )  # Heuristic for vector images
+        input_image = itkwasm.image_from_array(input_block, is_vector=is_vector)
+
+        if hasattr(input_image.size, "__iter__"):
+            input_size = list(input_image.size)
+        else:
+            input_size = [input_image.size]
+
+        if hasattr(input_image.spacing, "__iter__"):
+            input_spacing = list(input_image.spacing)
+        else:
+            input_spacing = [input_image.spacing]
+
+        if hasattr(input_image.origin, "__iter__"):
+            input_origin = list(input_image.origin)
+        else:
+            input_origin = [input_image.origin]
+
+        input_array = input_block
+
+    # For consistency, use the same size computation strategy that ensures
+    # all spatial dimensions with the same shrink factor get the same treatment
+    # This prevents edge blocks with different spatial dimension sizes from
+    # causing inconsistent output shapes
+    output_size = []
+    for i, (input_len, shrink_factor) in enumerate(zip(input_size, shrink_factors)):
+        # Use floor division like the original ITK implementation
+        output_len = int(math.floor(input_len / shrink_factor))
+        output_size.append(output_len)
+
+    # Compute output spacing as input_spacing * shrink_factor
+    output_spacing = [
+        spacing * shrink_factor
+        for spacing, shrink_factor in zip(input_spacing, shrink_factors)
+    ]
+
+    # Compute output origin as input_origin + 0.5 * (shrink_factor - 1) * input_spacing
+    output_origin = [
+        origin + 0.5 * (shrink_factor - 1) * spacing
+        for origin, shrink_factor, spacing in zip(
+            input_origin, shrink_factors, input_spacing
+        )
+    ]
+
+    # For chunk size computation, we need the shape in the same order as the input array
+    # ITK uses (x,y,z) ordering but numpy arrays use (z,y,x) ordering
+    if input_array is not None and hasattr(input_array, "shape"):
+        # This is a numpy array, use its shape directly to determine the output ordering
+        input_array_shape = input_array.shape
+        # Only apply shrink factors to spatial dimensions
+        # The shrink_factors list corresponds to spatial dimensions only
+        # We need to identify which array dimensions are spatial vs non-spatial
+        output_shape = list(input_array_shape)  # Start with original shape
+
+        # Apply shrink factors only to spatial dimensions
+        # Assume spatial dimensions are consecutive and shrink_factors is in the same order
+        # For most cases, spatial dims are the last few dimensions (excluding channel)
+        spatial_start_idx = len(input_array_shape) - len(shrink_factors)
+        if (
+            input_array_shape[-1] < 10
+        ):  # Heuristic: if last dimension is small, it's likely a channel
+            spatial_start_idx = len(input_array_shape) - len(shrink_factors) - 1
+
+        for i, shrink_factor in enumerate(shrink_factors):
+            spatial_idx = spatial_start_idx + i
+            if 0 <= spatial_idx < len(output_shape):
+                output_shape[spatial_idx] = int(
+                    math.floor(input_array_shape[spatial_idx] / shrink_factor)
+                )
+
+        output_shape = tuple(output_shape)
+    else:
+        # This is an ITK/ITKWasm image, need to compute array shape from image size
+        # ITK image.size is in (x,y,z) order, but we need (z,y,x) for numpy arrays
+        output_shape = tuple(output_size[::-1])
+
+    # Create scale and translation dictionaries
+    _image_dims = ("x", "y", "z", "t")
+    scale = {_image_dims[i]: s for i, s in enumerate(output_spacing)}
+    translation = {_image_dims[i]: o for i, o in enumerate(output_origin)}
+
+    return output_shape, output_spacing, output_origin, scale, translation
