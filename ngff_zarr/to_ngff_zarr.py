@@ -375,38 +375,6 @@ def _write_array_direct(
     """Write an array directly using dask.array.to_zarr."""
     arr = _prep_for_to_zarr(store, arr)
 
-    if format_kwargs.get('zarr_format') == 2:
-        if region is not None and zarr_array is not None:
-            dask.array.to_zarr(
-                arr,
-                zarr_array,
-                region=region,
-                component=path,
-                overwrite=False,
-                compute=True,
-                return_stored=False,
-                **sharding_kwargs,
-                **zarr_kwargs,
-                **format_kwargs,
-                **dimension_names_kwargs,
-                **kwargs,
-            )
-        
-        else:
-            dask.array.to_zarr(
-                arr,
-                store,
-                component=path,
-                overwrite=False,
-                compute=True,
-                return_stored=False,
-                **sharding_kwargs,
-                **zarr_kwargs,
-                **format_kwargs,
-                **dimension_names_kwargs,
-                **kwargs,
-            )
-
     if format_kwargs.get('zarr_format') == 3:
         if region is not None and zarr_array is not None:
             dask.array.to_zarr(
@@ -438,6 +406,71 @@ def _write_array_direct(
             )
 
             array[:] = arr.compute()
+
+    elif format_kwargs.get('zarr_format') == 2:
+        if region is not None and zarr_array is not None:
+            dask.array.to_zarr(
+                arr,
+                zarr_array,
+                region=region,
+                component=path,
+                overwrite=False,
+                compute=True,
+                return_stored=False,
+                **sharding_kwargs,
+                **zarr_kwargs,
+                **format_kwargs,
+                **dimension_names_kwargs,
+                **kwargs,
+            )
+        
+        else:
+            dask.array.to_zarr(
+                arr,
+                store,
+                component=path,
+                overwrite=False,
+                compute=True,
+                return_stored=False,
+                **sharding_kwargs,
+                **zarr_kwargs,
+                **format_kwargs,
+                **dimension_names_kwargs,
+                **kwargs,
+            )
+    else:
+        if region is not None and zarr_array is not None:
+            dask.array.to_zarr(
+                arr,
+                zarr_array,
+                region=region,
+                component=path,
+                overwrite=False,
+                compute=True,
+                return_stored=False,
+                **sharding_kwargs,
+                **zarr_kwargs,
+                **format_kwargs,
+                **dimension_names_kwargs,
+                **kwargs,
+            )
+        
+        else:
+            dask.array.to_zarr(
+                arr,
+                store,
+                component=path,
+                overwrite=False,
+                compute=True,
+                return_stored=False,
+                **sharding_kwargs,
+                **zarr_kwargs,
+                **format_kwargs,
+                **dimension_names_kwargs,
+                **kwargs,
+            )
+
+
 
 def _handle_large_array_writing(
     image,
