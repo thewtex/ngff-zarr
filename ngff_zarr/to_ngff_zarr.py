@@ -145,6 +145,10 @@ def _write_with_tensorstore(
             "name": "regular",
             "configuration": {"chunk_shape": chunks},
         }
+        spec["metadata"]["chunk_key_encoding"] = {
+            "name": "default",
+            "configuration": {"separator": "/"}
+        }
         spec["metadata"]["data_type"] = _numpy_to_zarr_dtype(array.dtype)
         if dimension_names:
             spec["metadata"]["dimension_names"] = dimension_names
