@@ -287,7 +287,6 @@ def _configure_sharding(
     if chunks_per_shard is None:
         return {}, None, arr
 
-    sharding_kwargs = {}
     c0 = tuple([c[0] for c in arr.chunks])
 
     if isinstance(chunks_per_shard, int):
@@ -302,25 +301,14 @@ def _configure_sharding(
     else:
         raise ValueError("chunks_per_shard must be an int, tuple, or dict")
 
-    from zarr.codecs.sharding import ShardingCodec
-
-    if "codec" in kwargs:
-        nested_codec = kwargs.pop("codec")
-        sharding_codec = ShardingCodec(
-            chunk_shape=c0,
-            codec=nested_codec,
-        )
-    else:
-        sharding_codec = ShardingCodec(chunk_shape=c0)
-
-    if "codecs" in kwargs:
-        previous_codecs = kwargs.pop("codecs")
-        sharding_kwargs["codecs"] = previous_codecs + [sharding_codec]
-    else:
-        sharding_kwargs["codecs"] = [sharding_codec]
-
     internal_chunk_shape = c0
     arr = arr.rechunk(shards)
+
+    # Only include 'shards' and 'chunks' in sharding_kwargs
+    sharding_kwargs = {
+        "shards": shards,
+        "chunks": c0,
+    }
 
     return sharding_kwargs, internal_chunk_shape, arr
 
@@ -383,38 +371,69 @@ def _write_array_direct(
     """Write an array directly using dask.array.to_zarr."""
     arr = _prep_for_to_zarr(store, arr)
 
-    if region is not None and zarr_array is not None:
-        # array = zarr.create_array(
-        #     store=zarr_array.store,
-        #     name=path,
-        #     shape=arr.shape,
-        #     dtype=arr.dtype,
-        #     **sharding_kwargs,
-        #     **zarr_kwargs,
-        #     **format_kwargs,
-        #     **dimension_names_kwargs,
-        #     **kwargs,
-        # )
-        # array[region] = arr.compute()
-        pass
-    else:
-
-        print(sharding_kwargs)
-
-        array = zarr.create_array(
-            store=store,
-            name=path,
-            shape=arr.shape,
-            dtype=arr.dtype,
-            # **sharding_kwargs,
-            **zarr_kwargs,
-            **format_kwargs,
-            **dimension_names_kwargs,
-            **kwargs,
-        )
+    if format_kwargs.get('zarr_format') == 2:
+        if region is not None and zarr_array is not None:
+            dask.array.to_zarr(
+                arr,
+                zarr_array,
+                region=region,
+                component=path,
+                overwrite=False,
+                compute=True,
+                return_stored=False,
+                **sharding_kwargs,
+                **zarr_kwargs,
+                **format_kwargs,
+                **dimension_names_kwargs,
+                **kwargs,
+            )
         
-        array[:] = arr.compute()
+        else:
+            dask.array.to_zarr(
+                arr,
+                store,
+                component=path,
+                overwrite=False,
+                compute=True,
+                return_stored=False,
+                **sharding_kwargs,
+                **zarr_kwargs,
+                **format_kwargs,
+                **dimension_names_kwargs,
+                **kwargs,
+            )
 
+    if format_kwargs.get('zarr_format') == 3:
+        if region is not None and zarr_array is not None:
+            dask.array.to_zarr(
+                arr,
+                zarr_array,
+                region=region,
+                component=path,
+                overwrite=False,
+                compute=True,
+                return_stored=False,
+                **sharding_kwargs,
+                **zarr_kwargs,
+                **format_kwargs,
+                **dimension_names_kwargs,
+                **kwargs,
+            )
+            
+        else:
+            array = zarr.create_array(
+                store=store,
+                name=path,
+                shape=arr.shape,
+                dtype=arr.dtype,
+                **sharding_kwargs,
+                **zarr_kwargs,
+                **format_kwargs,
+                **dimension_names_kwargs,
+                **kwargs,
+            )
+
+            array[:] = arr.compute()
 
 def _handle_large_array_writing(
     image,
@@ -473,7 +492,7 @@ def _handle_large_array_writing(
     for region_index, region in enumerate(regions):
         if isinstance(progress, NgffProgressCallback):
             progress.add_callback_task(
-                f"[green]Writing scale {index+1} of {nscales}, region {region_index+1} of {len(regions)}"
+                f"[green]Writing scale {index + 1} of {nscales}, region {region_index + 1} of {len(regions)}"
             )
 
         arr_region = arr[region]
@@ -515,7 +534,6 @@ def _handle_large_array_writing(
                 zarr_array,
                 **kwargs,
             )
-
 
 def _compute_write_regions(
     image,
@@ -785,7 +803,11 @@ def to_ngff_zarr(
     zarr_format = 2 if version == "0.4" else 3
     format_kwargs = {"zarr_format": zarr_format} if zarr_version_major >= 3 else {}
     _zarr_kwargs = zarr_kwargs.copy()
-    if zarr_format == 2 and zarr_version_major >= 3:
+
+    # Force dimension_separator only for Zarr V2.
+    # Zarr V3 defaults to '/' for dimension names,
+    # and dimension_separator is currently not yet ported.
+    if zarr_format == 2 and zarr_version_major < 3:
         _zarr_kwargs["dimension_separator"] = "/"
 
     # Process each scale level
@@ -866,7 +888,7 @@ def to_ngff_zarr(
         else:
             if isinstance(progress, NgffProgressCallback):
                 progress.add_callback_task(
-                    f"[green]Writing scale {index+1} of {nscales}"
+                    f"[green]Writing scale {index + 1} of {nscales}"
                 )
 
             # For small arrays, write in one go

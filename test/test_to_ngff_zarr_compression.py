@@ -70,10 +70,3 @@ def test_zarr_v3_compression(input_images):
         assert scale2['codecs'][1]['configuration']['cname'] == 'zlib'
         assert scale2['codecs'][1]['configuration']['clevel'] == 5
         assert scale2['codecs'][1]['configuration']['shuffle'] == 'shuffle'
-
-
-    # Save to a persistent location
-    persistent_path = "/mnt/c/scratch/ngff-zarr-test/test.zarr"
-    to_ngff_zarr(
-        persistent_path, multiscales, version=version, compressors=compressors
-    )
