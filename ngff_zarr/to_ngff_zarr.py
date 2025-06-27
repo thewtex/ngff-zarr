@@ -384,34 +384,36 @@ def _write_array_direct(
     arr = _prep_for_to_zarr(store, arr)
 
     if region is not None and zarr_array is not None:
-        dask.array.to_zarr(
-            arr,
-            zarr_array,
-            region=region,
-            component=path,
-            overwrite=False,
-            compute=True,
-            return_stored=False,
-            **sharding_kwargs,
-            **zarr_kwargs,
-            **format_kwargs,
-            **dimension_names_kwargs,
-            **kwargs,
-        )
+        # array = zarr.create_array(
+        #     store=zarr_array.store,
+        #     name=path,
+        #     shape=arr.shape,
+        #     dtype=arr.dtype,
+        #     **sharding_kwargs,
+        #     **zarr_kwargs,
+        #     **format_kwargs,
+        #     **dimension_names_kwargs,
+        #     **kwargs,
+        # )
+        # array[region] = arr.compute()
+        pass
     else:
-        dask.array.to_zarr(
-            arr,
-            store,
-            component=path,
-            overwrite=False,
-            compute=True,
-            return_stored=False,
-            **sharding_kwargs,
+
+        print(sharding_kwargs)
+
+        array = zarr.create_array(
+            store=store,
+            name=path,
+            shape=arr.shape,
+            dtype=arr.dtype,
+            # **sharding_kwargs,
             **zarr_kwargs,
             **format_kwargs,
             **dimension_names_kwargs,
             **kwargs,
         )
+        
+        array[:] = arr.compute()
 
 
 def _handle_large_array_writing(
