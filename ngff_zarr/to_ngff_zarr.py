@@ -145,10 +145,6 @@ def _write_with_tensorstore(
             "name": "regular",
             "configuration": {"chunk_shape": chunks},
         }
-        spec["metadata"]["chunk_key_encoding"] = {
-            "name": "default",
-            "configuration": {"separator": "/"}
-        }
         spec["metadata"]["data_type"] = _numpy_to_zarr_dtype(array.dtype)
         if dimension_names:
             spec["metadata"]["dimension_names"] = dimension_names
@@ -375,7 +371,7 @@ def _write_array_direct(
     """Write an array directly using dask.array.to_zarr."""
     arr = _prep_for_to_zarr(store, arr)
 
-    if format_kwargs.get('zarr_format') == 3:
+    if format_kwargs.get("zarr_format") == 3:
         if region is not None and zarr_array is not None:
             dask.array.to_zarr(
                 arr,
@@ -391,7 +387,7 @@ def _write_array_direct(
                 **dimension_names_kwargs,
                 **kwargs,
             )
-            
+
         else:
             array = zarr.create_array(
                 store=store,
@@ -407,7 +403,7 @@ def _write_array_direct(
 
             array[:] = arr.compute()
 
-    elif format_kwargs.get('zarr_format') == 2:
+    elif format_kwargs.get("zarr_format") == 2:
         if region is not None and zarr_array is not None:
             dask.array.to_zarr(
                 arr,
@@ -423,7 +419,7 @@ def _write_array_direct(
                 **dimension_names_kwargs,
                 **kwargs,
             )
-        
+
         else:
             dask.array.to_zarr(
                 arr,
@@ -454,7 +450,7 @@ def _write_array_direct(
                 **dimension_names_kwargs,
                 **kwargs,
             )
-        
+
         else:
             dask.array.to_zarr(
                 arr,
@@ -571,6 +567,7 @@ def _handle_large_array_writing(
                 zarr_array,
                 **kwargs,
             )
+
 
 def _compute_write_regions(
     image,

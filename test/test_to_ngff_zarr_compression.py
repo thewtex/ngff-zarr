@@ -5,12 +5,10 @@ import tempfile
 import pytest
 
 import zarr.storage
-from zarr.storage import MemoryStore
 import zarr
 
-from dask_image import imread
 
-from ngff_zarr import Methods, to_multiscales, to_ngff_zarr, config, to_ngff_image
+from ngff_zarr import Methods, to_multiscales, to_ngff_zarr
 
 # from ._data import verify_against_baseline
 
@@ -25,25 +23,23 @@ pytestmark = pytest.mark.skipif(
 def test_zarr_v3_compression(input_images):
     dataset_name = "cthead1"
     image = input_images[dataset_name]
-    baseline_name = "2_4/RFC3_GAUSSIAN.zarr"
+    # baseline_name = "2_4/RFC3_GAUSSIAN.zarr"
     chunks = (64, 64)
     multiscales = to_multiscales(
         image, [2, 4], chunks=chunks, method=Methods.ITKWASM_GAUSSIAN
     )
-    store = zarr.storage.MemoryStore()
+    # store = zarr.storage.MemoryStore()
 
-
-    compressors = zarr.codecs.BloscCodec(cname="zlib", clevel=5, shuffle=zarr.codecs.BloscShuffle.shuffle)
+    compressors = zarr.codecs.BloscCodec(
+        cname="zlib", clevel=5, shuffle=zarr.codecs.BloscShuffle.shuffle
+    )
 
     # chunks_per_shard = 2
     # Test this with sharding also
 
     version = "0.5"
     with tempfile.TemporaryDirectory() as tmpdir:
-
-        to_ngff_zarr(
-            tmpdir, multiscales, version=version, compressors=compressors
-        )
+        to_ngff_zarr(tmpdir, multiscales, version=version, compressors=compressors)
 
         with open(tmpdir + "/zarr.json") as f:
             zarr_json = json.load(f)
@@ -52,21 +48,21 @@ def test_zarr_v3_compression(input_images):
 
         scale0 = metadata["scale0/image"]
 
-        assert scale0['codecs'][1]['name'] == 'blosc'
-        assert scale0['codecs'][1]['configuration']['cname'] == 'zlib'
-        assert scale0['codecs'][1]['configuration']['clevel'] == 5
-        assert scale0['codecs'][1]['configuration']['shuffle'] == 'shuffle'
+        assert scale0["codecs"][1]["name"] == "blosc"
+        assert scale0["codecs"][1]["configuration"]["cname"] == "zlib"
+        assert scale0["codecs"][1]["configuration"]["clevel"] == 5
+        assert scale0["codecs"][1]["configuration"]["shuffle"] == "shuffle"
 
         scale1 = metadata["scale1/image"]
 
-        assert scale1['codecs'][1]['name'] == 'blosc'
-        assert scale1['codecs'][1]['configuration']['cname'] == 'zlib'
-        assert scale1['codecs'][1]['configuration']['clevel'] == 5
-        assert scale1['codecs'][1]['configuration']['shuffle'] == 'shuffle'
+        assert scale1["codecs"][1]["name"] == "blosc"
+        assert scale1["codecs"][1]["configuration"]["cname"] == "zlib"
+        assert scale1["codecs"][1]["configuration"]["clevel"] == 5
+        assert scale1["codecs"][1]["configuration"]["shuffle"] == "shuffle"
 
         scale2 = metadata["scale2/image"]
 
-        assert scale2['codecs'][1]['name'] == 'blosc'
-        assert scale2['codecs'][1]['configuration']['cname'] == 'zlib'
-        assert scale2['codecs'][1]['configuration']['clevel'] == 5
-        assert scale2['codecs'][1]['configuration']['shuffle'] == 'shuffle'
+        assert scale2["codecs"][1]["name"] == "blosc"
+        assert scale2["codecs"][1]["configuration"]["cname"] == "zlib"
+        assert scale2["codecs"][1]["configuration"]["clevel"] == 5
+        assert scale2["codecs"][1]["configuration"]["shuffle"] == "shuffle"
