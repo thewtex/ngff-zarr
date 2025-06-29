@@ -377,100 +377,38 @@ def _write_array_direct(
     """Write an array directly using dask.array.to_zarr."""
     arr = _prep_for_to_zarr(store, arr)
 
-    if format_kwargs.get("zarr_format") == 3:
-        if region is not None and zarr_array is not None:
-            dask.array.to_zarr(
-                arr,
-                zarr_array,
-                region=region,
-                component=path,
-                overwrite=False,
-                compute=True,
-                return_stored=False,
-                **sharding_kwargs,
-                **zarr_kwargs,
-                **format_kwargs,
-                **dimension_names_kwargs,
-                **kwargs,
-            )
+    zarr_fmt = format_kwargs.get("zarr_format")
+    to_zarr_kwargs = {
+        **sharding_kwargs,
+        **zarr_kwargs,
+        **format_kwargs,
+        **dimension_names_kwargs,
+        **kwargs,
+    }
 
-        else:
-            array = zarr.create_array(
-                store=store,
-                name=path,
-                shape=arr.shape,
-                dtype=arr.dtype,
-                **sharding_kwargs,
-                **zarr_kwargs,
-                **format_kwargs,
-                **dimension_names_kwargs,
-                **kwargs,
-            )
-
-            array[:] = arr.compute()
-
-    elif format_kwargs.get("zarr_format") == 2:
-        if region is not None and zarr_array is not None:
-            dask.array.to_zarr(
-                arr,
-                zarr_array,
-                region=region,
-                component=path,
-                overwrite=False,
-                compute=True,
-                return_stored=False,
-                **sharding_kwargs,
-                **zarr_kwargs,
-                **format_kwargs,
-                **dimension_names_kwargs,
-                **kwargs,
-            )
-
-        else:
-            dask.array.to_zarr(
-                arr,
-                store,
-                component=path,
-                overwrite=False,
-                compute=True,
-                return_stored=False,
-                **sharding_kwargs,
-                **zarr_kwargs,
-                **format_kwargs,
-                **dimension_names_kwargs,
-                **kwargs,
-            )
+    if zarr_fmt == 3 and region is None and zarr_array is None:
+        # Zarr v3, no region/zarr_array: use zarr.create_array and assign
+        array = zarr.create_array(
+            store=store,
+            name=path,
+            shape=arr.shape,
+            dtype=arr.dtype,
+            **to_zarr_kwargs,
+        )
+        array[:] = arr.compute()
     else:
-        if region is not None and zarr_array is not None:
-            dask.array.to_zarr(
-                arr,
-                zarr_array,
-                region=region,
-                component=path,
-                overwrite=False,
-                compute=True,
-                return_stored=False,
-                **sharding_kwargs,
-                **zarr_kwargs,
-                **format_kwargs,
-                **dimension_names_kwargs,
-                **kwargs,
-            )
-
-        else:
-            dask.array.to_zarr(
-                arr,
-                store,
-                component=path,
-                overwrite=False,
-                compute=True,
-                return_stored=False,
-                **sharding_kwargs,
-                **zarr_kwargs,
-                **format_kwargs,
-                **dimension_names_kwargs,
-                **kwargs,
-            )
+        # All other cases: use dask.array.to_zarr
+        target = zarr_array if (region is not None and zarr_array is not None) else store
+        dask.array.to_zarr(
+            arr,
+            target,
+            region=region if (region is not None and zarr_array is not None) else None,
+            component=path,
+            overwrite=False,
+            compute=True,
+            return_stored=False,
+            **to_zarr_kwargs,
+        )
 
 
 
@@ -844,10 +782,7 @@ def to_ngff_zarr(
     format_kwargs = {"zarr_format": zarr_format} if zarr_version_major >= 3 else {}
     _zarr_kwargs = zarr_kwargs.copy()
 
-    # Force dimension_separator only for Zarr V2.
-    # Zarr V3 defaults to '/' for dimension names,
-    # and dimension_separator is currently not yet ported.
-    if zarr_format == 2 and zarr_version_major < 3:
+    if zarr_format == 2 and zarr_version_major >= 3:
         _zarr_kwargs["dimension_separator"] = "/"
 
     # Process each scale level

@@ -3532,7 +3532,7 @@ packages:
 - pypi: ./
   name: ngff-zarr
   version: 0.13.3
-  sha256: 7a97e56dfbc4806585457aab0dd3e4384d73e362286fc7b103e6829e06d3be9c
+  sha256: 8b7c2e24125aad32b7b40e69c67c565cf02851b5cd8433d7a717ff51940afd81
   requires_dist:
   - dask[array]
   - importlib-resources
@@ -3589,7 +3589,7 @@ packages:
   - pooch ; extra == 'test'
   - pytest>=6 ; extra == 'test'
   - jsonschema ; extra == 'validate'
-  requires_python: '>=3.11,<3.12'
+  requires_python: '>=3.9'
   editable: true
 - conda: https://conda.anaconda.org/conda-forge/noarch/nodeenv-1.9.1-pyhd8ed1ab_1.conda
   sha256: 3636eec0e60466a00069b47ce94b6d88b01419b6577d8e393da44bb5bc8d3468
