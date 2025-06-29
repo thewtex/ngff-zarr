@@ -386,8 +386,8 @@ def _write_array_direct(
         **kwargs,
     }
 
-    if zarr_fmt == 3 and region is None and zarr_array is None:
-        # Zarr v3, no region/zarr_array: use zarr.create_array and assign
+    if zarr_fmt == 3 and zarr_array is None:
+        # Zarr v3, use zarr.create_array and assign (whole array or region)
         array = zarr.create_array(
             store=store,
             name=path,
@@ -395,7 +395,10 @@ def _write_array_direct(
             dtype=arr.dtype,
             **to_zarr_kwargs,
         )
-        array[:] = arr.compute()
+        if region is not None:
+            array[region] = arr.compute()
+        else:
+            array[:] = arr.compute()
     else:
         # All other cases: use dask.array.to_zarr
         target = zarr_array if (region is not None and zarr_array is not None) else store
@@ -759,7 +762,7 @@ def to_ngff_zarr(
     :param chunks_per_shard: Number of chunks along each axis in a shard. If None, no sharding. Requires OME-Zarr version >= 0.5.
     :type  chunks_per_shard: int, tuple, or dict, optional
 
-    :param **kwargs: Passed to the zarr.creation.create() function, e.g., compression options.
+    :param **kwargs: Passed to the zarr.create_array() or zarr.creation.create() function, e.g., compression options.
     """
     # Setup and validation
     store_path = str(store) if isinstance(store, (str, Path)) else None
@@ -781,6 +784,11 @@ def to_ngff_zarr(
     zarr_format = 2 if version == "0.4" else 3
     format_kwargs = {"zarr_format": zarr_format} if zarr_version_major >= 3 else {}
     _zarr_kwargs = zarr_kwargs.copy()
+
+    if version == "0.4" and kwargs.get("compressors") is not None:
+        raise ValueError(
+            "The argument `compressors` are not supported for OME-Zarr version 0.4. (Zarr v3). Use `compression` instead."
+        )
 
     if zarr_format == 2 and zarr_version_major >= 3:
         _zarr_kwargs["dimension_separator"] = "/"
