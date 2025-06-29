@@ -135,7 +135,7 @@ def _write_with_tensorstore(
         },
     }
     if zarr_format == 2:
-        spec["driver"] = "zarr"
+        spec["driver"] = "zarr" if zarr_version_major < 3 else "zarr2"
         spec["metadata"]["chunks"] = chunks
         spec["metadata"]["dimension_separator"] = "/"
         spec["metadata"]["dtype"] = array.dtype.str
@@ -146,6 +146,12 @@ def _write_with_tensorstore(
             "configuration": {"chunk_shape": chunks},
         }
         spec["metadata"]["data_type"] = _numpy_to_zarr_dtype(array.dtype)
+        spec['metadata']["chunk_key_encoding"] = {
+            "name": "default",
+            "configuration": {
+                "separator": "/"
+            }
+        }
         if dimension_names:
             spec["metadata"]["dimension_names"] = dimension_names
         if internal_chunk_shape:
@@ -287,7 +293,6 @@ def _configure_sharding(
     if chunks_per_shard is None:
         return {}, None, arr
 
-    sharding_kwargs = {}
     c0 = tuple([c[0] for c in arr.chunks])
 
     if isinstance(chunks_per_shard, int):
@@ -302,25 +307,14 @@ def _configure_sharding(
     else:
         raise ValueError("chunks_per_shard must be an int, tuple, or dict")
 
-    from zarr.codecs.sharding import ShardingCodec
-
-    if "codec" in kwargs:
-        nested_codec = kwargs.pop("codec")
-        sharding_codec = ShardingCodec(
-            chunk_shape=c0,
-            codec=nested_codec,
-        )
-    else:
-        sharding_codec = ShardingCodec(chunk_shape=c0)
-
-    if "codecs" in kwargs:
-        previous_codecs = kwargs.pop("codecs")
-        sharding_kwargs["codecs"] = previous_codecs + [sharding_codec]
-    else:
-        sharding_kwargs["codecs"] = [sharding_codec]
-
     internal_chunk_shape = c0
     arr = arr.rechunk(shards)
+
+    # Only include 'shards' and 'chunks' in sharding_kwargs
+    sharding_kwargs = {
+        "shards": shards,
+        "chunks": c0,
+    }
 
     return sharding_kwargs, internal_chunk_shape, arr
 
@@ -383,35 +377,42 @@ def _write_array_direct(
     """Write an array directly using dask.array.to_zarr."""
     arr = _prep_for_to_zarr(store, arr)
 
-    if region is not None and zarr_array is not None:
-        dask.array.to_zarr(
-            arr,
-            zarr_array,
-            region=region,
-            component=path,
-            overwrite=False,
-            compute=True,
-            return_stored=False,
-            **sharding_kwargs,
-            **zarr_kwargs,
-            **format_kwargs,
-            **dimension_names_kwargs,
-            **kwargs,
+    zarr_fmt = format_kwargs.get("zarr_format")
+    to_zarr_kwargs = {
+        **sharding_kwargs,
+        **zarr_kwargs,
+        **format_kwargs,
+        **dimension_names_kwargs,
+        **kwargs,
+    }
+
+    if zarr_fmt == 3 and zarr_array is None:
+        # Zarr v3, use zarr.create_array and assign (whole array or region)
+        array = zarr.create_array(
+            store=store,
+            name=path,
+            shape=arr.shape,
+            dtype=arr.dtype,
+            **to_zarr_kwargs,
         )
+        if region is not None:
+            array[region] = arr.compute()
+        else:
+            array[:] = arr.compute()
     else:
+        # All other cases: use dask.array.to_zarr
+        target = zarr_array if (region is not None and zarr_array is not None) else store
         dask.array.to_zarr(
             arr,
-            store,
+            target,
+            region=region if (region is not None and zarr_array is not None) else None,
             component=path,
             overwrite=False,
             compute=True,
             return_stored=False,
-            **sharding_kwargs,
-            **zarr_kwargs,
-            **format_kwargs,
-            **dimension_names_kwargs,
-            **kwargs,
+            **to_zarr_kwargs,
         )
+
 
 
 def _handle_large_array_writing(
@@ -471,7 +472,7 @@ def _handle_large_array_writing(
     for region_index, region in enumerate(regions):
         if isinstance(progress, NgffProgressCallback):
             progress.add_callback_task(
-                f"[green]Writing scale {index+1} of {nscales}, region {region_index+1} of {len(regions)}"
+                f"[green]Writing scale {index + 1} of {nscales}, region {region_index + 1} of {len(regions)}"
             )
 
         arr_region = arr[region]
@@ -761,7 +762,7 @@ def to_ngff_zarr(
     :param chunks_per_shard: Number of chunks along each axis in a shard. If None, no sharding. Requires OME-Zarr version >= 0.5.
     :type  chunks_per_shard: int, tuple, or dict, optional
 
-    :param **kwargs: Passed to the zarr.creation.create() function, e.g., compression options.
+    :param **kwargs: Passed to the zarr.create_array() or zarr.creation.create() function, e.g., compression options.
     """
     # Setup and validation
     store_path = str(store) if isinstance(store, (str, Path)) else None
@@ -783,6 +784,12 @@ def to_ngff_zarr(
     zarr_format = 2 if version == "0.4" else 3
     format_kwargs = {"zarr_format": zarr_format} if zarr_version_major >= 3 else {}
     _zarr_kwargs = zarr_kwargs.copy()
+
+    if version == "0.4" and kwargs.get("compressors") is not None:
+        raise ValueError(
+            "The argument `compressors` are not supported for OME-Zarr version 0.4. (Zarr v3). Use `compression` instead."
+        )
+
     if zarr_format == 2 and zarr_version_major >= 3:
         _zarr_kwargs["dimension_separator"] = "/"
 
@@ -864,7 +871,7 @@ def to_ngff_zarr(
         else:
             if isinstance(progress, NgffProgressCallback):
                 progress.add_callback_task(
-                    f"[green]Writing scale {index+1} of {nscales}"
+                    f"[green]Writing scale {index + 1} of {nscales}"
                 )
 
             # For small arrays, write in one go
