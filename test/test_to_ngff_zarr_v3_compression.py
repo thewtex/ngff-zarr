@@ -68,7 +68,21 @@ def test_zarr_v3_compression(input_images):
             dataset_name, baseline_name, multiscales, version=version
         )
 
-    # Test writing OME-Zarr 0.5 with compression and sharding
+
+def test_zarr_v3_compression_with_sharding(input_images):
+    """Test Zarr v3 compression combined with sharding functionality"""
+    dataset_name = "cthead1"
+    image = input_images[dataset_name]
+    baseline_name = "2_4/RFC3_GAUSSIAN.zarr"
+    chunks = (64, 64)
+    multiscales = to_multiscales(
+        image, [2, 4], chunks=chunks, method=Methods.ITKWASM_GAUSSIAN
+    )
+
+    compressors = zarr.codecs.BloscCodec(
+        cname="zlib", clevel=5, shuffle=zarr.codecs.BloscShuffle.shuffle
+    )
+
     version = "0.5"
     chunks_per_shard = 2
 
