@@ -138,7 +138,7 @@ def test_tensorstore_already_exists_failure():
             store=zarr_path,
             multiscales=multiscales,
             use_tensorstore=True,  # Enable TensorStore
-            version='0.5'
+            # version="0.5",
         )
         end_time_write = time.time()
         logger.info(

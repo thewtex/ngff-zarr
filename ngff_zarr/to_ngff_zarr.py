@@ -134,8 +134,8 @@ def _write_with_tensorstore(
             "shape": dataset_shape,
         },
     }
-    if zarr_format == 2:
-        spec["driver"] = "zarr"
+    if zarr_format == 2 and zarr_version_major < 3:
+        spec["driver"] = "zarr" if zarr_version_major < 3 else "zarr2"
         spec["metadata"]["chunks"] = chunks
         spec["metadata"]["dimension_separator"] = "/"
         spec["metadata"]["dtype"] = array.dtype.str
