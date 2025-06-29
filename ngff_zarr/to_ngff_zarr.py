@@ -135,7 +135,7 @@ def _write_with_tensorstore(
         },
     }
     if zarr_format == 2:
-        spec["driver"] = "zarr2" if sys.version_info >= (3, 10) else "zarr"
+        spec["driver"] = "zarr"
         spec["metadata"]["chunks"] = chunks
         spec["metadata"]["dimension_separator"] = "/"
         spec["metadata"]["dtype"] = array.dtype.str
@@ -146,6 +146,12 @@ def _write_with_tensorstore(
             "configuration": {"chunk_shape": chunks},
         }
         spec["metadata"]["data_type"] = _numpy_to_zarr_dtype(array.dtype)
+        spec['metadata']["chunk_key_encoding"] = {
+            "name": "default",
+            "configuration": {
+                "separator": "/"
+            }
+        }
         if dimension_names:
             spec["metadata"]["dimension_names"] = dimension_names
         if internal_chunk_shape:
