@@ -1,6 +1,8 @@
 from typing import List
 import copy
 
+import numpy as np
+from numpy.typing import ArrayLike
 
 from ..ngff_image import NgffImage
 
@@ -181,15 +183,46 @@ def _get_block(previous_image: NgffImage, block_index: int):
     """Helper method for accessing an enumerated chunk from input"""
     block_shape = [c[block_index] for c in previous_image.data.chunks]
     block = previous_image.data[tuple([slice(0, s) for s in block_shape])]
-    dims = list(previous_image.dims)
-    # Also take "c" if it is the last dimension
-    if dims[-1] == "c":
-        dims[-1] = "x"
-    indexer = []
-    for d in dims:
-        if d in _spatial_dims:
-            indexer.append(slice(None))
-        else:
-            indexer.append(0)
-    block = block[tuple(indexer)]
     return block
+
+
+def _next_scale_metadata(
+    previous_image: NgffImage, dim_factors: dict, spatial_dims: tuple
+) -> tuple:
+    """Compute the next scale metadata based on the previous image and scale factor."""
+
+    scale = {}
+    for dim in previous_image.dims:
+        if dim in spatial_dims:
+            scale[dim] = previous_image.scale[dim] * dim_factors[dim]
+        elif dim in previous_image.scale:
+            scale[dim] = previous_image.scale[dim]
+
+    translation = {}
+    for dim in previous_image.dims:
+        if dim in spatial_dims:
+            translation[dim] = previous_image.translation[dim] + (
+                0.5 * (dim_factors[dim] - 1) * previous_image.scale[dim]
+            )
+        elif dim in previous_image.translation:
+            translation[dim] = previous_image.translation[dim]
+
+    return translation, scale
+
+
+def _next_block_shape(
+    previous_image: NgffImage,
+    dim_factors: dict,
+    spatial_dims: tuple,
+    block_input: ArrayLike,
+) -> tuple:
+    """Compute the next block shape based on the previous image and scale factor."""
+
+    shape = []
+    for i, dim in enumerate(previous_image.dims):
+        if dim in spatial_dims:
+            shape.append(int(np.floor(block_input.shape[i] / dim_factors[dim])))
+        else:
+            shape.append(block_input.shape[i])
+
+    return tuple(shape)
