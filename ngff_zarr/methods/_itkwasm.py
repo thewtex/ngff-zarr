@@ -14,6 +14,8 @@ from ._support import (
     _get_block,
     _spatial_dims,
     _spatial_dims_last_zyx,
+    _next_scale_metadata,
+    _next_block_shape,
 )
 
 _image_dims: Tuple[str, str, str, str] = ("x", "y", "z", "t")
@@ -80,8 +82,7 @@ def _itkwasm_chunk_bin_shrink(
 def _downsample_itkwasm(
     ngff_image: NgffImage, default_chunks, out_chunks, scale_factors, smoothing
 ):
-    import itkwasm
-    from itkwasm_downsample import downsample_bin_shrink, gaussian_kernel_radius
+    from itkwasm_downsample import gaussian_kernel_radius
 
     multiscales = [
         ngff_image,
@@ -98,84 +99,61 @@ def _downsample_itkwasm(
             scale_factor, spatial_dims, previous_dim_factors
         )
         previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
+
         # Operate on a contiguous spatial block
         previous_image = _spatial_dims_last_zyx(previous_image)
         if tuple(previous_image.dims) != dims:
             transposed_dims = True
             reorder = [previous_image.dims.index(dim) for dim in dims]
 
-        shrink_factors = [dim_factors[sd] for sd in spatial_dims]
-
-        # Compute metadata for region splitting
+        translation, scale = _next_scale_metadata(
+            previous_image, dim_factors, spatial_dims
+        )
 
         # Blocks 0, ..., N-2 have the same shape
         block_0_input = _get_block(previous_image, 0)
+        next_block_0_shape = _next_block_shape(
+            previous_image, dim_factors, spatial_dims, block_0_input
+        )
+        block_0_size = []
+        for dim in spatial_dims:
+            if dim in previous_image.dims:
+                block_0_size.append(block_0_input.shape[previous_image.dims.index(dim)])
+            else:
+                block_0_size.append(1)
+        block_0_size.reverse()
+
         # Block N-1 may be smaller than preceding blocks
         block_neg1_input = _get_block(previous_image, -1)
+        next_block_neg1_shape = _next_block_shape(
+            previous_image, dim_factors, spatial_dims, block_neg1_input
+        )
 
         # Compute overlap for Gaussian blurring for all blocks
         is_vector = previous_image.dims[-1] == "c"
-        block_0_image = itkwasm.image_from_array(
-            np.ones_like(block_0_input), is_vector=is_vector
-        )
-        input_spacing = [previous_image.scale[d] for d in spatial_dims]
-        block_0_image.spacing = input_spacing
-        input_origin = [previous_image.translation[d] for d in spatial_dims]
-        block_0_image.origin = input_origin
 
         # pixel units
+        # Compute metadata for region splitting
+        shrink_factors = [dim_factors[sd] for sd in spatial_dims]
         sigma_values = _compute_sigma(shrink_factors)
-        kernel_radius = gaussian_kernel_radius(
-            size=block_0_image.size, sigma=sigma_values
-        )
+        kernel_radius = gaussian_kernel_radius(size=block_0_size, sigma=sigma_values)
 
-        # Compute output size and spatial metadata for blocks 0, .., N-2
-        block_output = downsample_bin_shrink(
-            block_0_image, shrink_factors, information_only=False
-        )
-        block_0_output_spacing = block_output.spacing
-        block_0_output_origin = block_output.origin
+        dtype = block_0_input.dtype
 
-        scale = {_image_dims[i]: s for (i, s) in enumerate(block_0_output_spacing)}
-        translation = {_image_dims[i]: s for (i, s) in enumerate(block_0_output_origin)}
-        dtype = block_output.data.dtype
-
-        computed_size = [
-            int(block_len / shrink_factor)
-            for block_len, shrink_factor in zip(block_0_image.size, shrink_factors)
-        ]
-        assert all(
-            block_output.size[dim] == computed_size[dim]
-            for dim in range(len(block_output.size))
-        )
         output_chunks = list(previous_image.data.chunks)
         output_chunks_start = 0
         while previous_image.dims[output_chunks_start] not in _spatial_dims:
             output_chunks_start += 1
         output_chunks = output_chunks[output_chunks_start:]
+        next_block_0_shape = next_block_0_shape[output_chunks_start:]
         for i, c in enumerate(output_chunks):
             output_chunks[i] = [
-                block_output.data.shape[i],
+                next_block_0_shape[i],
             ] * len(c)
-        # Compute output size for block N-1
-        block_neg1_image = itkwasm.image_from_array(
-            np.ones_like(block_neg1_input), is_vector=is_vector
-        )
-        block_neg1_image.spacing = input_spacing
-        block_neg1_image.origin = input_origin
-        block_output = downsample_bin_shrink(
-            block_neg1_image, shrink_factors, information_only=False
-        )
-        computed_size = [
-            int(block_len / shrink_factor)
-            for block_len, shrink_factor in zip(block_neg1_image.size, shrink_factors)
-        ]
-        assert all(
-            block_output.size[dim] == computed_size[dim]
-            for dim in range(len(block_output.size))
-        )
+
+        next_block_neg1_shape = next_block_neg1_shape[output_chunks_start:]
         for i in range(len(output_chunks)):
-            output_chunks[i][-1] = block_output.data.shape[i]
+            output_chunks[i][-1] = next_block_neg1_shape[i]
             output_chunks[i] = tuple(output_chunks[i])
         output_chunks = tuple(output_chunks)
 
