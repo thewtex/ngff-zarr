@@ -11,6 +11,8 @@ from ._support import (
     _update_previous_dim_factors,
     _get_block,
     _spatial_dims,
+    _next_scale_metadata,
+    _next_block_shape,
 )
 
 _image_dims: Tuple[str, str, str, str] = ("x", "y", "z", "t")
@@ -142,47 +144,47 @@ def _downsample_itk_bin_shrink(
         )
         previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
 
+        translation, scale = _next_scale_metadata(
+            previous_image, dim_factors, spatial_dims
+        )
+
+        # Blocks 0, ..., N-2 have the same shape
+        block_0_input = _get_block(previous_image, 0)
+        next_block_0_shape = _next_block_shape(
+            previous_image, dim_factors, spatial_dims, block_0_input
+        )
+        block_0_size = []
+        for dim in spatial_dims:
+            if dim in previous_image.dims:
+                block_0_size.append(block_0_input.shape[previous_image.dims.index(dim)])
+            else:
+                block_0_size.append(1)
+        block_0_size.reverse()
+
+        # Block N-1 may be smaller than preceding blocks
+        block_neg1_input = _get_block(previous_image, -1)
+        next_block_neg1_shape = _next_block_shape(
+            previous_image, dim_factors, spatial_dims, block_neg1_input
+        )
+
         shrink_factors = [dim_factors[sd] for sd in spatial_dims]
 
-        block_0 = _get_block(previous_image, 0)
+        dtype = block_0_input.dtype
 
-        # For consistency for now, do not utilize direction until there is standardized support for
-        # direction cosines / orientation in OME-NGFF
-        # block_0.attrs.pop("direction", None)
-        if "c" in previous_image.dims:
-            raise ValueError(
-                "Downsampling with ITK BinShrinkImageFilter does not support channel dimension 'c'. "
-                "Use ITK Gaussian downsampling instead."
-            )
-        block_input = itk.image_from_array(np.ones_like(block_0))
-        spacing = [previous_image.scale[d] for d in spatial_dims]
-        block_input.SetSpacing(spacing)
-        origin = [previous_image.translation[d] for d in spatial_dims]
-        block_input.SetOrigin(origin)
-        filt = itk.BinShrinkImageFilter.New(block_input, shrink_factors=shrink_factors)
-        filt.UpdateOutputInformation()
-        block_output = filt.GetOutput()
-        scale = {_image_dims[i]: s for (i, s) in enumerate(block_output.GetSpacing())}
-        translation = {
-            _image_dims[i]: s for (i, s) in enumerate(block_output.GetOrigin())
-        }
-        dtype = block_output.dtype
         output_chunks = list(previous_image.data.chunks)
+        output_chunks_start = 0
+        while previous_image.dims[output_chunks_start] not in _spatial_dims:
+            output_chunks_start += 1
+        output_chunks = output_chunks[output_chunks_start:]
+        next_block_0_shape = next_block_0_shape[output_chunks_start:]
         for i, c in enumerate(output_chunks):
             output_chunks[i] = [
-                block_output.shape[i],
+                next_block_0_shape[i],
             ] * len(c)
 
-        block_neg1 = _get_block(previous_image, -1)
-        # block_neg1.attrs.pop("direction", None)
-        block_input = itk.image_from_array(np.ones_like(block_neg1))
-        block_input.SetSpacing(spacing)
-        block_input.SetOrigin(origin)
-        filt = itk.BinShrinkImageFilter.New(block_input, shrink_factors=shrink_factors)
-        filt.UpdateOutputInformation()
-        block_output = filt.GetOutput()
+        next_block_neg1_shape = next_block_neg1_shape[output_chunks_start:]
         for i in range(len(output_chunks)):
-            output_chunks[i][-1] = block_output.shape[i]
+            output_chunks[i][-1] = next_block_neg1_shape[i]
             output_chunks[i] = tuple(output_chunks[i])
         output_chunks = tuple(output_chunks)
 
