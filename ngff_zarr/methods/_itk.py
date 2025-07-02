@@ -213,6 +213,7 @@ def _downsample_itk_gaussian(
     ngff_image: NgffImage, default_chunks, out_chunks, scale_factors
 ):
     import itk
+    from itkwasm_downsample import gaussian_kernel_radius
 
     # Optionally run accelerated smoothing with itk-vkfft
     if "VkFFTBackend" in dir(itk):
@@ -237,79 +238,56 @@ def _downsample_itk_gaussian(
         )
         previous_image = _align_chunks(previous_image, default_chunks, dim_factors)
 
-        shrink_factors = [dim_factors[sd] for sd in spatial_dims]
-
-        # Compute metadata for region splitting
+        translation, scale = _next_scale_metadata(
+            previous_image, dim_factors, spatial_dims
+        )
 
         # Blocks 0, ..., N-2 have the same shape
         block_0_input = _get_block(previous_image, 0)
+        next_block_0_shape = _next_block_shape(
+            previous_image, dim_factors, spatial_dims, block_0_input
+        )
+        block_0_size = []
+        for dim in spatial_dims:
+            if dim in previous_image.dims:
+                block_0_size.append(block_0_input.shape[previous_image.dims.index(dim)])
+            else:
+                block_0_size.append(1)
+        block_0_size.reverse()
+
         # Block N-1 may be smaller than preceding blocks
         block_neg1_input = _get_block(previous_image, -1)
-
-        # Compute overlap for Gaussian blurring for all blocks
-        block_0_image = itk.image_from_array(np.ones_like(block_0_input))
-        input_spacing = [previous_image.scale[d] for d in spatial_dims]
-        block_0_image.SetSpacing(input_spacing)
-        input_origin = [previous_image.translation[d] for d in spatial_dims]
-        block_0_image.SetOrigin(input_origin)
+        next_block_neg1_shape = _next_block_shape(
+            previous_image, dim_factors, spatial_dims, block_neg1_input
+        )
 
         # pixel units
+        # Compute metadata for region splitting
+        shrink_factors = [dim_factors[sd] for sd in spatial_dims]
         sigma_values = _compute_sigma(shrink_factors)
-        kernel_radius = _compute_itk_gaussian_kernel_radius(
-            itk.size(block_0_image), sigma_values
-        )
+        kernel_radius = gaussian_kernel_radius(size=block_0_size, sigma=sigma_values)
 
-        # Compute output size and spatial metadata for blocks 0, .., N-2
-        filt = itk.BinShrinkImageFilter.New(
-            block_0_image, shrink_factors=shrink_factors
-        )
-        filt.UpdateOutputInformation()
-        block_output = filt.GetOutput()
-        block_0_output_spacing = block_output.GetSpacing()
-        block_0_output_origin = block_output.GetOrigin()
+        dtype = block_0_input.dtype
 
-        scale = {_image_dims[i]: s for (i, s) in enumerate(block_0_output_spacing)}
-        translation = {_image_dims[i]: s for (i, s) in enumerate(block_0_output_origin)}
-        dtype = block_output.dtype
-
-        computed_size = [
-            int(block_len / shrink_factor)
-            for block_len, shrink_factor in zip(itk.size(block_0_image), shrink_factors)
-        ]
-        assert all(
-            itk.size(block_output)[dim] == computed_size[dim]
-            for dim in range(block_output.ndim)
-        )
         output_chunks = list(previous_image.data.chunks)
-        if "t" in previous_image.dims:
-            dims = list(previous_image.dims)
-            t_index = dims.index("t")
-            output_chunks.pop(t_index)
+        output_chunks_start = 0
+        while previous_image.dims[output_chunks_start] not in _spatial_dims:
+            output_chunks_start += 1
+        output_chunks = output_chunks[output_chunks_start:]
+        next_block_0_shape = next_block_0_shape[output_chunks_start:]
         for i, c in enumerate(output_chunks):
             output_chunks[i] = [
-                block_output.shape[i],
+                next_block_0_shape[i],
             ] * len(c)
-        # Compute output size for block N-1
-        block_neg1_image = itk.image_from_array(np.ones_like(block_neg1_input))
-        block_neg1_image.SetSpacing(input_spacing)
-        block_neg1_image.SetOrigin(input_origin)
-        filt.SetInput(block_neg1_image)
-        filt.UpdateOutputInformation()
-        block_output = filt.GetOutput()
-        computed_size = [
-            int(block_len / shrink_factor)
-            for block_len, shrink_factor in zip(
-                itk.size(block_neg1_image), shrink_factors
-            )
-        ]
-        assert all(
-            itk.size(block_output)[dim] == computed_size[dim]
-            for dim in range(block_output.ndim)
-        )
+
+        next_block_neg1_shape = next_block_neg1_shape[output_chunks_start:]
         for i in range(len(output_chunks)):
-            output_chunks[i][-1] = block_output.shape[i]
+            output_chunks[i][-1] = next_block_neg1_shape[i]
             output_chunks[i] = tuple(output_chunks[i])
         output_chunks = tuple(output_chunks)
+
+        if "t" in previous_image.dims:
+            t_index = previous_image.dims.index("t")
 
         if "t" in previous_image.dims:
             all_timepoints = []
