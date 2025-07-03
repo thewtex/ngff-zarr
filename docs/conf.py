@@ -29,7 +29,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 autodoc2_packages = [
     {
-        "path": "../ngff_zarr",
+        "path": "../py/ngff_zarr",
         "exclude_files": ["__about__.py"],
     },
 ]

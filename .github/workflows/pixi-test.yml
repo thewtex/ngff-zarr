@@ -19,4 +19,4 @@ jobs:
           frozen: true
 
       - name: Run tests
-        run: pixi run test
+        run: cd py && pixi run test

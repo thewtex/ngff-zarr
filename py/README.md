@@ -8,23 +8,12 @@
 
 ---
 
-A multi-language implementation of the
+A lean and kind
 [Open Microscopy Environment (OME) Next Generation File Format (NGFF) Zarr](https://ngff.openmicroscopy.org)
-specification.
+implementation.
 
-## Repository Structure
+## ✨ Features
 
-This repository contains multiple packages implementing NGFF-Zarr support:
-
-- **[`py/`](./py/)** - Python package (ngff-zarr) - A lean and kind NGFF-Zarr implementation
-- **[`mcp/`](./mcp/)** - Model Context Protocol (MCP) server (ngff-zarr-mcp) for AI integration
-- **TypeScript package** - Coming soon
-
-## Python Package (`py/`)
-
-The main Python package provides:
-
-✨ **Features**
 - Minimal dependencies
 - Work with arbitrary Zarr store types
 - Lazy, parallel, and web ready -- no local filesystem required
@@ -38,16 +27,11 @@ The main Python package provides:
 - [Sharded Zarr] stores
 - Optional writing via [tensorstore]
 
-📖 **Documentation**
+## Documentation
 
-More information about command line usage, the Python API, library features, and
+More information an command line usage, the Python API, library features, and
 how to contribute can be found in
 [our documentation](https://ngff-zarr.readthedocs.io/).
-
-## MCP Server (`mcp/`)
-
-The Model Context Protocol server enables AI assistants like Claude to interact with NGFF-Zarr files.
-See the [MCP documentation](./mcp/README.md) for setup and usage instructions.
 
 ## See also
 
