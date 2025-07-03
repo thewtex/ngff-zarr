@@ -150,6 +150,9 @@ def test_tensorstore_chunk_shape_consistency():
     # This reproduces the issue from #161 where array dimensions don't divide evenly by chunk size
     # Shape needs to be large enough to trigger regional writing and have uneven chunk divisions
     pytest.importorskip("tensorstore")
+    pytest.mark.skipif(
+        zarr_version < version.parse("3.0.0b1"), reason="zarr version < 3.0.0b1"
+    )
 
     shape = (
         515,
@@ -183,7 +186,9 @@ def test_tensorstore_chunk_shape_consistency():
 def test_tensorstore_chunk_shape_consistency_with_sharding():
     """Test TensorStore with sharding and edge case dimensions."""
     pytest.importorskip("tensorstore")
-
+    pytest.mark.skipif(
+        zarr_version < version.parse("3.0.0b1"), reason="zarr version < 3.0.0b1"
+    )
     shape = (
         515,
         512,
@@ -217,6 +222,9 @@ def test_tensorstore_chunk_shape_consistency_with_sharding():
 def test_tensorstore_zero_chunk_validation():
     """Test that zero chunk sizes are properly validated."""
     pytest.importorskip("tensorstore")
+    pytest.mark.skipif(
+        zarr_version < version.parse("3.0.0b1"), reason="zarr version < 3.0.0b1"
+    )
 
     shape = (513, 512, 512)  # Large enough to trigger regional writing with edge chunks
     test_array = np.random.rand(*shape).astype(np.float32)
