@@ -7,7 +7,6 @@ import numpy as np
 from pathlib import Path
 
 from ngff_zarr_mcp.models import ConversionOptions
-from ngff_zarr_mcp.tools import convert_to_ome_zarr, inspect_ome_zarr
 from ngff_zarr_mcp.utils import get_supported_formats, get_available_methods
 
 
@@ -54,7 +53,7 @@ async def demo_conversion():
             scale_factors=[2, 4],
         )
 
-        print(f"\n⚙️  Conversion Options:")
+        print("\n⚙️  Conversion Options:")
         print(f"  Output: {options.output_path}")
         print(f"  Dimensions: {options.dims}")
         print(f"  Scale: {options.scale}")

@@ -2,7 +2,6 @@
 
 from typing import Dict, List, Optional, Union, Literal
 from pydantic import BaseModel, Field, validator
-from pathlib import Path
 
 
 class ConversionOptions(BaseModel):

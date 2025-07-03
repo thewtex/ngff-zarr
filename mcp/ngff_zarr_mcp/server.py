@@ -1,8 +1,6 @@
 """MCP server for ngff-zarr image conversion."""
 
-import sys
-import asyncio
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict
 
 from mcp.server.fastmcp import FastMCP
 
@@ -10,7 +8,6 @@ from .models import (
     ConversionOptions,
     ConversionResult,
     StoreInfo,
-    SupportedFormats,
     OptimizationOptions,
     ValidationResult,
 )

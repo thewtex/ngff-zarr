@@ -1,10 +1,8 @@
 """MCP tools for ngff-zarr image conversion."""
 
-import os
 import tempfile
-import asyncio
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Union
+from typing import List
 
 import zarr
 from ngff_zarr import (
@@ -41,7 +39,6 @@ from .utils import (
     prepare_input_files,
     is_url,
     is_zarr_store,
-    get_store_size_and_files,
 )
 
 

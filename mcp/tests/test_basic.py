@@ -1,14 +1,9 @@
 """Basic tests for ngff-zarr MCP server."""
 
 import pytest
-import tempfile
-import numpy as np
-from pathlib import Path
-import asyncio
 
 from ngff_zarr_mcp.models import ConversionOptions
 from ngff_zarr_mcp.utils import get_supported_formats, get_available_methods
-from ngff_zarr_mcp.tools import convert_to_ome_zarr
 
 
 def test_get_supported_formats():

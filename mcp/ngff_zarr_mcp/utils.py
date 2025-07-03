@@ -1,24 +1,15 @@
 """Utility functions for ngff-zarr MCP server."""
 
-import os
-import asyncio
 import tempfile
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Union
+from typing import Dict, Any, Optional, List
 from urllib.parse import urlparse
 import httpx
 import aiofiles
 
 import zarr
-import numpy as np
 from ngff_zarr import (
-    detect_cli_io_backend,
-    ConversionBackend,
-    Methods,
     from_ngff_zarr,
-    to_ngff_zarr,
-    cli_input_to_ngff_image,
-    to_multiscales,
     config,
 )
 
