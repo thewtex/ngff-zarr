@@ -1,13 +1,10 @@
 {
   "mcpServers": {
     "ngff-zarr": {
-      "command": "python",
+      "command": "uvx",
       "args": [
-        "-m", "ngff_zarr_mcp.server"
-      ],
-      "env": {
-        "PYTHONPATH": "/path/to/ngff-zarr/mcp"
-      }
+        "ngff-zarr-mcp"
+      ]
     }
   }
 }

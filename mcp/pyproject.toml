@@ -56,6 +56,7 @@ dev = [
     "black>=23.1.0",
     "mypy>=1.0.0",
     "ruff>=0.0.243",
+    "hatch",
     "types-aiofiles",
     "types-psutil",
 ]
@@ -156,6 +157,7 @@ lint = "ruff check ."
 format = "black ."
 format-check = "black --check --diff ."
 typecheck = "mypy ngff_zarr_mcp tests"
+build = "hatch build"
 all-checks = { depends-on = ["lint", "format-check", "typecheck"] }
 
 [tool.pixi.feature.cloud.pypi-dependencies]
