@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ngff-zarr-mcp"
-description = "Model Context Protocol server for ngff-zarr image conversion"
+description = "Model Context Protocol server for OME-Zarr image conversion"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
@@ -31,7 +31,7 @@ classifiers = [
 ]
 dependencies = [
     "mcp",
-    "ngff-zarr",
+    "ngff-zarr[cli]",
     "pydantic >= 2.0",
     "httpx",
     "aiofiles",
@@ -48,6 +48,14 @@ all = [
     "ngff-zarr[all]",
     "s3fs",
     "gcsfs",
+]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "black>=23.1.0",
+    "mypy>=1.0.0",
+    "ruff>=0.0.243",
 ]
 
 [project.urls]
@@ -125,3 +133,37 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "if TYPE_CHECKING:",
 ]
+
+[tool.pixi.project]
+channels = ["conda-forge", "pyconda"]
+platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
+
+[tool.pixi.pypi-dependencies]
+ngff-zarr-mcp = { path = ".", editable = true }
+
+[tool.pixi.dependencies]
+python = ">=3.9,<3.14"
+
+[tool.pixi.feature.dev.pypi-dependencies]
+ngff-zarr-mcp = { path = ".", editable = true, extras = ["dev"] }
+
+[tool.pixi.feature.dev.tasks]
+test = "pytest tests/"
+test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=ngff_zarr_mcp tests/"
+lint = "ruff check ."
+format = "black ."
+format-check = "black --check --diff ."
+typecheck = "mypy ngff_zarr_mcp tests"
+all-checks = { depends-on = ["lint", "format-check", "typecheck"] }
+
+[tool.pixi.feature.cloud.pypi-dependencies]
+ngff-zarr-mcp = { path = ".", editable = true, extras = ["cloud"] }
+
+[tool.pixi.feature.all.pypi-dependencies]
+ngff-zarr-mcp = { path = ".", editable = true, extras = ["all"] }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+cloud = { features = ["cloud"], solve-group = "default" }
+all = { features = ["all"], solve-group = "default" }

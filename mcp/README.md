@@ -30,6 +30,31 @@ A Model Context Protocol (MCP) server that provides AI agents with the ability t
 
 ## Installation
 
+### Using pixi (Recommended)
+
+[Pixi](https://pixi.sh) provides the easiest way to manage dependencies and run tasks:
+
+```bash
+# Install pixi if not already installed
+curl -fsSL https://pixi.sh/install.sh | bash
+
+# Install dependencies and run tests
+cd mcp/
+pixi install
+pixi run test
+
+# Run all checks (linting, formatting, type checking)
+pixi run all-checks
+
+# Start the MCP server
+pixi run dev-server
+
+# Build documentation with context7
+pixi run docs
+```
+
+### Using pip
+
 ```bash
 # Install the package
 cd mcp/
@@ -160,6 +185,55 @@ print(f"Dimensions: {info.dimensions}")
 - Configure sharding for better performance with cloud storage
 
 ## Development
+
+### Using pixi (Recommended)
+
+Pixi provides reproducible, cross-platform environment management. All Python dependencies are defined in `pyproject.toml` and automatically managed by pixi.
+
+```bash
+# Clone and setup environment
+git clone <repository>
+cd mcp/
+pixi install
+
+# Development environment (includes all dev tools)
+pixi shell -e dev
+
+# Run tests
+pixi run test
+pixi run test-cov
+
+# Lint and format code  
+pixi run lint
+pixi run format
+pixi run typecheck
+
+# Run all checks
+pixi run all-checks
+
+# Build and serve documentation
+pixi run docs
+pixi run docs-build
+
+# Start MCP server for testing
+pixi run dev-server        # STDIO mode
+pixi run dev-server-sse    # SSE mode
+```
+
+#### Pixi Environments
+
+- **default**: Runtime dependencies only (from `[project.dependencies]`)
+- **dev**: Development tools (pytest, black, mypy, ruff)
+- **cloud**: Cloud storage support (s3fs, gcsfs)
+- **all**: Complete feature set (all ngff-zarr dependencies + cloud)
+
+```bash
+pixi shell -e dev      # Development work
+pixi shell -e cloud    # Cloud storage testing
+pixi shell -e all      # Full feature testing
+```
+
+### Using traditional tools
 
 ```bash
 # Clone and install in development mode
