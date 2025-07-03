@@ -190,6 +190,25 @@ claude mcp add ngff-zarr -- python -m pip install ngff-zarr-mcp && ngff-zarr-mcp
 </details>
 
 <details>
+<summary><b>Install in Gemini CLI</b></summary>
+
+Add this to your *.gemini/settings.json* Gemini CLI MCP configuration. See the [Gemini CLI configuration docs](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md) for more info.
+
+#### Using uvx (recommended)
+```json
+{
+  "mcpServers": {
+    "ngff-zarr": {
+      "command": "uvx",
+      "args": ["ngff-zarr-mcp"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
 <summary><b>Install in Cline</b></summary>
 
 1. Open **Cline**.
