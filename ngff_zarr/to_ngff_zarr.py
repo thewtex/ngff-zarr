@@ -125,6 +125,7 @@ def _write_with_tensorstore(
     # Use full array shape if provided, otherwise use the region array shape
     dataset_shape = full_array_shape if full_array_shape is not None else array.shape
 
+    # Build the base spec
     spec = {
         "kvstore": {
             "driver": "file",
@@ -134,17 +135,16 @@ def _write_with_tensorstore(
             "shape": dataset_shape,
         },
     }
+
     if zarr_format == 2:
         spec["driver"] = "zarr" if zarr_version_major < 3 else "zarr2"
-        spec["metadata"]["chunks"] = chunks
         spec["metadata"]["dimension_separator"] = "/"
         spec["metadata"]["dtype"] = array.dtype.str
+        # Only add chunk info when creating the dataset
+        if create_dataset:
+            spec["metadata"]["chunks"] = chunks
     elif zarr_format == 3:
         spec["driver"] = "zarr3"
-        spec["metadata"]["chunk_grid"] = {
-            "name": "regular",
-            "configuration": {"chunk_shape": chunks},
-        }
         spec["metadata"]["data_type"] = _numpy_to_zarr_dtype(array.dtype)
         spec["metadata"]["chunk_key_encoding"] = {
             "name": "default",
@@ -152,13 +152,19 @@ def _write_with_tensorstore(
         }
         if dimension_names:
             spec["metadata"]["dimension_names"] = dimension_names
-        if internal_chunk_shape:
-            spec["metadata"]["codecs"] = [
-                {
-                    "name": "sharding_indexed",
-                    "configuration": {"chunk_shape": internal_chunk_shape},
-                }
-            ]
+        # Only add chunk info when creating the dataset
+        if create_dataset:
+            spec["metadata"]["chunk_grid"] = {
+                "name": "regular",
+                "configuration": {"chunk_shape": chunks},
+            }
+            if internal_chunk_shape:
+                spec["metadata"]["codecs"] = [
+                    {
+                        "name": "sharding_indexed",
+                        "configuration": {"chunk_shape": internal_chunk_shape},
+                    }
+                ]
     else:
         raise ValueError(f"Unsupported zarr format: {zarr_format}")
 
@@ -167,11 +173,26 @@ def _write_with_tensorstore(
         if create_dataset:
             dataset = ts.open(spec, create=True, dtype=array.dtype).result()
         else:
-            dataset = ts.open(spec, create=False, dtype=array.dtype).result()
+            # For existing datasets, use a minimal spec that just specifies the path
+            existing_spec = {
+                "kvstore": {
+                    "driver": "file",
+                    "path": store_path,
+                },
+                "driver": spec["driver"],
+            }
+            dataset = ts.open(existing_spec, create=False, dtype=array.dtype).result()
     except Exception as e:
         if "ALREADY_EXISTS" in str(e) and create_dataset:
             # Dataset already exists, open it without creating
-            dataset = ts.open(spec, create=False, dtype=array.dtype).result()
+            existing_spec = {
+                "kvstore": {
+                    "driver": "file",
+                    "path": store_path,
+                },
+                "driver": spec["driver"],
+            }
+            dataset = ts.open(existing_spec, create=False, dtype=array.dtype).result()
         else:
             raise
 
@@ -348,10 +369,9 @@ def _configure_sharding(
     internal_chunk_shape = c0
     arr = arr.rechunk(shards)
 
-    # Only include 'shards' and 'chunks' in sharding_kwargs
+    # Only include 'shards' in sharding_kwargs (chunks is passed separately)
     sharding_kwargs = {
         "shards": shards,
-        "chunks": c0,
     }
 
     return sharding_kwargs, internal_chunk_shape, arr
@@ -530,7 +550,7 @@ def _handle_large_array_writing(
                 store_path,
                 path,
                 optimized,
-                [c[0] for c in arr_region.chunks],
+                chunks,  # Use original array chunks, not region chunks
                 shards,
                 internal_chunk_shape,
                 zarr_format,
