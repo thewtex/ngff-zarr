@@ -39,9 +39,3 @@ jobs:
     - name: Run tests
       working-directory: ./mcp
       run: pixi run -e dev test-cov
-
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v4
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
-      with:
-        fail_ci_if_error: true
