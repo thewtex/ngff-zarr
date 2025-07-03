@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "ngff-zarr": {
+      "command": "uvx",
+      "args": [
+        "ngff-zarr-mcp"
+      ]
+    }
+  }
+}

@@ -47,5 +47,5 @@ repos:
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
-        exclude: test/conftest.py
+        exclude: py/test/conftest.py
       - id: ruff-format
