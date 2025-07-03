@@ -146,11 +146,9 @@ def _write_with_tensorstore(
             "configuration": {"chunk_shape": chunks},
         }
         spec["metadata"]["data_type"] = _numpy_to_zarr_dtype(array.dtype)
-        spec['metadata']["chunk_key_encoding"] = {
+        spec["metadata"]["chunk_key_encoding"] = {
             "name": "default",
-            "configuration": {
-                "separator": "/"
-            }
+            "configuration": {"separator": "/"},
         }
         if dimension_names:
             spec["metadata"]["dimension_names"] = dimension_names
@@ -177,7 +175,47 @@ def _write_with_tensorstore(
         else:
             raise
 
-    dataset[region] = array
+    # Try to write the dask array directly first
+    try:
+        dataset[region] = array
+    except Exception as e:
+        # If we encounter dimension mismatch or shape-related errors,
+        # compute the array and try again with corrective action
+        error_msg = str(e).lower()
+        if any(
+            keyword in error_msg
+            for keyword in [
+                "dimension",
+                "shape",
+                "mismatch",
+                "size",
+                "extent",
+                "rank",
+                "invalid",
+            ]
+        ):
+            # Compute the array to get the actual shape
+            computed_array = array.compute()
+
+            # Adjust region to match the actual computed array shape if needed
+            if len(region) == len(computed_array.shape):
+                adjusted_region = tuple(
+                    slice(
+                        region[i].start or 0,
+                        (region[i].start or 0) + computed_array.shape[i],
+                    )
+                    if isinstance(region[i], slice)
+                    else region[i]
+                    for i in range(len(region))
+                )
+            else:
+                adjusted_region = region
+
+            # Try writing the computed array with adjusted region
+            dataset[adjusted_region] = computed_array
+        else:
+            # Re-raise the exception if it's not related to dimension/shape issues
+            raise
 
 
 def _validate_ngff_parameters(
@@ -401,7 +439,9 @@ def _write_array_direct(
             array[:] = arr.compute()
     else:
         # All other cases: use dask.array.to_zarr
-        target = zarr_array if (region is not None and zarr_array is not None) else store
+        target = (
+            zarr_array if (region is not None and zarr_array is not None) else store
+        )
         dask.array.to_zarr(
             arr,
             target,
@@ -412,7 +452,6 @@ def _write_array_direct(
             return_stored=False,
             **to_zarr_kwargs,
         )
-
 
 
 def _handle_large_array_writing(
