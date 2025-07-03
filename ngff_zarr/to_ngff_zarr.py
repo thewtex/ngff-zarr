@@ -369,11 +369,21 @@ def _configure_sharding(
     internal_chunk_shape = c0
     arr = arr.rechunk(shards)
 
-    # For zarr-python, we need to pass shards and chunks parameters
-    sharding_kwargs = {
-        "shards": shards,
-        "chunks": internal_chunk_shape,
-    }
+    # Configure sharding parameters differently for v2 vs v3
+    sharding_kwargs = {}
+    if zarr_version_major >= 3:
+        # For Zarr v3, configure sharding as a codec
+        # Use chunk_shape for internal chunks and configure sharding via codecs
+        sharding_kwargs["chunk_shape"] = internal_chunk_shape
+        # Note: sharding codec will be configured separately in the codecs parameter
+        # We'll pass the shard shape through a separate key to be handled later
+        sharding_kwargs["_shard_shape"] = shards
+    else:
+        # For zarr v2, use the older API
+        sharding_kwargs = {
+            "shards": shards,
+            "chunks": internal_chunk_shape,
+        }
 
     return sharding_kwargs, internal_chunk_shape, arr
 
@@ -437,8 +447,32 @@ def _write_array_direct(
     arr = _prep_for_to_zarr(store, arr)
 
     zarr_fmt = format_kwargs.get("zarr_format")
+    
+    # Handle sharding kwargs for direct writing
+    cleaned_sharding_kwargs = {}
+    
+    if sharding_kwargs and "_shard_shape" in sharding_kwargs:
+        # For Zarr v3 direct writes, use shards and chunks parameters
+        shard_shape = sharding_kwargs["_shard_shape"]
+        internal_chunk_shape = sharding_kwargs.get("chunk_shape")
+        
+        # Ensure internal_chunk_shape is available
+        if internal_chunk_shape is None:
+            # Use chunks from arr if available, or default
+            internal_chunk_shape = tuple(arr.chunks[i][0] for i in range(arr.ndim))
+        
+        # For direct Zarr v3 writes, use shards and chunks
+        cleaned_sharding_kwargs["shards"] = shard_shape
+        cleaned_sharding_kwargs["chunks"] = internal_chunk_shape
+        
+        # Remove internal kwargs
+        cleaned_sharding_kwargs.update({k: v for k, v in sharding_kwargs.items() 
+                                       if k not in ["_shard_shape", "chunk_shape"]})
+    else:
+        cleaned_sharding_kwargs = sharding_kwargs
+    
     to_zarr_kwargs = {
-        **sharding_kwargs,
+        **cleaned_sharding_kwargs,
         **zarr_kwargs,
         **format_kwargs,
         **dimension_names_kwargs,
@@ -508,8 +542,54 @@ def _handle_large_array_writing(
 
     chunks = tuple([c[0] for c in arr.chunks])
 
-    # If sharding is enabled, chunks are already in sharding_kwargs
-    chunk_kwargs = {} if sharding_kwargs else {"chunks": chunks}
+    # If sharding is enabled, configure it properly
+    chunk_kwargs = {}
+    codecs_kwargs = {}
+    
+    if sharding_kwargs:
+        if "_shard_shape" in sharding_kwargs:
+            # For Zarr v3, configure sharding as a codec only
+            shard_shape = sharding_kwargs.pop("_shard_shape")
+            internal_chunk_shape = sharding_kwargs.get("chunk_shape")  # This is the inner chunk shape
+            
+            # Configure the sharding codec with proper defaults
+            from zarr.codecs.sharding import ShardingCodec
+            from zarr.codecs.bytes import BytesCodec
+            from zarr.codecs.zstd import ZstdCodec
+            
+            # Default inner codecs for sharding
+            default_codecs = [BytesCodec(), ZstdCodec()]
+            
+            # Ensure internal_chunk_shape is available; fallback to chunks if needed
+            if internal_chunk_shape is None:
+                internal_chunk_shape = chunks
+            
+            # The array's chunk_shape should be the shard shape
+            # The sharding codec's chunk_shape should be the internal chunk shape
+            sharding_codec = ShardingCodec(
+                chunk_shape=internal_chunk_shape,  # Internal chunk shape within shards
+                codecs=default_codecs
+            )
+            
+            # Set up codecs with sharding
+            existing_codecs = zarr_kwargs.get("codecs", [])
+            if not isinstance(existing_codecs, list):
+                existing_codecs = []
+            codecs_kwargs["codecs"] = [sharding_codec] + existing_codecs
+            
+            # Set the array's chunk_shape to the shard shape
+            chunk_kwargs["chunk_shape"] = shard_shape
+            
+            # Clean up remaining kwargs (remove chunk_shape since we're setting it explicitly)
+            remaining_kwargs = {k: v for k, v in sharding_kwargs.items() if k not in ["_shard_shape", "chunk_shape"]}
+            sharding_kwargs_clean = remaining_kwargs
+        else:
+            # For Zarr v2 or other cases
+            sharding_kwargs_clean = sharding_kwargs
+    else:
+        # No sharding
+        chunk_kwargs = {"chunks": chunks}
+        sharding_kwargs_clean = {}
 
     zarr_array = open_array(
         shape=arr.shape,
@@ -518,8 +598,9 @@ def _handle_large_array_writing(
         path=path,
         mode="a",
         **chunk_kwargs,
-        **sharding_kwargs,
+        **sharding_kwargs_clean,
         **zarr_kwargs,
+        **codecs_kwargs,
         **dimension_names_kwargs,
         **format_kwargs,
     )
