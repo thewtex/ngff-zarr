@@ -1,6 +1,6 @@
 """MCP server for ngff-zarr image conversion."""
 
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Literal
 
 from mcp.server.fastmcp import FastMCP
 
@@ -75,9 +75,21 @@ async def convert_images_to_ome_zarr(
         ConversionResult with success status and store information
     """
 
+    # Validate ome_zarr_version
+    if ome_zarr_version not in ["0.4", "0.5"]:
+        return ConversionResult(
+            success=False,
+            output_path="",
+            store_info={},
+            error=f"Invalid OME-Zarr version: {ome_zarr_version}. Must be '0.4' or '0.5'",
+        )
+
+    # Cast to proper type for mypy
+    validated_version: Literal["0.4", "0.5"] = ome_zarr_version  # type: ignore[assignment]
+
     options = ConversionOptions(
         output_path=output_path,
-        ome_zarr_version=ome_zarr_version,
+        ome_zarr_version=validated_version,
         dims=dims,
         scale=scale,
         translation=translation,
@@ -86,7 +98,7 @@ async def convert_images_to_ome_zarr(
         chunks=chunks,
         chunks_per_shard=chunks_per_shard,
         method=method,
-        scale_factors=scale_factors,
+        scale_factors=scale_factors,  # type: ignore[arg-type]
         compression_codec=compression_codec,
         compression_level=compression_level,
         use_tensorstore=use_tensorstore,

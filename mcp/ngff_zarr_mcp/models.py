@@ -1,7 +1,7 @@
 """Data models for ngff-zarr MCP server."""
 
 from typing import Dict, List, Optional, Union, Literal
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class ConversionOptions(BaseModel):
@@ -29,10 +29,10 @@ class ConversionOptions(BaseModel):
     name: Optional[str] = Field(None, description="Image name")
 
     # Processing options
-    chunks: Optional[Union[int, List[int]]] = Field(
+    chunks: Optional[Union[int, List[int], tuple[int, ...]]] = Field(
         None, description="Dask array chunking specification"
     )
-    chunks_per_shard: Optional[Union[int, List[int]]] = Field(
+    chunks_per_shard: Optional[Union[int, List[int], tuple[int, ...]]] = Field(
         None, description="Chunks per shard for sharding"
     )
     method: str = Field("itkwasm_gaussian", description="Downsampling method")
@@ -54,7 +54,8 @@ class ConversionOptions(BaseModel):
     )
     cache_dir: Optional[str] = Field(None, description="Directory for caching")
 
-    @validator("dims")
+    @field_validator("dims")
+    @classmethod
     def validate_dims(cls, v):
         if v is not None:
             valid_dims = {"t", "z", "y", "x", "c"}
@@ -83,7 +84,7 @@ class StoreInfo(BaseModel):
     dimensions: List[str] = Field(..., description="Image dimensions")
     shape: List[int] = Field(..., description="Image shape")
     dtype: str = Field(..., description="Data type")
-    chunks: List[int] = Field(..., description="Chunk sizes")
+    chunks: Union[List[int], tuple[int, ...]] = Field(..., description="Chunk sizes")
     compression: Optional[str] = Field(None, description="Compression codec")
     scale_info: Dict = Field(..., description="Scale/spacing information")
     translation_info: Dict = Field(..., description="Translation/origin information")
@@ -106,8 +107,8 @@ class OptimizationOptions(BaseModel):
     output_path: str = Field(..., description="Path for optimized output store")
     compression_codec: Optional[str] = Field(None, description="New compression codec")
     compression_level: Optional[int] = Field(None, description="New compression level")
-    chunks: Optional[Union[int, List[int]]] = Field(None, description="New chunk sizes")
-    chunks_per_shard: Optional[Union[int, List[int]]] = Field(
+    chunks: Optional[Union[int, List[int], tuple[int, ...]]] = Field(None, description="New chunk sizes")
+    chunks_per_shard: Optional[Union[int, List[int], tuple[int, ...]]] = Field(
         None, description="New sharding configuration"
     )
 

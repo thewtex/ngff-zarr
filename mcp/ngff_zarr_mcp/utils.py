@@ -8,14 +8,14 @@ import httpx
 import aiofiles
 
 import zarr
-from ngff_zarr import (
+from ngff_zarr import (  # type: ignore[import-untyped]
     from_ngff_zarr,
     config,
 )
 
 # Import unit validation function
 try:
-    from ngff_zarr.v04.zarr_metadata import is_unit_supported
+    from ngff_zarr.v04.zarr_metadata import is_unit_supported  # type: ignore[import-untyped]
 except ImportError:
     # Fallback if not available
     def is_unit_supported(unit):
@@ -95,7 +95,7 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
             # Handle remote stores
             if is_s3_url(store_path):
                 try:
-                    import s3fs
+                    import s3fs  # type: ignore[import-not-found]
 
                     fs = s3fs.S3FileSystem()
                     store = s3fs.S3Map(store_path, s3=fs)
@@ -103,11 +103,11 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
                     raise ImportError("s3fs required for S3 URLs")
             else:
                 # HTTP/HTTPS URLs
-                import fsspec
+                import fsspec  # type: ignore[import-untyped]
 
                 store = fsspec.get_mapper(store_path)
         else:
-            store = zarr.DirectoryStore(store_path)
+            store = zarr.DirectoryStore(store_path)  # type: ignore[attr-defined]
 
         # Load multiscales
         multiscales = from_ngff_zarr(store)
@@ -132,9 +132,13 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
         try:
             root = zarr.open(store, mode="r")
             if "multiscales" in root.attrs:
-                ms_attrs = root.attrs["multiscales"][0]
-                if "version" in ms_attrs:
-                    version = ms_attrs["version"]
+                multiscales_attr = root.attrs["multiscales"]
+                if isinstance(multiscales_attr, list) and len(multiscales_attr) > 0:
+                    ms_attrs = multiscales_attr[0]
+                    if isinstance(ms_attrs, dict) and "version" in ms_attrs:
+                        version_attr = ms_attrs["version"]
+                        if isinstance(version_attr, str):
+                            version = version_attr
         except Exception:
             pass
 
@@ -250,7 +254,7 @@ def get_supported_formats() -> SupportedFormats:
 
 def get_available_methods() -> List[str]:
     """Get available downsampling methods."""
-    from ngff_zarr.methods import methods_values
+    from ngff_zarr.methods import methods_values  # type: ignore[import-untyped]
 
     return methods_values
 
@@ -261,7 +265,7 @@ def get_available_compression_codecs() -> List[str]:
 
     # Check for blosc variants
     try:
-        import numcodecs  # noqa: F401
+        import numcodecs  # type: ignore[import-untyped]  # noqa: F401
 
         blosc_codecs = ["blosc", "blosclz", "lz4", "lz4hc", "snappy", "zlib", "zstd"]
         codecs.extend([f"blosc:{codec}" for codec in blosc_codecs])
@@ -280,15 +284,15 @@ def setup_dask_config(
     import dask
 
     if memory_target:
-        config.memory_target = dask.utils.parse_bytes(memory_target)
+        config.memory_target = dask.utils.parse_bytes(memory_target)  # type: ignore[attr-defined]
 
     if cache_dir:
         cache_path = Path(cache_dir).resolve()
         cache_path.mkdir(parents=True, exist_ok=True)
-        if hasattr(zarr.storage, "DirectoryStore"):
-            LocalStore = zarr.storage.DirectoryStore
+        if hasattr(zarr.storage, "DirectoryStore"):  # type: ignore[attr-defined]
+            LocalStore = zarr.storage.DirectoryStore  # type: ignore[attr-defined]
         else:
-            LocalStore = zarr.storage.LocalStore
+            LocalStore = zarr.storage.LocalStore  # type: ignore[attr-defined]
         config.cache_store = LocalStore(cache_path)
 
     client = None
@@ -301,8 +305,10 @@ def setup_dask_config(
             worker_memory_target = config.memory_target // n_workers
 
             try:
-                n_workers = psutil.cpu_count(False) // 2
-                worker_memory_target = config.memory_target // n_workers
+                cpu_count = psutil.cpu_count(False)
+                if cpu_count is not None:
+                    n_workers = cpu_count // 2
+                    worker_memory_target = config.memory_target // n_workers
             except Exception:
                 pass
 
@@ -364,7 +370,7 @@ async def prepare_input_files(
     temp_path = Path(temp_dir)
     temp_path.mkdir(parents=True, exist_ok=True)
 
-    prepared_paths = []
+    prepared_paths: list[str] = []
 
     for input_path in input_paths:
         if is_url(input_path) and not is_s3_url(input_path):

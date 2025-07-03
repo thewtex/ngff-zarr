@@ -56,6 +56,8 @@ dev = [
     "black>=23.1.0",
     "mypy>=1.0.0",
     "ruff>=0.0.243",
+    "types-aiofiles",
+    "types-psutil",
 ]
 
 [project.urls]
