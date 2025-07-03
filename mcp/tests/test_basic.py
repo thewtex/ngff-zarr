@@ -34,7 +34,7 @@ async def test_conversion_options_validation():
         output_path="test.ome.zarr",
         ome_zarr_version="0.4",
         dims=["z", "y", "x"],
-        method="itkwasm_gaussian"
+        method="itkwasm_gaussian",
     )
     assert options.output_path == "test.ome.zarr"
     assert options.dims == ["z", "y", "x"]
@@ -43,7 +43,4 @@ async def test_conversion_options_validation():
 def test_invalid_dims():
     """Test validation of invalid dimensions."""
     with pytest.raises(ValueError):
-        ConversionOptions(
-            output_path="test.ome.zarr",
-            dims=["invalid", "dims"]
-        )
+        ConversionOptions(output_path="test.ome.zarr", dims=["invalid", "dims"])

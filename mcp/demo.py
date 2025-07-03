@@ -15,30 +15,32 @@ async def demo_conversion():
     """Demonstrate image conversion functionality."""
     print("🚀 ngff-zarr MCP Server Demo")
     print("=" * 40)
-    
+
     # Show supported formats
     print("\n📁 Supported Formats:")
     formats = get_supported_formats()
     for backend, extensions in formats.input_formats.items():
-        print(f"  {backend}: {', '.join(extensions[:5])}{'...' if len(extensions) > 5 else ''}")
-    
+        print(
+            f"  {backend}: {', '.join(extensions[:5])}{'...' if len(extensions) > 5 else ''}"
+        )
+
     # Show available methods
     print(f"\n⚙️  Available Methods: {', '.join(get_available_methods())}")
-    
+
     # Create a simple test image
     print("\n🖼️  Creating test image...")
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
-        
+
         # Create a simple numpy array and save as .npy (which can be loaded)
         test_data = np.random.randint(0, 255, (32, 64, 64), dtype=np.uint8)
         test_file = temp_path / "test_image.npy"
         np.save(test_file, test_data)
-        
+
         # Unfortunately, cli_input_to_ngff_image might not support .npy directly
         # Let's create a simple demo without actual file conversion
         print(f"  Created test data with shape: {test_data.shape}")
-        
+
         # Demo conversion options
         output_path = temp_path / "output.ome.zarr"
         options = ConversionOptions(
@@ -49,9 +51,9 @@ async def demo_conversion():
             units={"z": "micrometer", "y": "micrometer", "x": "micrometer"},
             name="Demo Image",
             method="itkwasm_gaussian",
-            scale_factors=[2, 4]
+            scale_factors=[2, 4],
         )
-        
+
         print(f"\n⚙️  Conversion Options:")
         print(f"  Output: {options.output_path}")
         print(f"  Dimensions: {options.dims}")
@@ -59,7 +61,7 @@ async def demo_conversion():
         print(f"  Units: {options.units}")
         print(f"  Method: {options.method}")
         print(f"  Scale factors: {options.scale_factors}")
-        
+
         print("\n✅ Demo completed successfully!")
         print("   The MCP server is ready to handle real image conversions.")
 
