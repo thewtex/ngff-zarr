@@ -29,7 +29,7 @@ implementation.
 
 ## Documentation
 
-More information an command line usage, the Python API, library features, and
+More information on command line usage, the Python API, library features, and
 how to contribute can be found in
 [our documentation](https://ngff-zarr.readthedocs.io/).
 
