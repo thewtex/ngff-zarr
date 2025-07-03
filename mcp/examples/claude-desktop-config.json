@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "ngff-zarr": {
+      "command": "python",
+      "args": [
+        "-m", "ngff_zarr_mcp.server"
+      ],
+      "env": {
+        "PYTHONPATH": "/path/to/ngff-zarr/mcp"
+      }
+    }
+  }
+}

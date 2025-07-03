@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "ngff-zarr-sse": {
+      "url": "http://localhost:8000/sse",
+      "description": "ngff-zarr server running with SSE transport"
+    }
+  }
+}

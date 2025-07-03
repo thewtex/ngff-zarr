@@ -1,0 +1,127 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ngff-zarr-mcp"
+description = "Model Context Protocol server for ngff-zarr image conversion"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+keywords = ["mcp", "ome-zarr", "image-conversion", "microscopy"]
+authors = [
+    { name = "Matt McCormick", email = "matt@fideus.io" }
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Scientific/Engineering",
+]
+dependencies = [
+    "mcp",
+    "ngff-zarr",
+    "pydantic >= 2.0",
+    "httpx",
+    "aiofiles",
+    "pathvalidate",
+]
+dynamic = ["version"]
+
+[project.optional-dependencies]
+cloud = [
+    "s3fs",
+    "gcsfs",
+]
+all = [
+    "ngff-zarr[all]",
+    "s3fs",
+    "gcsfs",
+]
+
+[project.urls]
+Documentation = "https://github.com/thewtex/ngff-zarr#readme"
+Issues = "https://github.com/thewtex/ngff-zarr/issues"
+Source = "https://github.com/thewtex/ngff-zarr"
+
+[project.scripts]
+ngff-zarr-mcp = "ngff_zarr_mcp.server:main"
+
+[tool.hatch.version]
+path = "ngff_zarr_mcp/__about__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ngff_zarr_mcp"]
+
+[tool.hatch.envs.default]
+dependencies = [
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest {args:tests}"
+test-cov = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=ngff_zarr_mcp {args:tests}"
+
+[tool.hatch.envs.lint]
+detached = true
+dependencies = [
+    "black>=23.1.0",
+    "mypy>=1.0.0",
+    "ruff>=0.0.243",
+]
+
+[tool.hatch.envs.lint.scripts]
+typing = "mypy --install-types --non-interactive {args:ngff_zarr_mcp tests}"
+style = [
+    "ruff {args:.}",
+    "black --check --diff {args:.}",
+]
+fmt = [
+    "black {args:.}",
+    "ruff --fix {args:.}",
+    "style",
+]
+all = [
+    "style",
+    "typing",
+]
+
+[tool.black]
+target-version = ["py39"]
+line-length = 88
+
+[tool.ruff]
+target-version = "py39"
+line-length = 88
+
+[tool.coverage.run]
+source_pkgs = ["ngff_zarr_mcp", "tests"]
+branch = true
+parallel = true
+omit = [
+    "ngff_zarr_mcp/__about__.py",
+]
+
+[tool.coverage.paths]
+ngff_zarr_mcp = ["ngff_zarr_mcp", "*/ngff-zarr-mcp/ngff_zarr_mcp"]
+tests = ["tests", "*/ngff-zarr-mcp/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "no cov",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
