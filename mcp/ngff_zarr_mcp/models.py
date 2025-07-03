@@ -107,7 +107,9 @@ class OptimizationOptions(BaseModel):
     output_path: str = Field(..., description="Path for optimized output store")
     compression_codec: Optional[str] = Field(None, description="New compression codec")
     compression_level: Optional[int] = Field(None, description="New compression level")
-    chunks: Optional[Union[int, List[int], tuple[int, ...]]] = Field(None, description="New chunk sizes")
+    chunks: Optional[Union[int, List[int], tuple[int, ...]]] = Field(
+        None, description="New chunk sizes"
+    )
     chunks_per_shard: Optional[Union[int, List[int], tuple[int, ...]]] = Field(
         None, description="New sharding configuration"
     )

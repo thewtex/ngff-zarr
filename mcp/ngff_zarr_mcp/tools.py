@@ -209,16 +209,22 @@ async def validate_ome_zarr(store_path: str) -> ValidationResult:
                 version = store_info.version
             except Exception as e:
                 errors.append(f"Cannot access remote store: {str(e)}")
-                return ValidationResult(valid=False, version=None, errors=errors, warnings=warnings)
+                return ValidationResult(
+                    valid=False, version=None, errors=errors, warnings=warnings
+                )
         else:
             store_path_obj = Path(store_path)
             if not store_path_obj.exists():
                 errors.append(f"Store path does not exist: {store_path}")
-                return ValidationResult(valid=False, version=None, errors=errors, warnings=warnings)
+                return ValidationResult(
+                    valid=False, version=None, errors=errors, warnings=warnings
+                )
 
             if not is_zarr_store(store_path):
                 errors.append(f"Path is not a valid Zarr store: {store_path}")
-                return ValidationResult(valid=False, version=None, errors=errors, warnings=warnings)
+                return ValidationResult(
+                    valid=False, version=None, errors=errors, warnings=warnings
+                )
 
         # Try to load as NGFF
         try:
@@ -277,7 +283,10 @@ async def validate_ome_zarr(store_path: str) -> ValidationResult:
 
     except Exception as e:
         return ValidationResult(
-            valid=False, version=None, errors=[f"Validation failed: {str(e)}"], warnings=[]
+            valid=False,
+            version=None,
+            errors=[f"Validation failed: {str(e)}"],
+            warnings=[],
         )
 
 
