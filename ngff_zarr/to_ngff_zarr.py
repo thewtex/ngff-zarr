@@ -369,9 +369,10 @@ def _configure_sharding(
     internal_chunk_shape = c0
     arr = arr.rechunk(shards)
 
-    # Only include 'shards' in sharding_kwargs (chunks is passed separately)
+    # For zarr-python, we need to pass shards and chunks parameters
     sharding_kwargs = {
         "shards": shards,
+        "chunks": internal_chunk_shape,
     }
 
     return sharding_kwargs, internal_chunk_shape, arr
@@ -507,13 +508,16 @@ def _handle_large_array_writing(
 
     chunks = tuple([c[0] for c in arr.chunks])
 
+    # If sharding is enabled, chunks are already in sharding_kwargs
+    chunk_kwargs = {} if sharding_kwargs else {"chunks": chunks}
+
     zarr_array = open_array(
         shape=arr.shape,
-        chunks=chunks,
         dtype=arr.dtype,
         store=store,
         path=path,
         mode="a",
+        **chunk_kwargs,
         **sharding_kwargs,
         **zarr_kwargs,
         **dimension_names_kwargs,
@@ -889,18 +893,11 @@ def to_ngff_zarr(
             arr, chunks_per_shard, dims, kwargs.copy()
         )
 
-        # Get the chunks and optional shards for TensorStore
+        # Get the chunks - these are now the shards if sharding is enabled
         chunks = tuple([c[0] for c in arr.chunks])
-        shards = None
-        if chunks_per_shard is not None:
-            if isinstance(chunks_per_shard, int):
-                shards = tuple([c * chunks_per_shard for c in chunks])
-            elif isinstance(chunks_per_shard, (tuple, list)):
-                shards = tuple([c * chunks_per_shard[i] for i, c in enumerate(chunks)])
-            elif isinstance(chunks_per_shard, dict):
-                shards = tuple(
-                    [c * chunks_per_shard.get(dims[i], 1) for i, c in enumerate(chunks)]
-                )
+
+        # For TensorStore, shards are the same as chunks when sharding is enabled
+        shards = chunks if chunks_per_shard is not None else None
 
         # Determine write method based on memory requirements
         if memory_usage(image) > config.memory_target and multiscales.scale_factors:
