@@ -161,6 +161,8 @@ async def convert_to_ome_zarr(
                     chunks_per_shard=chunks_per_shard,
                     use_tensorstore=options.use_tensorstore,
                     version=options.ome_zarr_version,
+                    compression_codec=options.compression_codec,
+                    compression_level=options.compression_level,
                 )
 
                 # Analyze the created store
@@ -363,7 +365,11 @@ async def optimize_zarr_store(options: OptimizationOptions) -> ConversionResult:
 
         # Save optimized store
         to_ngff_zarr(
-            output_store, optimized_multiscales, chunks_per_shard=chunks_per_shard
+            output_store,
+            optimized_multiscales,
+            chunks_per_shard=chunks_per_shard,
+            compression_codec=options.compression_codec,
+            compression_level=options.compression_level,
         )
 
         # Analyze the optimized store

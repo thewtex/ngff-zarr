@@ -512,6 +512,24 @@ print(f"Scales: {info.num_scales}")
 print(f"Dimensions: {info.dimensions}")
 ```
 
+## Examples and Demos
+
+The `examples/` directory contains demonstration scripts and configuration files:
+
+- **[`examples/conversion_demo.py`](examples/conversion_demo.py)** - Interactive demo showing image conversion capabilities
+- **[`examples/structure_demo.py`](examples/structure_demo.py)** - Overview of project structure and available tools
+- **[`examples/README.md`](examples/README.md)** - Detailed information about all examples
+
+Run the demos to explore the server's functionality:
+
+```bash
+# Show conversion capabilities
+pixi run python examples/conversion_demo.py
+
+# Show project structure and tools
+pixi run python examples/structure_demo.py
+```
+
 ## Supported Formats
 
 ### Input Formats
