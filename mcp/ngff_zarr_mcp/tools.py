@@ -260,7 +260,7 @@ async def validate_ome_zarr(store_path: str) -> ValidationResult:
                 if "multiscales" in root.attrs:
                     ms_attrs = root.attrs["multiscales"][0]
                     version = ms_attrs.get("version", "0.4")
-            except:
+            except Exception:
                 version = "0.4"  # Default assumption
 
         except Exception as e:

@@ -48,7 +48,7 @@ def is_url(path: str) -> bool:
     try:
         result = urlparse(path)
         return all([result.scheme, result.netloc])
-    except:
+    except Exception:
         return False
 
 
@@ -124,7 +124,7 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
                 chunk_info = first_image.data._meta
                 if hasattr(chunk_info, "compressor") and chunk_info.compressor:
                     compression = str(chunk_info.compressor)
-            except:
+            except Exception:
                 pass
 
         # Determine OME-Zarr version from metadata
@@ -135,7 +135,7 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
                 ms_attrs = root.attrs["multiscales"][0]
                 if "version" in ms_attrs:
                     version = ms_attrs["version"]
-        except:
+        except Exception:
             pass
 
         return StoreInfo(
@@ -261,7 +261,7 @@ def get_available_compression_codecs() -> List[str]:
 
     # Check for blosc variants
     try:
-        import numcodecs
+        import numcodecs  # noqa: F401
 
         blosc_codecs = ["blosc", "blosclz", "lz4", "lz4hc", "snappy", "zlib", "zstd"]
         codecs.extend([f"blosc:{codec}" for codec in blosc_codecs])
@@ -303,7 +303,7 @@ def setup_dask_config(
             try:
                 n_workers = psutil.cpu_count(False) // 2
                 worker_memory_target = config.memory_target // n_workers
-            except:
+            except Exception:
                 pass
 
             cluster = LocalCluster(
