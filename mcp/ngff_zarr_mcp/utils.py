@@ -227,7 +227,88 @@ def get_supported_formats() -> SupportedFormats:
             ".scn",  # Leica SCN format
             # Note: .lsm is already covered by ITK/ITKWasm in COMMON_EXTENSIONS
         ],
-        "imageio": [".webm", ".mp4", ".avi", ".mov", ".gif"],
+        "imageio": [
+            # Video formats (FFMPEG plugin)
+            ".webm",
+            ".mp4",
+            ".avi",
+            ".mov",
+            ".gif",  # Already present
+            ".mkv",
+            ".mpeg",
+            ".mpg",
+            ".wmv",
+            ".flv",
+            ".3gp",
+            ".3g2",
+            ".m4v",
+            ".f4v",
+            ".m2ts",
+            ".vob",
+            ".ogv",
+            ".dv",
+            ".asf",
+            ".rm",
+            ".rmvb",
+            ".ts",
+            ".mts",
+            ".divx",
+            ".xvid",
+            # Image formats not well-supported by ITK/tifffile
+            ".psd",  # Photoshop Document
+            ".pcx",  # ZSoft Paintbrush
+            ".sgi",  # Silicon Graphics Image
+            ".ras",  # Sun Raster
+            ".xbm",
+            ".xpm",  # X Window System
+            ".dds",  # DirectDraw Surface
+            ".cut",  # Dr. Halo
+            ".exr",  # OpenEXR
+            ".ppm",
+            ".pgm",
+            ".pbm",  # Portable Pixmap formats
+            ".webp",  # WebP format
+            ".icns",  # Apple Icon format
+            ".ico",  # Windows Icon format
+            ".tga",  # Targa format
+            ".pict",  # Macintosh PICT
+            ".pcd",  # Kodak PhotoCD
+            # Camera raw formats (FreeImage plugin)
+            ".3fr",
+            ".arw",
+            ".cr2",
+            ".crw",
+            ".nef",
+            ".orf",
+            ".raf",
+            ".rw2",
+            ".dng",
+            ".raw",
+            ".bay",
+            ".cap",
+            ".dcs",
+            ".dcr",
+            ".drf",
+            ".erf",
+            ".fff",
+            ".iiq",
+            ".k25",
+            ".kdc",
+            ".mdc",
+            ".mef",
+            ".mos",
+            ".mrw",
+            ".nrw",
+            ".pef",
+            ".ptx",
+            ".pxn",
+            ".r3d",
+            ".rwl",
+            ".sr2",
+            ".srf",
+            ".srw",
+            ".x3f",
+        ],
     }
 
     output_formats = [".zarr", ".ome.zarr"]
