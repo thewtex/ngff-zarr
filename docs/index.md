@@ -35,6 +35,7 @@ python.md
 cli.md
 itk.md
 methods.md
+faq.md
 development.md
 ```
 
