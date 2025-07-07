@@ -206,7 +206,8 @@ def get_supported_formats() -> SupportedFormats:
     input_formats = {
         "ngff_zarr": [".zarr", ".ome.zarr"],
         "zarr": [".zarr"],  # Raw zarr arrays
-        "itkwasm": COMMON_EXTENSIONS + [".aim", ".isq", ".fdf"],  # ITKWasm-specific extensions
+        "itkwasm": COMMON_EXTENSIONS
+        + [".aim", ".isq", ".fdf"],  # ITKWasm-specific extensions
         "itk": COMMON_EXTENSIONS + [],  # ITK-specific extensions
         "tifffile": [".tif", ".tiff", ".svs", ".ndpi", ".scn"],
         "imageio": [".webm", ".mp4", ".avi", ".mov", ".gif"],
