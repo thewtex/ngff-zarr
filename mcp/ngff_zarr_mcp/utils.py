@@ -209,7 +209,24 @@ def get_supported_formats() -> SupportedFormats:
         "itkwasm": COMMON_EXTENSIONS
         + [".aim", ".isq", ".fdf"],  # ITKWasm-specific extensions
         "itk": COMMON_EXTENSIONS + [],  # ITK-specific extensions
-        "tifffile": [".tif", ".tiff", ".svs", ".ndpi", ".scn"],
+        "tifffile": [
+            ".tif",
+            ".tiff",  # Standard TIFF
+            ".ome.tiff",  # OME-TIFF microscopy format
+            ".stk",  # MetaMorph STK format
+            ".gel",  # Molecular Dynamics GEL format
+            ".seq",  # Media Cybernetics SEQ format
+            ".zif",  # Zoomable Image File Format
+            ".qptiff",  # PerkinElmer QPTIFF format
+            ".bif",  # Roche BIF format
+            ".avs",  # Argos AVS format
+            ".dp",  # Philips DP format
+            # Digital pathology formats
+            ".svs",  # Aperio SVS format
+            ".ndpi",  # Hamamatsu NDPI format
+            ".scn",  # Leica SCN format
+            # Note: .lsm is already covered by ITK/ITKWasm in COMMON_EXTENSIONS
+        ],
         "imageio": [".webm", ".mp4", ".avi", ".mov", ".gif"],
     }
 
