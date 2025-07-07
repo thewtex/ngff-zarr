@@ -143,3 +143,109 @@ def test_tensorstore_already_exists_failure():
         logger.info(
             f"  Zarr written in {end_time_write - start_time_write:.2f} seconds (UNEXPECTED SUCCESS)."
         )
+
+
+@pytest.mark.skipif(
+    zarr_version < version.parse("3.0.8"), reason="zarr version < 3.0.0b1"
+)
+def test_tensorstore_chunk_shape_consistency():
+    """Test that TensorStore handles chunk shape consistency for edge case dimensions."""
+    # This reproduces the issue from #161 where array dimensions don't divide evenly by chunk size
+    # Shape needs to be large enough to trigger regional writing and have uneven chunk divisions
+    pytest.importorskip("tensorstore")
+
+    shape = (
+        515,
+        512,
+        512,
+    )  # Large enough to trigger issue, with uneven division in first dimension
+    test_array = np.random.rand(*shape).astype(np.float32)
+
+    image = to_ngff_image(
+        test_array,
+        dims=("z", "y", "x"),
+        scale={"z": 1.0, "y": 1.0, "x": 1.0},
+    )
+
+    multiscales = to_multiscales(
+        image,
+        method=Methods.ITKWASM_GAUSSIAN,
+        cache=False,
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # This should not fail with chunk shape mismatch errors
+        to_ngff_zarr(
+            store=tmpdir,
+            multiscales=multiscales,
+            use_tensorstore=True,
+            version="0.5",
+        )
+
+
+@pytest.mark.skipif(
+    zarr_version < version.parse("3.0.8"), reason="zarr version < 3.0.0b1"
+)
+def test_tensorstore_chunk_shape_consistency_with_sharding():
+    """Test TensorStore with sharding and edge case dimensions."""
+    pytest.importorskip("tensorstore")
+    shape = (
+        515,
+        512,
+        512,
+    )  # Large enough to trigger issue, with uneven division in first dimension
+    test_array = np.random.rand(*shape).astype(np.float32)
+
+    image = to_ngff_image(
+        test_array,
+        dims=("z", "y", "x"),
+        scale={"z": 1.0, "y": 1.0, "x": 1.0},
+    )
+
+    multiscales = to_multiscales(
+        image,
+        method=Methods.ITKWASM_GAUSSIAN,
+        cache=False,
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # This should not fail with chunk shape mismatch errors
+        to_ngff_zarr(
+            store=tmpdir,
+            multiscales=multiscales,
+            use_tensorstore=True,
+            chunks_per_shard=2,
+            version="0.5",
+        )
+
+
+@pytest.mark.skipif(
+    zarr_version < version.parse("3.0.8"), reason="zarr version < 3.0.0b1"
+)
+def test_tensorstore_zero_chunk_validation():
+    """Test that zero chunk sizes are properly validated."""
+    pytest.importorskip("tensorstore")
+
+    shape = (513, 512, 512)  # Large enough to trigger regional writing with edge chunks
+    test_array = np.random.rand(*shape).astype(np.float32)
+
+    image = to_ngff_image(
+        test_array,
+        dims=("z", "y", "x"),
+        scale={"z": 1.0, "y": 1.0, "x": 1.0},
+    )
+
+    multiscales = to_multiscales(
+        image,
+        method=Methods.ITKWASM_GAUSSIAN,
+        cache=False,
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # This should not fail with zero chunk size errors
+        to_ngff_zarr(
+            store=tmpdir,
+            multiscales=multiscales,
+            use_tensorstore=True,
+            version="0.5",
+        )
