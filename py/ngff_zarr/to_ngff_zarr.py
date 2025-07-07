@@ -125,6 +125,7 @@ def _write_with_tensorstore(
     # Use full array shape if provided, otherwise use the region array shape
     dataset_shape = full_array_shape if full_array_shape is not None else array.shape
 
+    # Build the base spec
     spec = {
         "kvstore": {
             "driver": "file",
@@ -134,33 +135,36 @@ def _write_with_tensorstore(
             "shape": dataset_shape,
         },
     }
+
     if zarr_format == 2:
         spec["driver"] = "zarr" if zarr_version_major < 3 else "zarr2"
-        spec["metadata"]["chunks"] = chunks
         spec["metadata"]["dimension_separator"] = "/"
         spec["metadata"]["dtype"] = array.dtype.str
+        # Only add chunk info when creating the dataset
+        if create_dataset:
+            spec["metadata"]["chunks"] = chunks
     elif zarr_format == 3:
         spec["driver"] = "zarr3"
-        spec["metadata"]["chunk_grid"] = {
-            "name": "regular",
-            "configuration": {"chunk_shape": chunks},
-        }
         spec["metadata"]["data_type"] = _numpy_to_zarr_dtype(array.dtype)
-        spec['metadata']["chunk_key_encoding"] = {
+        spec["metadata"]["chunk_key_encoding"] = {
             "name": "default",
-            "configuration": {
-                "separator": "/"
-            }
+            "configuration": {"separator": "/"},
         }
         if dimension_names:
             spec["metadata"]["dimension_names"] = dimension_names
-        if internal_chunk_shape:
-            spec["metadata"]["codecs"] = [
-                {
-                    "name": "sharding_indexed",
-                    "configuration": {"chunk_shape": internal_chunk_shape},
-                }
-            ]
+        # Only add chunk info when creating the dataset
+        if create_dataset:
+            spec["metadata"]["chunk_grid"] = {
+                "name": "regular",
+                "configuration": {"chunk_shape": chunks},
+            }
+            if internal_chunk_shape:
+                spec["metadata"]["codecs"] = [
+                    {
+                        "name": "sharding_indexed",
+                        "configuration": {"chunk_shape": internal_chunk_shape},
+                    }
+                ]
     else:
         raise ValueError(f"Unsupported zarr format: {zarr_format}")
 
@@ -169,15 +173,70 @@ def _write_with_tensorstore(
         if create_dataset:
             dataset = ts.open(spec, create=True, dtype=array.dtype).result()
         else:
-            dataset = ts.open(spec, create=False, dtype=array.dtype).result()
+            # For existing datasets, use a minimal spec that just specifies the path
+            existing_spec = {
+                "kvstore": {
+                    "driver": "file",
+                    "path": store_path,
+                },
+                "driver": spec["driver"],
+            }
+            dataset = ts.open(existing_spec, create=False, dtype=array.dtype).result()
     except Exception as e:
         if "ALREADY_EXISTS" in str(e) and create_dataset:
             # Dataset already exists, open it without creating
-            dataset = ts.open(spec, create=False, dtype=array.dtype).result()
+            existing_spec = {
+                "kvstore": {
+                    "driver": "file",
+                    "path": store_path,
+                },
+                "driver": spec["driver"],
+            }
+            dataset = ts.open(existing_spec, create=False, dtype=array.dtype).result()
         else:
             raise
 
-    dataset[region] = array
+    # Try to write the dask array directly first
+    try:
+        dataset[region] = array
+    except Exception as e:
+        # If we encounter dimension mismatch or shape-related errors,
+        # compute the array and try again with corrective action
+        error_msg = str(e).lower()
+        if any(
+            keyword in error_msg
+            for keyword in [
+                "dimension",
+                "shape",
+                "mismatch",
+                "size",
+                "extent",
+                "rank",
+                "invalid",
+            ]
+        ):
+            # Compute the array to get the actual shape
+            computed_array = array.compute()
+
+            # Adjust region to match the actual computed array shape if needed
+            if len(region) == len(computed_array.shape):
+                adjusted_region = tuple(
+                    slice(
+                        region[i].start or 0,
+                        (region[i].start or 0) + computed_array.shape[i],
+                    )
+                    if isinstance(region[i], slice)
+                    else region[i]
+                    for i in range(len(region))
+                )
+            else:
+                adjusted_region = region
+
+            # Try writing the computed array with adjusted region
+            dataset[adjusted_region] = computed_array
+        else:
+            # Re-raise the exception if it's not related to dimension/shape issues
+            raise
 
 
 def _validate_ngff_parameters(
@@ -310,11 +369,21 @@ def _configure_sharding(
     internal_chunk_shape = c0
     arr = arr.rechunk(shards)
 
-    # Only include 'shards' and 'chunks' in sharding_kwargs
-    sharding_kwargs = {
-        "shards": shards,
-        "chunks": c0,
-    }
+    # Configure sharding parameters differently for v2 vs v3
+    sharding_kwargs = {}
+    if zarr_version_major >= 3:
+        # For Zarr v3, configure sharding as a codec
+        # Use chunk_shape for internal chunks and configure sharding via codecs
+        sharding_kwargs["chunk_shape"] = internal_chunk_shape
+        # Note: sharding codec will be configured separately in the codecs parameter
+        # We'll pass the shard shape through a separate key to be handled later
+        sharding_kwargs["_shard_shape"] = shards
+    else:
+        # For zarr v2, use the older API
+        sharding_kwargs = {
+            "shards": shards,
+            "chunks": internal_chunk_shape,
+        }
 
     return sharding_kwargs, internal_chunk_shape, arr
 
@@ -378,8 +447,37 @@ def _write_array_direct(
     arr = _prep_for_to_zarr(store, arr)
 
     zarr_fmt = format_kwargs.get("zarr_format")
+
+    # Handle sharding kwargs for direct writing
+    cleaned_sharding_kwargs = {}
+
+    if sharding_kwargs and "_shard_shape" in sharding_kwargs:
+        # For Zarr v3 direct writes, use shards and chunks parameters
+        shard_shape = sharding_kwargs["_shard_shape"]
+        internal_chunk_shape = sharding_kwargs.get("chunk_shape")
+
+        # Ensure internal_chunk_shape is available
+        if internal_chunk_shape is None:
+            # Use chunks from arr if available, or default
+            internal_chunk_shape = tuple(arr.chunks[i][0] for i in range(arr.ndim))
+
+        # For direct Zarr v3 writes, use shards and chunks
+        cleaned_sharding_kwargs["shards"] = shard_shape
+        cleaned_sharding_kwargs["chunks"] = internal_chunk_shape
+
+        # Remove internal kwargs
+        cleaned_sharding_kwargs.update(
+            {
+                k: v
+                for k, v in sharding_kwargs.items()
+                if k not in ["_shard_shape", "chunk_shape"]
+            }
+        )
+    else:
+        cleaned_sharding_kwargs = sharding_kwargs
+
     to_zarr_kwargs = {
-        **sharding_kwargs,
+        **cleaned_sharding_kwargs,
         **zarr_kwargs,
         **format_kwargs,
         **dimension_names_kwargs,
@@ -401,7 +499,9 @@ def _write_array_direct(
             array[:] = arr.compute()
     else:
         # All other cases: use dask.array.to_zarr
-        target = zarr_array if (region is not None and zarr_array is not None) else store
+        target = (
+            zarr_array if (region is not None and zarr_array is not None) else store
+        )
         dask.array.to_zarr(
             arr,
             target,
@@ -412,7 +512,6 @@ def _write_array_direct(
             return_stored=False,
             **to_zarr_kwargs,
         )
-
 
 
 def _handle_large_array_writing(
@@ -448,15 +547,71 @@ def _handle_large_array_writing(
 
     chunks = tuple([c[0] for c in arr.chunks])
 
+    # If sharding is enabled, configure it properly
+    chunk_kwargs = {}
+    codecs_kwargs = {}
+
+    if sharding_kwargs:
+        if "_shard_shape" in sharding_kwargs:
+            # For Zarr v3, configure sharding as a codec only
+            shard_shape = sharding_kwargs.pop("_shard_shape")
+            internal_chunk_shape = sharding_kwargs.get(
+                "chunk_shape"
+            )  # This is the inner chunk shape
+
+            # Configure the sharding codec with proper defaults
+            from zarr.codecs.sharding import ShardingCodec
+            from zarr.codecs.bytes import BytesCodec
+            from zarr.codecs.zstd import ZstdCodec
+
+            # Default inner codecs for sharding
+            default_codecs = [BytesCodec(), ZstdCodec()]
+
+            # Ensure internal_chunk_shape is available; fallback to chunks if needed
+            if internal_chunk_shape is None:
+                internal_chunk_shape = chunks
+
+            # The array's chunk_shape should be the shard shape
+            # The sharding codec's chunk_shape should be the internal chunk shape
+            sharding_codec = ShardingCodec(
+                chunk_shape=internal_chunk_shape,  # Internal chunk shape within shards
+                codecs=default_codecs,
+            )
+
+            # Set up codecs with sharding
+            existing_codecs = zarr_kwargs.get("codecs", [])
+            if not isinstance(existing_codecs, list):
+                existing_codecs = []
+            codecs_kwargs["codecs"] = [sharding_codec] + existing_codecs
+
+            # Set the array's chunk_shape to the shard shape
+            chunk_kwargs["chunk_shape"] = shard_shape
+
+            # Clean up remaining kwargs (remove chunk_shape since we're setting it explicitly)
+            remaining_kwargs = {
+                k: v
+                for k, v in sharding_kwargs.items()
+                if k not in ["_shard_shape", "chunk_shape"]
+            }
+            sharding_kwargs_clean = remaining_kwargs
+        else:
+            # For Zarr v2 or other cases
+            sharding_kwargs_clean = sharding_kwargs
+    else:
+        # No sharding
+        chunk_kwargs = {"chunks": chunks}
+        sharding_kwargs_clean = {}
+
     zarr_array = open_array(
         shape=arr.shape,
-        chunks=chunks,
         dtype=arr.dtype,
         store=store,
         path=path,
         mode="a",
-        **sharding_kwargs,
+        **chunk_kwargs,
+        **sharding_kwargs_clean,
         **zarr_kwargs,
+        **codecs_kwargs,
         **dimension_names_kwargs,
         **format_kwargs,
     )
@@ -491,7 +646,7 @@ def _handle_large_array_writing(
                 store_path,
                 path,
                 optimized,
-                [c[0] for c in arr_region.chunks],
+                chunks,  # Use original array chunks, not region chunks
                 shards,
                 internal_chunk_shape,
                 zarr_format,
@@ -830,18 +985,11 @@ def to_ngff_zarr(
             arr, chunks_per_shard, dims, kwargs.copy()
         )
 
-        # Get the chunks and optional shards for TensorStore
+        # Get the chunks - these are now the shards if sharding is enabled
         chunks = tuple([c[0] for c in arr.chunks])
-        shards = None
-        if chunks_per_shard is not None:
-            if isinstance(chunks_per_shard, int):
-                shards = tuple([c * chunks_per_shard for c in chunks])
-            elif isinstance(chunks_per_shard, (tuple, list)):
-                shards = tuple([c * chunks_per_shard[i] for i, c in enumerate(chunks)])
-            elif isinstance(chunks_per_shard, dict):
-                shards = tuple(
-                    [c * chunks_per_shard.get(dims[i], 1) for i, c in enumerate(chunks)]
-                )
+
+        # For TensorStore, shards are the same as chunks when sharding is enabled
+        shards = chunks if chunks_per_shard is not None else None
 
         # Determine write method based on memory requirements
         if memory_usage(image) > config.memory_target and multiscales.scale_factors:
