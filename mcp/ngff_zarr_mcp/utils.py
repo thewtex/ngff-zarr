@@ -107,7 +107,8 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
 
                 store = fsspec.get_mapper(store_path)
         else:
-            store = zarr.DirectoryStore(store_path)  # type: ignore[attr-defined]
+            # For local files, just use the path directly
+            store = store_path
 
         # Load multiscales
         multiscales = from_ngff_zarr(store)
@@ -131,7 +132,16 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
         version = "0.4"  # Default
         try:
             root = zarr.open(store, mode="r")
-            if "multiscales" in root.attrs:
+
+            # Check for v0.5 format first (ome.version)
+            if "ome" in root.attrs:
+                ome_attrs = root.attrs["ome"]
+                if isinstance(ome_attrs, dict) and "version" in ome_attrs:
+                    version_attr = ome_attrs["version"]
+                    if isinstance(version_attr, str):
+                        version = version_attr
+            # Check for v0.4 format (multiscales[0].version)
+            elif "multiscales" in root.attrs:
                 multiscales_attr = root.attrs["multiscales"]
                 if isinstance(multiscales_attr, list) and len(multiscales_attr) > 0:
                     ms_attrs = multiscales_attr[0]

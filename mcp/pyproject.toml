@@ -31,7 +31,7 @@ classifiers = [
 ]
 dependencies = [
     "mcp",
-    "ngff-zarr[cli]",
+    "ngff-zarr[cli] >= 0.13.4",
     "pydantic >= 2.0",
     "httpx",
     "aiofiles",
@@ -146,6 +146,8 @@ ngff-zarr-mcp = { path = ".", editable = true }
 
 [tool.pixi.dependencies]
 python = ">=3.9,<3.14"
+pytest = ">=8.4.1,<9"
+pytest-asyncio = ">=1.0.0,<2"
 
 [tool.pixi.feature.dev.pypi-dependencies]
 ngff-zarr-mcp = { path = ".", editable = true, extras = ["dev"] }
