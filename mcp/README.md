@@ -740,10 +740,6 @@ pixi run typecheck
 # Run all checks
 pixi run all-checks
 
-# Build and serve documentation
-pixi run docs
-pixi run docs-build
-
 # Start MCP server for testing
 pixi run dev-server        # STDIO mode
 pixi run dev-server-sse    # SSE mode
