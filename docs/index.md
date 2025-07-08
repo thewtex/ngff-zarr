@@ -25,6 +25,7 @@ A lean and kind
 - Writes OME-Zarr v0.4 to v0.5
 - [Sharded Zarr] stores
 - Optional writing via [tensorstore]
+- **Model Context Protocol (MCP) server** for AI agent integration
 
 ```{toctree}
 :maxdepth: 2
@@ -33,6 +34,7 @@ quick_start.md
 installation.md
 python.md
 cli.md
+mcp.md
 itk.md
 methods.md
 development.md
