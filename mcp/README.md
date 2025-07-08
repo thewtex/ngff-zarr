@@ -1,27 +1,36 @@
 # ngff-zarr MCP Server
 
-A Model Context Protocol (MCP) server that provides AI agents with the ability to convert images to OME-Zarr format using the ngff-zarr library.
+A Model Context Protocol (MCP) server that provides AI agents with the ability
+to convert images to OME-Zarr format using the ngff-zarr library.
 
 ## Features
 
 ### Tools
-- **convert_images_to_ome_zarr**: Convert various image formats to OME-Zarr with full control over metadata, compression, and multiscale generation
-- **get_ome_zarr_info**: Inspect existing OME-Zarr stores and get detailed information
+
+- **convert_images_to_ome_zarr**: Convert various image formats to OME-Zarr with
+  full control over metadata, compression, and multiscale generation
+- **get_ome_zarr_info**: Inspect existing OME-Zarr stores and get detailed
+  information
 - **validate_ome_zarr_store**: Validate OME-Zarr structure and metadata
-- **optimize_ome_zarr_store**: Optimize existing stores with new compression and chunking
+- **optimize_ome_zarr_store**: Optimize existing stores with new compression and
+  chunking
 
 ### Resources
+
 - **supported-formats**: List of supported input/output formats and backends
-- **downsampling-methods**: Available downsampling methods for multiscale generation
+- **downsampling-methods**: Available downsampling methods for multiscale
+  generation
 - **compression-codecs**: Available compression codecs and their characteristics
 
 ### Input Support
+
 - Local files (all formats supported by ngff-zarr)
 - Local directories (Zarr stores)
 - Network URLs (HTTP/HTTPS)
 - S3 URLs (with optional s3fs dependency)
 
 ### Output Optimization
+
 - Multiple compression codecs (gzip, lz4, zstd, blosc variants)
 - Configurable compression levels
 - Flexible chunk sizing
@@ -40,7 +49,7 @@ A Model Context Protocol (MCP) server that provides AI agents with the ability t
 The easiest way to use ngff-zarr MCP server is with `uvx`:
 
 ```bash
-# Install uvx if not already installed  
+# Install uvx if not already installed
 pip install uvx
 
 # Run the MCP server directly from PyPI
@@ -52,9 +61,14 @@ uvx ngff-zarr-mcp
 
 Go to: `Settings` -> `Cursor Settings` -> `MCP` -> `Add new global MCP server`
 
-Pasting the following configuration into your Cursor `~/.cursor/mcp.json` file is the recommended approach. You may also install in a specific project by creating `.cursor/mcp.json` in your project folder. See [Cursor MCP docs](https://docs.cursor.com/context/model-context-protocol) for more info.
+Pasting the following configuration into your Cursor `~/.cursor/mcp.json` file
+is the recommended approach. You may also install in a specific project by
+creating `.cursor/mcp.json` in your project folder. See
+[Cursor MCP docs](https://docs.cursor.com/context/model-context-protocol) for
+more info.
 
 #### Using uvx (recommended)
+
 ```json
 {
   "mcpServers": {
@@ -67,6 +81,7 @@ Pasting the following configuration into your Cursor `~/.cursor/mcp.json` file i
 ```
 
 #### Using direct Python
+
 ```json
 {
   "mcpServers": {
@@ -83,9 +98,11 @@ Pasting the following configuration into your Cursor `~/.cursor/mcp.json` file i
 <details>
 <summary><b>Install in Windsurf</b></summary>
 
-Add this to your Windsurf MCP config file. See [Windsurf MCP docs](https://docs.windsurf.com/windsurf/mcp) for more info.
+Add this to your Windsurf MCP config file. See
+[Windsurf MCP docs](https://docs.windsurf.com/windsurf/mcp) for more info.
 
 #### Using uvx (recommended)
+
 ```json
 {
   "mcpServers": {
@@ -98,6 +115,7 @@ Add this to your Windsurf MCP config file. See [Windsurf MCP docs](https://docs.
 ```
 
 #### SSE Transport
+
 ```json
 {
   "mcpServers": {
@@ -114,9 +132,12 @@ Add this to your Windsurf MCP config file. See [Windsurf MCP docs](https://docs.
 <details>
 <summary><b>Install in VS Code</b></summary>
 
-Add this to your VS Code MCP config file. See [VS Code MCP docs](https://code.visualstudio.com/docs/copilot/chat/mcp-servers) for more info.
+Add this to your VS Code MCP config file. See
+[VS Code MCP docs](https://code.visualstudio.com/docs/copilot/chat/mcp-servers)
+for more info.
 
 #### Using uvx (recommended)
+
 ```json
 "mcp": {
   "servers": {
@@ -129,6 +150,7 @@ Add this to your VS Code MCP config file. See [VS Code MCP docs](https://code.vi
 ```
 
 #### Using pip install
+
 ```json
 "mcp": {
   "servers": {
@@ -143,11 +165,63 @@ Add this to your VS Code MCP config file. See [VS Code MCP docs](https://code.vi
 </details>
 
 <details>
-<summary><b>Install in Claude Desktop</b></summary>
+<summary><b>Install in OpenCode</b></summary>
 
-Add this to your Claude Desktop `claude_desktop_config.json` file. See [Claude Desktop MCP docs](https://modelcontextprotocol.io/quickstart/user) for more info.
+OpenCode is a Go-based CLI application that provides an AI-powered coding
+assistant in the terminal. It supports MCP servers through JSON configuration
+files. See [OpenCode MCP docs](https://opencode.ai/docs/mcp-servers/) for more
+details.
+
+Add this to your OpenCode configuration file (`~/.config/opencode/config.json`
+for global or `opencode.json` for project-specific):
 
 #### Using uvx (recommended)
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "ngff-zarr": {
+      "type": "local",
+      "command": ["uvx", "ngff-zarr-mcp"],
+      "enabled": true
+    }
+  }
+}
+```
+
+#### Using pip install
+
+```json
+{
+  "mcp": {
+    "ngff-zarr": {
+      "type": "local",
+      "command": ["python",
+        "-c",
+        "import subprocess; subprocess.run(['pip', 'install', 'ngff-zarr-mcp']); import ngff_zarr_mcp.server; ngff_zarr_mcp.server.main()"
+      ],
+      "enabled": true
+    }
+  }
+}
+```
+
+After adding the configuration, restart OpenCode. The ngff-zarr tools will be
+available in the terminal interface with automatic permission prompts for tool
+execution.
+
+</details>
+
+<details>
+<summary><b>Install in Claude Desktop</b></summary>
+
+Add this to your Claude Desktop `claude_desktop_config.json` file. See
+[Claude Desktop MCP docs](https://modelcontextprotocol.io/quickstart/user) for
+more info.
+
+#### Using uvx (recommended)
+
 ```json
 {
   "mcpServers": {
@@ -160,6 +234,7 @@ Add this to your Claude Desktop `claude_desktop_config.json` file. See [Claude D
 ```
 
 #### Using direct installation
+
 ```json
 {
   "mcpServers": {
@@ -175,14 +250,18 @@ Add this to your Claude Desktop `claude_desktop_config.json` file. See [Claude D
 <details>
 <summary><b>Install in Claude Code</b></summary>
 
-Run this command. See [Claude Code MCP docs](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/tutorials#set-up-model-context-protocol-mcp) for more info.
+Run this command. See
+[Claude Code MCP docs](https://docs.anthropic.com/en/docs/agents-and-tools/claude-code/tutorials#set-up-model-context-protocol-mcp)
+for more info.
 
 #### Using uvx
+
 ```sh
 claude mcp add ngff-zarr -- uvx ngff-zarr-mcp
 ```
 
 #### Using pip
+
 ```sh
 claude mcp add ngff-zarr -- python -m pip install ngff-zarr-mcp && ngff-zarr-mcp
 ```
@@ -192,9 +271,12 @@ claude mcp add ngff-zarr -- python -m pip install ngff-zarr-mcp && ngff-zarr-mcp
 <details>
 <summary><b>Install in Gemini CLI</b></summary>
 
-Add this to your *.gemini/settings.json* Gemini CLI MCP configuration. See the [Gemini CLI configuration docs](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md) for more info.
+Add this to your _.gemini/settings.json_ Gemini CLI MCP configuration. See the
+[Gemini CLI configuration docs](https://github.com/google-gemini/gemini-cli/blob/main/docs/cli/configuration.md)
+for more info.
 
 #### Using uvx (recommended)
+
 ```json
 {
   "mcpServers": {
@@ -216,6 +298,7 @@ Add this to your *.gemini/settings.json* Gemini CLI MCP configuration. See the [
 3. Add a new server with the following configuration:
 
 #### Using uvx (recommended)
+
 ```json
 {
   "mcpServers": {
@@ -232,7 +315,8 @@ Add this to your *.gemini/settings.json* Gemini CLI MCP configuration. See the [
 <details>
 <summary><b>Install in BoltAI</b></summary>
 
-Open the "Settings" page of the app, navigate to "Plugins," and enter the following JSON:
+Open the "Settings" page of the app, navigate to "Plugins," and enter the
+following JSON:
 
 ```json
 {
@@ -245,14 +329,18 @@ Open the "Settings" page of the app, navigate to "Plugins," and enter the follow
 }
 ```
 
-Once saved, you can start using ngff-zarr tools in your conversations. More information is available on [BoltAI's Documentation site](https://docs.boltai.com/docs/plugins/mcp-servers).
+Once saved, you can start using ngff-zarr tools in your conversations. More
+information is available on
+[BoltAI's Documentation site](https://docs.boltai.com/docs/plugins/mcp-servers).
 
 </details>
 
 <details>
 <summary><b>Install in Zed</b></summary>
 
-Add this to your Zed `settings.json`. See [Zed Context Server docs](https://zed.dev/docs/assistant/context-servers) for more info.
+Add this to your Zed `settings.json`. See
+[Zed Context Server docs](https://zed.dev/docs/assistant/context-servers) for
+more info.
 
 ```json
 {
@@ -304,11 +392,15 @@ Add this to your Zed `settings.json`. See [Zed Context Server docs](https://zed.
 <details>
 <summary><b>Install in JetBrains AI Assistant</b></summary>
 
-See [JetBrains AI Assistant Documentation](https://www.jetbrains.com/help/ai-assistant/configure-an-mcp-server.html) for more details.
+See
+[JetBrains AI Assistant Documentation](https://www.jetbrains.com/help/ai-assistant/configure-an-mcp-server.html)
+for more details.
 
-1. In JetBrains IDEs go to `Settings` -> `Tools` -> `AI Assistant` -> `Model Context Protocol (MCP)`
+1. In JetBrains IDEs go to `Settings` -> `Tools` -> `AI Assistant` ->
+   `Model Context Protocol (MCP)`
 2. Click `+ Add`.
-3. Click on `Command` in the top-left corner of the dialog and select the As JSON option from the list
+3. Click on `Command` in the top-left corner of the dialog and select the As
+   JSON option from the list
 4. Add this configuration and click `OK`
 
 ```json
@@ -325,7 +417,9 @@ See [JetBrains AI Assistant Documentation](https://www.jetbrains.com/help/ai-ass
 <details>
 <summary><b>Install in Qodo Gen</b></summary>
 
-See [Qodo Gen docs](https://docs.qodo.ai/qodo-documentation/qodo-gen/qodo-gen-chat/agentic-mode/agentic-tools-mcps) for more details.
+See
+[Qodo Gen docs](https://docs.qodo.ai/qodo-documentation/qodo-gen/qodo-gen-chat/agentic-mode/agentic-tools-mcps)
+for more details.
 
 1. Open Qodo Gen chat panel in VSCode or IntelliJ.
 2. Click Connect more tools.
@@ -344,7 +438,9 @@ See [Qodo Gen docs](https://docs.qodo.ai/qodo-documentation/qodo-gen/qodo-gen-ch
 <details>
 <summary><b>Install in Roo Code</b></summary>
 
-Add this to your Roo Code MCP configuration file. See [Roo Code MCP docs](https://docs.roocode.com/features/mcp/using-mcp-in-roo) for more info.
+Add this to your Roo Code MCP configuration file. See
+[Roo Code MCP docs](https://docs.roocode.com/features/mcp/using-mcp-in-roo) for
+more info.
 
 ```json
 {
@@ -362,7 +458,9 @@ Add this to your Roo Code MCP configuration file. See [Roo Code MCP docs](https:
 <details>
 <summary><b>Install in Amazon Q Developer CLI</b></summary>
 
-Add this to your Amazon Q Developer CLI configuration file. See [Amazon Q Developer CLI docs](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/command-line-mcp-configuration.html) for more details.
+Add this to your Amazon Q Developer CLI configuration file. See
+[Amazon Q Developer CLI docs](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/command-line-mcp-configuration.html)
+for more details.
 
 ```json
 {
@@ -385,7 +483,8 @@ To configure ngff-zarr MCP in Zencoder, follow these steps:
 1. Go to the Zencoder menu (...)
 2. From the dropdown menu, select Agent tools
 3. Click on the Add custom MCP
-4. Add the name and server configuration from below, and make sure to hit the Install button
+4. Add the name and server configuration from below, and make sure to hit the
+   Install button
 
 ```json
 {
@@ -401,7 +500,9 @@ Once the MCP server is added, you can easily continue using it.
 <details>
 <summary><b>Install in Warp</b></summary>
 
-See [Warp Model Context Protocol Documentation](https://docs.warp.dev/knowledge-and-collaboration/mcp#adding-an-mcp-server) for details.
+See
+[Warp Model Context Protocol Documentation](https://docs.warp.dev/knowledge-and-collaboration/mcp#adding-an-mcp-server)
+for details.
 
 1. Navigate `Settings` > `AI` > `Manage MCP servers`.
 2. Add a new MCP server by clicking the `+ Add` button.
@@ -426,6 +527,7 @@ See [Warp Model Context Protocol Documentation](https://docs.warp.dev/knowledge-
 For development work, use pixi (recommended) or pip:
 
 #### Using pixi (Recommended)
+
 ```bash
 # Install pixi if not already installed
 curl -fsSL https://pixi.sh/install.sh | bash
@@ -448,6 +550,7 @@ pixi run typecheck
 ```
 
 #### Using pip
+
 ```bash
 # Clone and install in development mode
 git clone <repository>
@@ -477,7 +580,8 @@ ngff-zarr-mcp --transport sse --host localhost --port 8000
 ### Transport Options
 
 - **STDIO**: Default transport for most MCP clients
-- **SSE**: Server-Sent Events for web-based clients or when HTTP transport is preferred
+- **SSE**: Server-Sent Events for web-based clients or when HTTP transport is
+  preferred
 
 See the installation section above for client-specific configuration examples.
 
@@ -502,7 +606,7 @@ result = await convert_images_to_ome_zarr(
 ```python
 result = await convert_images_to_ome_zarr(
     input_paths=["image.nii.gz"],
-    output_path="brain.ome.zarr", 
+    output_path="brain.ome.zarr",
     dims=["z", "y", "x"],
     scale={"z": 2.0, "y": 0.5, "x": 0.5},
     units={"z": "micrometer", "y": "micrometer", "x": "micrometer"},
@@ -533,11 +637,15 @@ print(f"Dimensions: {info.dimensions}")
 
 ## Examples and Demos
 
-The `examples/` directory contains demonstration scripts and configuration files:
+The `examples/` directory contains demonstration scripts and configuration
+files:
 
-- **[`examples/conversion_demo.py`](examples/conversion_demo.py)** - Interactive demo showing image conversion capabilities
-- **[`examples/structure_demo.py`](examples/structure_demo.py)** - Overview of project structure and available tools
-- **[`examples/README.md`](examples/README.md)** - Detailed information about all examples
+- **[`examples/conversion_demo.py`](examples/conversion_demo.py)** - Interactive
+  demo showing image conversion capabilities
+- **[`examples/structure_demo.py`](examples/structure_demo.py)** - Overview of
+  project structure and available tools
+- **[`examples/README.md`](examples/README.md)** - Detailed information about
+  all examples
 
 Run the demos to explore the server's functionality:
 
@@ -552,27 +660,33 @@ pixi run python examples/structure_demo.py
 ## Supported Formats
 
 ### Input Formats
-- **ITK/ITK-Wasm**: .nii, .nii.gz, .mha, .mhd, .nrrd, .dcm, .jpg, .png, .bmp, etc.
+
+- **ITK/ITK-Wasm**: .nii, .nii.gz, .mha, .mhd, .nrrd, .dcm, .jpg, .png, .bmp,
+  etc.
 - **TIFF**: .tif, .tiff, .svs, .ndpi, .scn (via tifffile)
 - **Video**: .webm, .mp4, .avi, .mov, .gif (via imageio)
 - **Zarr**: .zarr, .ome.zarr
 
 ### Output Formats
+
 - OME-Zarr (.ome.zarr, .zarr)
 
 ## Performance Options
 
 ### Memory Management
+
 - Set memory targets to control RAM usage
 - Use caching for large datasets
 - Configure Dask LocalCluster for distributed processing
 
 ### Compression
+
 - Choose from multiple codecs: gzip, lz4, zstd, blosc variants
 - Adjust compression levels for speed vs. size tradeoffs
 - Use sharding to reduce file count (Zarr v3)
 
 ### Chunking
+
 - Optimize chunk sizes for your access patterns
 - Configure sharding for better performance with cloud storage
 
@@ -580,7 +694,8 @@ pixi run python examples/structure_demo.py
 
 ### Using pixi (Recommended)
 
-Pixi provides reproducible, cross-platform environment management. All Python dependencies are defined in `pyproject.toml` and automatically managed by pixi.
+Pixi provides reproducible, cross-platform environment management. All Python
+dependencies are defined in `pyproject.toml` and automatically managed by pixi.
 
 ```bash
 # Clone and setup environment
@@ -595,21 +710,13 @@ pixi shell -e dev
 pixi run test
 pixi run test-cov
 
-# Lint and format code  
+# Lint and format code
 pixi run lint
 pixi run format
 pixi run typecheck
 
 # Run all checks
 pixi run all-checks
-
-# Build and serve documentation
-pixi run docs
-pixi run docs-build
-
-# Start MCP server for testing
-pixi run dev-server        # STDIO mode
-pixi run dev-server-sse    # SSE mode
 ```
 
 #### Pixi Environments
@@ -644,6 +751,7 @@ ruff check .
 ## Dependencies
 
 ### Core
+
 - mcp: Model Context Protocol implementation
 - ngff-zarr: Core image conversion functionality
 - pydantic: Data validation
@@ -651,6 +759,7 @@ ruff check .
 - aiofiles: Async file operations
 
 ### Optional
+
 - s3fs: S3 storage support
 - gcsfs: Google Cloud Storage support
 - dask[distributed]: Distributed processing
@@ -660,7 +769,8 @@ ruff check .
 <details>
 <summary><b>Python Version Issues</b></summary>
 
-The ngff-zarr-mcp server requires Python 3.9 or higher. If you encounter version errors:
+The ngff-zarr-mcp server requires Python 3.9 or higher. If you encounter version
+errors:
 
 ```bash
 # Check your Python version

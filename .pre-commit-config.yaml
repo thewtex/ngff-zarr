@@ -9,6 +9,7 @@ repos:
     rev: "v4.6.0"
     hooks:
       - id: check-added-large-files
+        exclude: ^mcp/test/data/input/MR-head\.nrrd$
       - id: check-case-conflict
       - id: check-symlinks
       - id: check-json

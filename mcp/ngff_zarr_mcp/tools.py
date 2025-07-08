@@ -108,29 +108,23 @@ async def convert_to_ome_zarr(
 
                 # Determine if we need to generate multiscales
                 scale_factors = options.scale_factors
+                method = Methods(options.method) if options.method else None
+
+                # Setup caching for large datasets
+                cache = ngff_image.data.nbytes > config.memory_target
+
+                # Always use to_multiscales to create proper Multiscales object
+                # If scale_factors is None, create single-scale multiscales
                 if scale_factors is None:
-                    # Single scale output
-                    multiscales_obj = type(
-                        "Multiscales", (), {"images": [ngff_image]}
-                    )()
-                else:
-                    # Generate multiscales
-                    method = (
-                        Methods(options.method)
-                        if options.method
-                        else Methods.ITKWASM_GAUSSIAN
-                    )
+                    scale_factors = []
 
-                    # Setup caching for large datasets
-                    cache = ngff_image.data.nbytes > config.memory_target
-
-                    multiscales_obj = to_multiscales(
-                        ngff_image,
-                        scale_factors=scale_factors,
-                        method=method,
-                        chunks=chunks,
-                        cache=cache,
-                    )
+                multiscales_obj = to_multiscales(
+                    ngff_image,
+                    scale_factors=scale_factors,
+                    method=method,
+                    chunks=chunks,
+                    cache=cache,
+                )
 
                 # Setup output store
                 output_path = Path(options.output_path)
@@ -155,14 +149,41 @@ async def convert_to_ome_zarr(
                         chunks_per_shard = tuple(chunks_per_shard)
 
                 # Convert to OME-Zarr
+                kwargs = {}
+                if options.compression_codec:
+                    # Create proper compressor object
+                    import numcodecs
+
+                    if options.compression_codec == "gzip":
+                        level = options.compression_level or 6
+                        kwargs["compressor"] = numcodecs.GZip(level=level)
+                    elif options.compression_codec == "lz4":
+                        kwargs["compressor"] = numcodecs.LZ4()
+                    elif options.compression_codec == "zstd":
+                        level = options.compression_level or 3
+                        kwargs["compressor"] = numcodecs.Zstd(level=level)
+                    elif options.compression_codec.startswith("blosc"):
+                        # Handle blosc variants like "blosc:lz4", "blosc:zstd", etc.
+                        codec_parts = options.compression_codec.split(":")
+                        if len(codec_parts) == 2:
+                            codec_name = codec_parts[1]
+                        else:
+                            codec_name = "lz4"  # default
+                        level = options.compression_level or 5
+                        kwargs["compressor"] = numcodecs.Blosc(
+                            cname=codec_name, clevel=level
+                        )
+                    else:
+                        # Fallback to string (may work for some codecs)
+                        kwargs["compressor"] = options.compression_codec
+
                 to_ngff_zarr(
                     output_store,
                     multiscales_obj,
                     chunks_per_shard=chunks_per_shard,
                     use_tensorstore=options.use_tensorstore,
                     version=options.ome_zarr_version,
-                    compression_codec=options.compression_codec,
-                    compression_level=options.compression_level,
+                    **kwargs,
                 )
 
                 # Analyze the created store
@@ -171,7 +192,7 @@ async def convert_to_ome_zarr(
                 return ConversionResult(
                     success=True,
                     output_path=str(output_path),
-                    store_info=store_info.dict(),
+                    store_info=store_info.model_dump(),
                     error=None,
                 )
 
@@ -378,7 +399,7 @@ async def optimize_zarr_store(options: OptimizationOptions) -> ConversionResult:
         return ConversionResult(
             success=True,
             output_path=str(output_path),
-            store_info=store_info.dict(),
+            store_info=store_info.model_dump(),
             error=None,
         )
 

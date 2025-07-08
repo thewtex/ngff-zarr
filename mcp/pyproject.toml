@@ -31,7 +31,7 @@ classifiers = [
 ]
 dependencies = [
     "mcp",
-    "ngff-zarr[cli]",
+    "ngff-zarr[cli] >= 0.13.4",
     "pydantic >= 2.0",
     "httpx",
     "aiofiles",
@@ -137,6 +137,23 @@ exclude_lines = [
     "if TYPE_CHECKING:",
 ]
 
+[tool.mypy]
+python_version = "3.13"
+# Basic type checking without being too strict
+warn_return_any = false
+warn_unused_configs = false
+disallow_untyped_defs = false
+check_untyped_defs = false
+# Still check for some basic issues
+show_error_codes = true
+pretty = true
+
+[[tool.mypy.overrides]]
+module = [
+    "numcodecs.*",
+]
+ignore_missing_imports = true
+
 [tool.pixi.project]
 channels = ["conda-forge", "pyconda"]
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
@@ -146,6 +163,8 @@ ngff-zarr-mcp = { path = ".", editable = true }
 
 [tool.pixi.dependencies]
 python = ">=3.9,<3.14"
+pytest = ">=8.4.1,<9"
+pytest-asyncio = ">=1.0.0,<2"
 
 [tool.pixi.feature.dev.pypi-dependencies]
 ngff-zarr-mcp = { path = ".", editable = true, extras = ["dev"] }

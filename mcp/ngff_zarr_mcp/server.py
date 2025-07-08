@@ -174,7 +174,7 @@ async def optimize_ome_zarr_store(
     return await optimize_zarr_store(options)
 
 
-@mcp.resource("supported-formats")
+@mcp.resource("ngff-zarr://supported-formats")
 def get_supported_input_output_formats() -> str:
     """Get information about supported input and output formats."""
     formats = get_supported_formats()
@@ -194,7 +194,7 @@ def get_supported_input_output_formats() -> str:
     return "".join(output)
 
 
-@mcp.resource("downsampling-methods")
+@mcp.resource("ngff-zarr://downsampling-methods")
 def get_downsampling_methods() -> str:
     """Get information about available downsampling methods."""
     methods = get_available_methods()
@@ -219,7 +219,7 @@ def get_downsampling_methods() -> str:
     return "".join(output)
 
 
-@mcp.resource("compression-codecs")
+@mcp.resource("ngff-zarr://compression-codecs")
 def get_compression_codecs() -> str:
     """Get information about available compression codecs."""
     codecs = get_available_compression_codecs()

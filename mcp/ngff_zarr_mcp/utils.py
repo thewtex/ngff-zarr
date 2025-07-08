@@ -107,7 +107,8 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
 
                 store = fsspec.get_mapper(store_path)
         else:
-            store = zarr.DirectoryStore(store_path)  # type: ignore[attr-defined]
+            # For local files, just use the path directly
+            store = store_path
 
         # Load multiscales
         multiscales = from_ngff_zarr(store)
@@ -131,7 +132,16 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
         version = "0.4"  # Default
         try:
             root = zarr.open(store, mode="r")
-            if "multiscales" in root.attrs:
+
+            # Check for v0.5 format first (ome.version)
+            if "ome" in root.attrs:
+                ome_attrs = root.attrs["ome"]
+                if isinstance(ome_attrs, dict) and "version" in ome_attrs:
+                    version_attr = ome_attrs["version"]
+                    if isinstance(version_attr, str):
+                        version = version_attr
+            # Check for v0.4 format (multiscales[0].version)
+            elif "multiscales" in root.attrs:
                 multiscales_attr = root.attrs["multiscales"]
                 if isinstance(multiscales_attr, list) and len(multiscales_attr) > 0:
                     ms_attrs = multiscales_attr[0]
@@ -206,10 +216,109 @@ def get_supported_formats() -> SupportedFormats:
     input_formats = {
         "ngff_zarr": [".zarr", ".ome.zarr"],
         "zarr": [".zarr"],  # Raw zarr arrays
-        "itkwasm": COMMON_EXTENSIONS + [".aim", ".isq", ".fdf"],  # ITKWasm-specific extensions
+        "itkwasm": COMMON_EXTENSIONS
+        + [".aim", ".isq", ".fdf"],  # ITKWasm-specific extensions
         "itk": COMMON_EXTENSIONS + [],  # ITK-specific extensions
-        "tifffile": [".tif", ".tiff", ".svs", ".ndpi", ".scn"],
-        "imageio": [".webm", ".mp4", ".avi", ".mov", ".gif"],
+        "tifffile": [
+            ".tif",
+            ".tiff",  # Standard TIFF
+            ".ome.tiff",  # OME-TIFF microscopy format
+            ".stk",  # MetaMorph STK format
+            ".gel",  # Molecular Dynamics GEL format
+            ".seq",  # Media Cybernetics SEQ format
+            ".zif",  # Zoomable Image File Format
+            ".qptiff",  # PerkinElmer QPTIFF format
+            ".bif",  # Roche BIF format
+            ".avs",  # Argos AVS format
+            ".dp",  # Philips DP format
+            # Digital pathology formats
+            ".svs",  # Aperio SVS format
+            ".ndpi",  # Hamamatsu NDPI format
+            ".scn",  # Leica SCN format
+            # Note: .lsm is already covered by ITK/ITKWasm in COMMON_EXTENSIONS
+        ],
+        "imageio": [
+            # Video formats (FFMPEG plugin)
+            ".webm",
+            ".mp4",
+            ".avi",
+            ".mov",
+            ".gif",  # Already present
+            ".mkv",
+            ".mpeg",
+            ".mpg",
+            ".wmv",
+            ".flv",
+            ".3gp",
+            ".3g2",
+            ".m4v",
+            ".f4v",
+            ".m2ts",
+            ".vob",
+            ".ogv",
+            ".dv",
+            ".asf",
+            ".rm",
+            ".rmvb",
+            ".ts",
+            ".mts",
+            ".divx",
+            ".xvid",
+            # Image formats not well-supported by ITK/tifffile
+            ".psd",  # Photoshop Document
+            ".pcx",  # ZSoft Paintbrush
+            ".sgi",  # Silicon Graphics Image
+            ".ras",  # Sun Raster
+            ".xbm",
+            ".xpm",  # X Window System
+            ".dds",  # DirectDraw Surface
+            ".cut",  # Dr. Halo
+            ".exr",  # OpenEXR
+            ".ppm",
+            ".pgm",
+            ".pbm",  # Portable Pixmap formats
+            ".webp",  # WebP format
+            ".icns",  # Apple Icon format
+            ".ico",  # Windows Icon format
+            ".tga",  # Targa format
+            ".pict",  # Macintosh PICT
+            ".pcd",  # Kodak PhotoCD
+            # Camera raw formats (FreeImage plugin)
+            ".3fr",
+            ".arw",
+            ".cr2",
+            ".crw",
+            ".nef",
+            ".orf",
+            ".raf",
+            ".rw2",
+            ".dng",
+            ".raw",
+            ".bay",
+            ".cap",
+            ".dcs",
+            ".dcr",
+            ".drf",
+            ".erf",
+            ".fff",
+            ".iiq",
+            ".k25",
+            ".kdc",
+            ".mdc",
+            ".mef",
+            ".mos",
+            ".mrw",
+            ".nrw",
+            ".pef",
+            ".ptx",
+            ".pxn",
+            ".r3d",
+            ".rwl",
+            ".sr2",
+            ".srf",
+            ".srw",
+            ".x3f",
+        ],
     }
 
     output_formats = [".zarr", ".ome.zarr"]
