@@ -179,31 +179,12 @@ for global or `opencode.json` for project-specific):
 
 ```json
 {
+  "$schema": "https://opencode.ai/config.json",
   "mcp": {
-    "localmcp": {
-      "ngff-zarr": {
-        "type": "stdio",
-        "command": "uvx",
-        "args": ["ngff-zarr-mcp"],
-        "enabled": true
-      }
-    }
-  }
-}
-```
-
-#### Using direct installation
-
-```json
-{
-  "mcp": {
-    "localmcp": {
-      "ngff-zarr": {
-        "type": "stdio",
-        "command": "ngff-zarr-mcp",
-        "args": [],
-        "enabled": true
-      }
+    "ngff-zarr": {
+      "type": "local",
+      "command": ["uvx", "ngff-zarr-mcp"],
+      "enabled": true
     }
   }
 }
@@ -214,16 +195,13 @@ for global or `opencode.json` for project-specific):
 ```json
 {
   "mcp": {
-    "localmcp": {
-      "ngff-zarr": {
-        "type": "stdio",
-        "command": "python",
-        "args": [
-          "-c",
-          "import subprocess; subprocess.run(['pip', 'install', 'ngff-zarr-mcp']); import ngff_zarr_mcp.server; ngff_zarr_mcp.server.main()"
-        ],
-        "enabled": true
-      }
+    "ngff-zarr": {
+      "type": "local",
+      "command": ["python",
+        "-c",
+        "import subprocess; subprocess.run(['pip', 'install', 'ngff-zarr-mcp']); import ngff_zarr_mcp.server; ngff_zarr_mcp.server.main()"
+      ],
+      "enabled": true
     }
   }
 }
