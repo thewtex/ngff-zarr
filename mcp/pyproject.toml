@@ -137,6 +137,23 @@ exclude_lines = [
     "if TYPE_CHECKING:",
 ]
 
+[tool.mypy]
+python_version = "3.13"
+# Basic type checking without being too strict
+warn_return_any = false
+warn_unused_configs = false
+disallow_untyped_defs = false
+check_untyped_defs = false
+# Still check for some basic issues
+show_error_codes = true
+pretty = true
+
+[[tool.mypy.overrides]]
+module = [
+    "numcodecs.*",
+]
+ignore_missing_imports = true
+
 [tool.pixi.project]
 channels = ["conda-forge", "pyconda"]
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]

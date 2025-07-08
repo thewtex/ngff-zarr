@@ -4599,8 +4599,8 @@ packages:
   requires_python: '>=3.9'
 - pypi: ./
   name: ngff-zarr-mcp
-  version: 0.1.2
-  sha256: 9b48fe327ed5ce9ac917a9fd17abd000013b72bf057651d52a627a2905420a12
+  version: 0.2.0
+  sha256: 69f7353cc8ace60d0f1bbeedb5b51d6e71df659ea41a8c5e26ebfb525cb4d5fb
   requires_dist:
   - aiofiles
   - httpx
