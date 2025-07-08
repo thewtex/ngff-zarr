@@ -16,8 +16,10 @@ specification.
 
 This repository contains multiple packages implementing NGFF-Zarr support:
 
-- **[`py/`](./py/)** - Python package (ngff-zarr) - A lean and kind NGFF-Zarr implementation
-- **[`mcp/`](./mcp/)** - Model Context Protocol (MCP) server (ngff-zarr-mcp) for AI integration
+- **[`py/`](./py/)** - Python package (ngff-zarr) - A lean and kind NGFF-Zarr
+  implementation
+- **[`mcp/`](./mcp/)** - Model Context Protocol (MCP) server (ngff-zarr-mcp) for
+  AI integration
 - **TypeScript package** - Coming soon
 
 ## Python Package (`py/`)
@@ -25,6 +27,7 @@ This repository contains multiple packages implementing NGFF-Zarr support:
 The main Python package provides:
 
 ✨ **Features**
+
 - Minimal dependencies
 - Work with arbitrary Zarr store types
 - Lazy, parallel, and web ready -- no local filesystem required
@@ -37,6 +40,7 @@ The main Python package provides:
 - Writes OME-Zarr v0.4 to v0.5
 - [Sharded Zarr] stores
 - Optional writing via [tensorstore]
+- **Model Context Protocol (MCP) server** for AI agent integration
 
 📖 **Documentation**
 
@@ -46,8 +50,9 @@ how to contribute can be found in
 
 ## MCP Server (`mcp/`)
 
-The Model Context Protocol server enables AI assistants like Claude to interact with NGFF-Zarr files.
-See the [MCP documentation](./mcp/README.md) for setup and usage instructions.
+The Model Context Protocol server enables AI assistants like Claude to interact
+with NGFF-Zarr files. See the [MCP documentation](./mcp/README.md) for setup and
+usage instructions.
 
 ## See also
 
