@@ -4,6 +4,9 @@ from typing import List, Optional, Union
 from typing_extensions import Literal
 import re
 
+# Import RFC 4 support
+from ..rfc4 import AnatomicalOrientation
+
 SupportedDims = Union[
     Literal["c"], Literal["x"], Literal["y"], Literal["z"], Literal["t"]
 ]
@@ -138,6 +141,7 @@ class Axis:
     name: SupportedDims
     type: AxesType
     unit: Optional[Units] = None
+    orientation: Optional[AnatomicalOrientation] = None
 
 
 @dataclass

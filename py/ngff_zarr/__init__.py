@@ -36,6 +36,14 @@ from .v04.zarr_metadata import (
     OmeroChannel,
     OmeroWindow,
 )
+from .rfc4 import (
+    AnatomicalOrientation,
+    AnatomicalOrientationValues,
+    itk_lps_to_anatomical_orientation,
+    is_rfc4_enabled,
+    add_anatomical_orientation_to_axis,
+    remove_anatomical_orientation_from_axis,
+)
 
 __all__ = [
     "__version__",
@@ -43,7 +51,6 @@ __all__ = [
     "NgffImage",
     "Multiscales",
     "to_ngff_image",
-    "from_ngff_image",
     "itk_image_to_ngff_image",
     "ngff_image_to_itk_image",
     "memory_usage",
@@ -73,4 +80,11 @@ __all__ = [
     "Omero",
     "OmeroChannel",
     "OmeroWindow",
+    # RFC 4 - Anatomical Orientation
+    "AnatomicalOrientation",
+    "AnatomicalOrientationValues",
+    "itk_lps_to_anatomical_orientation",
+    "is_rfc4_enabled",
+    "add_anatomical_orientation_to_axis",
+    "remove_anatomical_orientation_from_axis",
 ]
