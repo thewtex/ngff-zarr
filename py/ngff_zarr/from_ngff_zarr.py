@@ -35,12 +35,14 @@ def from_ngff_zarr(
     store: StoreLike,
     validate: bool = False,
     version: Optional[str] = None,
+    storage_options: Optional[dict] = None,
 ) -> Multiscales:
     """
     Read an OME-Zarr NGFF Multiscales data structure from a Zarr store.
 
     store : StoreLike
-        Store or path to directory in file system.
+        Store or path to directory in file system. Can be a string URL
+        (e.g., 's3://bucket/path') for remote storage.
 
     validate : bool
         If True, validate the NGFF metadata against the schema.
@@ -48,12 +50,30 @@ def from_ngff_zarr(
     version : string, optional
         OME-Zarr version, if known.
 
+    storage_options : dict, optional
+        Storage options to pass to the store if store is a string URL.
+        For S3 URLs, this can include authentication credentials and other
+        options for the underlying filesystem.
+
     Returns
     -------
 
     multiscales: multiscale ngff image with dask-chunked arrays for data
 
     """
+
+    # Handle string URLs with storage options (zarr-python 3+ only)
+    if isinstance(store, str) and storage_options is not None:
+        if store.startswith(("s3://", "gs://", "azure://", "http://", "https://")):
+            if zarr_version_major >= 3 and hasattr(zarr.storage, "FsspecStore"):
+                store = zarr.storage.FsspecStore.from_url(
+                    store, storage_options=storage_options
+                )
+            else:
+                raise RuntimeError(
+                    "storage_options parameter requires zarr-python 3+ with FsspecStore support. "
+                    f"Current zarr version: {zarr.__version__}"
+                )
 
     format_kwargs = {}
     if version and zarr_version_major >= 3:
