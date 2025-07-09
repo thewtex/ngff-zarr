@@ -28,3 +28,94 @@ with very large datasets!
 The lazy evaluation approach allows ngff-zarr to handle extremely large datasets
 that wouldn't fit in memory, while still providing optimal performance through
 intelligent task graph optimization.
+
+## Network Storage and Authentication
+
+### How do I read from network stores like S3, GCS, or other remote storage?
+
+ngff-zarr can read from any network store that provides a Zarr Python compatible
+interface. This includes stores from
+[fsspec](https://filesystem-spec.readthedocs.io/en/latest/), which supports many
+protocols including S3, Google Cloud Storage, Azure Blob Storage, and more.
+
+You can construct network stores with authentication options and pass them
+directly to ngff-zarr functions.
+
+The following examples require the `fsspec` and `s3fs` packages:
+
+```bash
+pip install fsspec s3fs
+```
+
+```python
+import zarr
+from ngff_zarr import from_ngff_zarr
+
+# S3 example with authentication using FsspecStore
+s3_store = zarr.storage.FsspecStore.from_url(
+    "s3://my-bucket/my-dataset.zarr",
+    storage_options={
+        "key": "your-access-key",
+        "secret": "your-secret-key",
+        "region_name": "us-west-2"
+    }
+)
+
+# Read from the S3 store
+multiscales = from_ngff_zarr(s3_store)
+```
+
+For public datasets, you can omit authentication:
+
+```python
+# Example using OME-Zarr Open Science Vis Datasets
+s3_store = zarr.storage.FsspecStore.from_url(
+    "s3://ome-zarr-scivis/v0.5/96x2/carp.ome.zarr",
+    storage_options={"anon": True}  # Anonymous access for public data
+)
+
+multiscales = from_ngff_zarr(s3_store)
+```
+
+You can also pass S3 URLs directly to ngff-zarr functions, which will create the
+appropriate store automatically:
+
+```python
+# Direct URL access for public datasets
+multiscales = from_ngff_zarr(
+    "s3://ome-zarr-scivis/v0.5/96x2/carp.ome.zarr",
+    storage_options={"anon": True}
+)
+```
+
+For more control over the underlying filesystem, you can use S3FileSystem
+directly:
+
+```python
+import zarr
+from s3fs import S3FileSystem
+
+# Using S3FileSystem with Zarr
+fs = S3FileSystem(
+    key="your-access-key",
+    secret="your-secret-key",
+    region_name="us-west-2"
+)
+store = zarr.storage.FsspecStore(fs=fs, path="my-bucket/my-dataset.zarr")
+
+multiscales = from_ngff_zarr(store)
+```
+
+**Authentication Options:**
+
+In addition to specification of credentials explicitly, [there are other
+options](https://s3fs.readthedocs.io/en/latest/#credentials).
+
+- **Environment variables**: Set `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
+  etc.
+- **IAM roles**: Use EC2 instance profiles or assume roles
+- **Configuration files**: Use `~/.aws/credentials` or similar
+- **Direct parameters**: Pass credentials directly to the store constructor
+
+The same patterns work for other cloud providers (GCS, Azure) by using their
+respective fsspec implementations (e.g., `gcsfs`, `adlfs`).
