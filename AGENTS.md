@@ -1,14 +1,14 @@
 # AGENTS.md - Development Guide for AI Coding Agents
 
 ## Build/Test Commands
-- **Commands use the software development environment should be run with `pixi
-  run`
-- **Main package (py/)**: `pixi run test`
-- **MCP package (mcp/)**: `pixi run test`
+- **All commands use pixi**: `pixi run <command>`
+- **Main package (py/)**: `pixi run test` (uses pytest with test environment)
+- **MCP package (mcp/)**: `cd mcp && pixi run test` (dev environment)
 - **Single test**: `pixi run pytest path/to/test_file.py::test_function_name`
-- **Lint**: `pixi run lint`
-- **Format**: `pixi run format` (MCP only)
-- **Type check**: `pixi run typecheck` (MCP only)
+- **Lint**: `pixi run lint` (runs pre-commit hooks)
+- **Format**: `pixi run format` (MCP only), or `ruff --fix` + `black`
+- **Type check**: `pixi run typecheck` (MCP only, uses mypy)
+- **TypeScript**: `cd ts && pixi run test`, `pixi run lint`, `pixi run fmt`
 
 ## Python Code Style Guidelines
 - **Line length**: 88 characters (Black/Ruff standard)
@@ -27,5 +27,7 @@
 - Use `pathlib.Path` over os.path
 - Pre-commit hooks enforce style automatically
 
-## Typescript Code Style Guidelines
-- Use deno's standard style
+## TypeScript Code Style Guidelines
+- Use Deno's standard style (80 char line width, 2 space indent, semicolons)
+- Strict TypeScript compiler options enabled
+- Use JSR imports (@std/assert) and npm: prefix for npm packages
