@@ -7,7 +7,7 @@ import {
   TranslationSchema,
 } from "../src/schemas/zarr_metadata.ts";
 import { MethodsSchema } from "../src/schemas/methods.ts";
-import { DaskArrayMetadataSchema } from "../src/schemas/dask_array.ts";
+import { LazyArrayMetadataSchema } from "../src/schemas/lazy_array.ts";
 
 Deno.test("AxisSchema validation", () => {
   const validAxis = {
@@ -90,13 +90,15 @@ Deno.test("MetadataSchema validation", () => {
       { name: "y", type: "space" },
       { name: "x", type: "space" },
     ],
-    datasets: [{
-      path: "0",
-      coordinateTransformations: [
-        { type: "scale", scale: [1.0, 1.0] },
-        { type: "translation", translation: [0.0, 0.0] },
-      ],
-    }],
+    datasets: [
+      {
+        path: "0",
+        coordinateTransformations: [
+          { type: "scale", scale: [1.0, 1.0] },
+          { type: "translation", translation: [0.0, 0.0] },
+        ],
+      },
+    ],
     name: "test_image",
     version: "0.4",
   };
@@ -116,21 +118,26 @@ Deno.test("MethodsSchema validation", () => {
   assertThrows(() => MethodsSchema.parse("invalid_method"));
 });
 
-Deno.test("DaskArrayMetadataSchema validation", () => {
+Deno.test("LazyArrayMetadataSchema validation", () => {
   const validMetadata = {
     shape: [256, 256],
     dtype: "uint8",
-    chunks: [[64, 64], [64, 64], [64, 64], [64, 64]],
+    chunks: [
+      [64, 64],
+      [64, 64],
+      [64, 64],
+      [64, 64],
+    ],
     name: "test_array",
   };
 
-  const result = DaskArrayMetadataSchema.parse(validMetadata);
+  const result = LazyArrayMetadataSchema.parse(validMetadata);
   assertEquals(result.shape, [256, 256]);
   assertEquals(result.dtype, "uint8");
   assertEquals(result.name, "test_array");
 });
 
-Deno.test("DaskArrayMetadataSchema validation - negative shape", () => {
+Deno.test("LazyArrayMetadataSchema validation - negative shape", () => {
   const invalidMetadata = {
     shape: [-256, 256],
     dtype: "uint8",
@@ -138,5 +145,5 @@ Deno.test("DaskArrayMetadataSchema validation - negative shape", () => {
     name: "test_array",
   };
 
-  assertThrows(() => DaskArrayMetadataSchema.parse(invalidMetadata));
+  assertThrows(() => LazyArrayMetadataSchema.parse(invalidMetadata));
 });

@@ -1,4 +1,4 @@
-import { DaskArray } from "../types/dask_array.ts";
+import { LazyArray } from "../types/lazy_array.ts";
 import { NgffImage } from "../types/ngff_image.ts";
 import { Multiscales } from "../types/multiscales.ts";
 import type {
@@ -18,9 +18,9 @@ export function createNgffImage(
   dims: string[],
   scale: Record<string, number>,
   translation: Record<string, number>,
-  name = "image",
+  name = "image"
 ): NgffImage {
-  const daskArray = new DaskArray({
+  const lazyArray = new LazyArray({
     shape,
     dtype,
     chunks: [shape],
@@ -28,7 +28,7 @@ export function createNgffImage(
   });
 
   return new NgffImage({
-    data: daskArray,
+    data: lazyArray,
     dims,
     scale,
     translation,
@@ -41,7 +41,7 @@ export function createNgffImage(
 export function createAxis(
   name: SupportedDims,
   type: AxesType,
-  unit?: Units,
+  unit?: Units
 ): Axis {
   return {
     name,
@@ -67,7 +67,7 @@ export function createTranslation(translation: number[]): Translation {
 export function createDataset(
   path: string,
   scale: number[],
-  translation: number[],
+  translation: number[]
 ): Dataset {
   return {
     path,
@@ -82,7 +82,7 @@ export function createMetadata(
   axes: Axis[],
   datasets: Dataset[],
   name = "image",
-  version = "0.4",
+  version = "0.4"
 ): Metadata {
   return {
     axes: [...axes],
@@ -98,7 +98,7 @@ export function createMultiscales(
   images: NgffImage[],
   metadata: Metadata,
   scaleFactors?: (Record<string, number> | number)[],
-  method?: Methods,
+  method?: Methods
 ): Multiscales {
   return new Multiscales({
     images: [...images],

@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { UnitsSchema } from "./units.ts";
-import { DaskArrayMetadataSchema } from "./dask_array.ts";
+import { LazyArrayMetadataSchema } from "./lazy_array.ts";
 
 export const NgffImageOptionsSchema = z.object({
-  data: DaskArrayMetadataSchema,
+  data: LazyArrayMetadataSchema,
   dims: z.array(z.string()),
   scale: z.record(z.string(), z.number()),
   translation: z.record(z.string(), z.number()),

@@ -1,10 +1,10 @@
-import type { DaskArray } from "./dask_array.ts";
+import type { LazyArray } from "./lazy_array.ts";
 import type { Units } from "./units.ts";
 
 export type ComputedCallback = () => void;
 
 export interface NgffImageOptions {
-  data: DaskArray;
+  data: LazyArray;
   dims: string[];
   scale: Record<string, number>;
   translation: Record<string, number>;
@@ -14,7 +14,7 @@ export interface NgffImageOptions {
 }
 
 export class NgffImage {
-  public readonly data: DaskArray;
+  public readonly data: LazyArray;
   public readonly dims: string[];
   public readonly scale: Record<string, number>;
   public readonly translation: Record<string, number>;

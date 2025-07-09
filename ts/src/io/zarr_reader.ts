@@ -2,7 +2,7 @@ import * as zarr from "zarrita";
 import { Multiscales } from "../types/multiscales.ts";
 import { NgffImage } from "../types/ngff_image.ts";
 import type { Metadata } from "../types/zarr_metadata.ts";
-import { DaskArray } from "../types/dask_array.ts";
+import { LazyArray } from "../types/lazy_array.ts";
 import { MetadataSchema } from "../schemas/zarr_metadata.ts";
 
 export interface ZarrReaderOptions {
@@ -18,14 +18,14 @@ export class ZarrReader {
 
   async fromNgffZarr(
     storePath: string,
-    options: ZarrReaderOptions = {},
+    options: ZarrReaderOptions = {}
   ): Promise<Multiscales> {
     const validate = options.validate ?? this.validate;
 
     try {
       const store = new zarr.FetchStore(storePath);
       const root = zarr.root(store);
-      
+
       // Try to use consolidated metadata for better performance
       let consolidatedRoot;
       try {
@@ -33,22 +33,23 @@ export class ZarrReader {
       } catch {
         consolidatedRoot = store;
       }
-      
-      const group = await zarr.open(zarr.root(consolidatedRoot), { kind: "group" });
+
+      const group = await zarr.open(zarr.root(consolidatedRoot), {
+        kind: "group",
+      });
       const attrs = group.attrs as unknown;
 
       if (!attrs || !(attrs as Record<string, unknown>).multiscales) {
         throw new Error("No multiscales metadata found in Zarr store");
       }
 
-      const multiscalesMetadata = (attrs as Record<string, unknown>).multiscales?.[0] as unknown;
+      const multiscalesMetadata = (attrs as Record<string, unknown>)
+        .multiscales?.[0] as unknown;
 
       if (validate) {
         const result = MetadataSchema.safeParse(multiscalesMetadata);
         if (!result.success) {
-          throw new Error(
-            `Invalid OME-Zarr metadata: ${result.error.message}`,
-          );
+          throw new Error(`Invalid OME-Zarr metadata: ${result.error.message}`);
         }
       }
 
@@ -61,7 +62,7 @@ export class ZarrReader {
           kind: "array",
         });
 
-        const daskArray = new DaskArray({
+        const lazyArray = new LazyArray({
           shape: zarrArray.shape,
           dtype: zarrArray.dtype,
           chunks: [zarrArray.chunks],
@@ -96,7 +97,7 @@ export class ZarrReader {
         }, {} as Record<string, string>);
 
         const ngffImage = new NgffImage({
-          data: daskArray,
+          data: lazyArray,
           dims,
           scale,
           translation,
@@ -119,7 +120,7 @@ export class ZarrReader {
       throw new Error(
         `Failed to read OME-Zarr: ${
           error instanceof Error ? error.message : String(error)
-        }`,
+        }`
       );
     }
   }
@@ -127,7 +128,7 @@ export class ZarrReader {
   async readArrayData(
     storePath: string,
     arrayPath: string,
-    selection?: unknown[],
+    selection?: unknown[]
   ): Promise<unknown> {
     try {
       const store = new zarr.FetchStore(storePath);
@@ -145,7 +146,7 @@ export class ZarrReader {
       throw new Error(
         `Failed to read array data: ${
           error instanceof Error ? error.message : String(error)
-        }`,
+        }`
       );
     }
   }

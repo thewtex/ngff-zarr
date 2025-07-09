@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const DaskArrayMetadataSchema = z.object({
+export const LazyArrayMetadataSchema = z.object({
   shape: z.array(z.number().int().nonnegative()),
   dtype: z.string(),
   chunks: z.array(z.array(z.number().int().nonnegative())),

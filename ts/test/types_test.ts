@@ -1,11 +1,11 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { DaskArray } from "../src/types/dask_array.ts";
+import { LazyArray } from "../src/types/lazy_array.ts";
 import { NgffImage } from "../src/types/ngff_image.ts";
 import { Multiscales } from "../src/types/multiscales.ts";
 import { Methods } from "../src/types/methods.ts";
 import { validateColor } from "../src/types/zarr_metadata.ts";
 
-Deno.test("DaskArray creation and properties", () => {
+Deno.test("LazyArray creation and properties", () => {
   const metadata = {
     shape: [256, 256],
     dtype: "uint8",
@@ -13,17 +13,17 @@ Deno.test("DaskArray creation and properties", () => {
     name: "test_array",
   };
 
-  const daskArray = new DaskArray(metadata);
+  const lazyArray = new LazyArray(metadata);
 
-  assertEquals(daskArray.shape, [256, 256]);
-  assertEquals(daskArray.dtype, "uint8");
-  assertEquals(daskArray.ndim, 2);
-  assertEquals(daskArray.size, 65536);
-  assertEquals(daskArray.chunksize, [256, 256]);
-  assertEquals(daskArray.name, "test_array");
+  assertEquals(lazyArray.shape, [256, 256]);
+  assertEquals(lazyArray.dtype, "uint8");
+  assertEquals(lazyArray.ndim, 2);
+  assertEquals(lazyArray.size, 65536);
+  assertEquals(lazyArray.chunksize, [256, 256]);
+  assertEquals(lazyArray.name, "test_array");
 });
 
-Deno.test("DaskArray toString", () => {
+Deno.test("LazyArray toString", () => {
   const metadata = {
     shape: [100, 200],
     dtype: "float32",
@@ -31,17 +31,17 @@ Deno.test("DaskArray toString", () => {
     name: "float_array",
   };
 
-  const daskArray = new DaskArray(metadata);
-  const str = daskArray.toString();
+  const lazyArray = new LazyArray(metadata);
+  const str = lazyArray.toString();
 
   assertEquals(
     str,
-    "dask.array<float_array, shape=(100, 200), dtype=float32, chunksize=(50, 100), chunktype=TypedArray>",
+    "dask.array<float_array, shape=(100, 200), dtype=float32, chunksize=(50, 100), chunktype=TypedArray>"
   );
 });
 
 Deno.test("NgffImage creation", () => {
-  const daskArray = new DaskArray({
+  const lazyArray = new LazyArray({
     shape: [256, 256],
     dtype: "uint8",
     chunks: [[64, 64]],
@@ -49,7 +49,7 @@ Deno.test("NgffImage creation", () => {
   });
 
   const ngffImage = new NgffImage({
-    data: daskArray,
+    data: lazyArray,
     dims: ["y", "x"],
     scale: { y: 1.0, x: 1.0 },
     translation: { y: 0.0, x: 0.0 },
@@ -67,7 +67,7 @@ Deno.test("NgffImage creation", () => {
 });
 
 Deno.test("NgffImage with axes units", () => {
-  const daskArray = new DaskArray({
+  const lazyArray = new LazyArray({
     shape: [100, 100, 100],
     dtype: "uint16",
     chunks: [[50, 50, 50]],
@@ -75,7 +75,7 @@ Deno.test("NgffImage with axes units", () => {
   });
 
   const ngffImage = new NgffImage({
-    data: daskArray,
+    data: lazyArray,
     dims: ["z", "y", "x"],
     scale: { z: 2.5, y: 1.0, x: 1.0 },
     translation: { z: 0.0, y: 0.0, x: 0.0 },
@@ -92,7 +92,7 @@ Deno.test("NgffImage with axes units", () => {
 });
 
 Deno.test("Multiscales creation", () => {
-  const daskArray = new DaskArray({
+  const lazyArray = new LazyArray({
     shape: [256, 256],
     dtype: "uint8",
     chunks: [[64, 64]],
@@ -100,7 +100,7 @@ Deno.test("Multiscales creation", () => {
   });
 
   const ngffImage = new NgffImage({
-    data: daskArray,
+    data: lazyArray,
     dims: ["y", "x"],
     scale: { y: 1.0, x: 1.0 },
     translation: { y: 0.0, x: 0.0 },
@@ -114,13 +114,15 @@ Deno.test("Multiscales creation", () => {
       { name: "y" as const, type: "space" as const, unit: undefined },
       { name: "x" as const, type: "space" as const, unit: undefined },
     ],
-    datasets: [{
-      path: "0",
-      coordinateTransformations: [
-        { type: "scale" as const, scale: [1.0, 1.0] },
-        { type: "translation" as const, translation: [0.0, 0.0] },
-      ],
-    }],
+    datasets: [
+      {
+        path: "0",
+        coordinateTransformations: [
+          { type: "scale" as const, scale: [1.0, 1.0] },
+          { type: "translation" as const, translation: [0.0, 0.0] },
+        ],
+      },
+    ],
     coordinateTransformations: undefined,
     omero: undefined,
     name: "test",
