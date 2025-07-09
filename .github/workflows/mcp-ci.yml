@@ -2,9 +2,9 @@ name: MCP CI
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   test:
@@ -15,27 +15,27 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup pixi
-      uses: prefix-dev/setup-pixi@v0.8.1
-      with:
-        pixi-version: v0.49.0
-        manifest-path: ./mcp/pyproject.toml
-        cache: true
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v0.49.0
+          manifest-path: ./mcp/pyproject.toml
+          cache: true
 
-    - name: Install dependencies
-      working-directory: ./mcp
-      run: pixi install
+      - name: Install dependencies
+        working-directory: ./mcp
+        run: pixi install
 
-    - name: Run linting
-      working-directory: ./mcp
-      run: pixi run -e dev lint
+      - name: Run linting
+        working-directory: ./mcp
+        run: pixi run -e dev lint
 
-    - name: Run type checking
-      working-directory: ./mcp
-      run: pixi run -e dev typecheck
+      - name: Run type checking
+        working-directory: ./mcp
+        run: pixi run -e dev typecheck
 
-    - name: Run tests
-      working-directory: ./mcp
-      run: pixi run -e dev test-cov
+      - name: Run tests
+        working-directory: ./mcp
+        run: pixi run -e dev test-cov

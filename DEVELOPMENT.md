@@ -1,6 +1,7 @@
 # Development Guide
 
-This repository contains multiple packages implementing NGFF-Zarr support across different languages and use cases.
+This repository contains multiple packages implementing NGFF-Zarr support across
+different languages and use cases.
 
 ## Repository Structure
 
@@ -92,4 +93,5 @@ After the migration to `py/`, the following configurations were updated:
 - The main README.md provides an overview of all packages
 - Each package directory contains its own README.md with specific instructions
 - Dependencies and environments are isolated per package using pixi
-- The documentation is built from the Python package but hosted at the repository level
+- The documentation is built from the Python package but hosted at the
+  repository level
