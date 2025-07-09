@@ -37,6 +37,7 @@ cli.md
 mcp.md
 itk.md
 methods.md
+faq.md
 development.md
 ```
 
