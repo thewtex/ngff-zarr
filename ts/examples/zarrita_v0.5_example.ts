@@ -11,7 +11,7 @@
 import * as zarr from "zarrita";
 
 // Example 1: Basic usage with improved API
-async function basicExample() {
+async function _basicExample() {
   console.log("=== Basic zarrita v0.5.2 Example ===");
   
   // Create a Location using zarr.root()
@@ -33,7 +33,7 @@ async function basicExample() {
 }
 
 // Example 2: Using consolidated metadata for better performance
-async function consolidatedExample() {
+async function _consolidatedExample() {
   console.log("\n=== Consolidated Metadata Example ===");
   
   const store = new zarr.FetchStore("https://example.com/data.zarr");
@@ -44,23 +44,23 @@ async function consolidatedExample() {
     const root = zarr.root(consolidatedStore);
     
     // These operations won't require additional metadata requests
-    const group = await zarr.open(root, { kind: "group" });
+    const _group = await zarr.open(root, { kind: "group" });
     console.log("Successfully opened with consolidated metadata");
     
     // List known contents without network requests
     if ('contents' in consolidatedStore) {
-      const contents = (consolidatedStore as any).contents();
+      const contents = (consolidatedStore as { contents: () => unknown }).contents();
       console.log("Known contents:", contents);
     }
-  } catch (error) {
+  } catch (_error) {
     console.log("Consolidated metadata not available, falling back to regular store");
     const root = zarr.root(store);
-    const group = await zarr.open(root, { kind: "group" });
+    const _group = await zarr.open(root, { kind: "group" });
   }
 }
 
 // Example 3: Version-specific opening
-async function versionSpecificExample() {
+async function _versionSpecificExample() {
   console.log("\n=== Version-Specific Opening Example ===");
   
   const store = new zarr.FetchStore("https://example.com/data.zarr");
@@ -68,23 +68,23 @@ async function versionSpecificExample() {
   
   try {
     // Explicitly open as Zarr v2
-    const v2Array = await zarr.open.v2(root, { kind: "array" });
+    const _v2Array = await zarr.open.v2(root, { kind: "array" });
     console.log("Opened as Zarr v2 array");
-  } catch (error) {
+  } catch (_error) {
     console.log("Not a Zarr v2 array");
   }
   
   try {
     // Explicitly open as Zarr v3
-    const v3Array = await zarr.open.v3(root, { kind: "array" });
+    const _v3Array = await zarr.open.v3(root, { kind: "array" });
     console.log("Opened as Zarr v3 array");
-  } catch (error) {
+  } catch (_error) {
     console.log("Not a Zarr v3 array");
   }
 }
 
 // Example 4: Type inference and type guards
-async function typeInferenceExample() {
+async function _typeInferenceExample() {
   console.log("\n=== Type Inference Example ===");
   
   const store = new zarr.FetchStore("https://example.com/data.zarr");
@@ -93,13 +93,13 @@ async function typeInferenceExample() {
   
   // Use type guards for better TypeScript support
   if (arr.is("int64")) {
-    const chunk = await arr.getChunk([0, 0]);
+    const _chunk = await arr.getChunk([0, 0]);
     // TypeScript now knows chunk.data is BigInt64Array
     console.log("Working with BigInt64Array data");
   }
   
   if (arr.is("number")) {
-    const chunk = await arr.getChunk([0, 0]);
+    const _chunk = await arr.getChunk([0, 0]);
     // TypeScript knows this is a numeric typed array
     console.log("Working with numeric typed array");
   }
@@ -115,7 +115,7 @@ async function typeInferenceExample() {
 }
 
 // Example 5: Slicing with improved API
-async function slicingExample() {
+async function _slicingExample() {
   console.log("\n=== Slicing Example ===");
   
   const store = new zarr.FetchStore("https://example.com/3d-data.zarr");

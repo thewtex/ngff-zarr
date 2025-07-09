@@ -22,11 +22,11 @@ import * as ngffZarr from "https://deno.land/x/ngff_zarr_ts/mod.ts";
 ### Node.js/npm
 
 ```bash
-npm install @ngff-zarr/ts
+npm install @fideus-labs/ngff-zarr
 ```
 
 ```typescript
-import * as ngffZarr from "@ngff-zarr/ts";
+import * as ngffZarr from "@fideus-labs/ngff-zarr";
 ```
 
 ## Quick Start
@@ -34,7 +34,7 @@ import * as ngffZarr from "@ngff-zarr/ts";
 ### Reading OME-Zarr files
 
 ```typescript
-import { ZarrReader } from "@ngff-zarr/ts";
+import { ZarrReader } from "@fideus-labs/ngff-zarr";
 
 const reader = new ZarrReader({ validate: true });
 const multiscales = await reader.fromNgffZarr("path/to/image.ome.zarr");
@@ -51,7 +51,7 @@ import {
   createMultiscales,
   createNgffImage,
   ZarrWriter,
-} from "@ngff-zarr/ts";
+} from "@fideus-labs/ngff-zarr";
 
 // Create a simple 2D image
 const image = createNgffImage(
@@ -88,7 +88,7 @@ await writer.toNgffZarr("output.ome.zarr", multiscales);
 ### Schema Validation
 
 ```typescript
-import { MetadataSchema, validateMetadata } from "@ngff-zarr/ts";
+import { MetadataSchema, validateMetadata } from "@fideus-labs/ngff-zarr";
 
 const metadata = {
   axes: [

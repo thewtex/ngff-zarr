@@ -1,5 +1,5 @@
 {
-  "name": "@ngff-zarr/ts",
+  "name": "@fideus-labs/ngff-zarr",
   "version": "0.1.0",
   "exports": "./src/mod.ts",
   "tasks": {

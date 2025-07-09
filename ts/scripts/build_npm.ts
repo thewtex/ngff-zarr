@@ -11,7 +11,7 @@ await build({
     deno: true,
   },
   package: {
-    name: "@ngff-zarr/ts",
+    name: "@fideus-labs/ngff-zarr",
     version: "0.1.0",
     description:
       "TypeScript implementation of ngff-zarr for reading and writing OME-Zarr files",
