@@ -25,13 +25,13 @@ export class ZarrReader {
     try {
       const store = new zarr.FetchStore(storePath);
       const group = await zarr.open(store, { kind: "group" });
-      const attrs = group.attrs as any;
+      const attrs = group.attrs as unknown;
 
-      if (!attrs || !attrs.multiscales) {
+      if (!attrs || !(attrs as Record<string, unknown>).multiscales) {
         throw new Error("No multiscales metadata found in Zarr store");
       }
 
-      const multiscalesMetadata = attrs.multiscales[0] as any;
+      const multiscalesMetadata = (attrs as Record<string, unknown>).multiscales?.[0] as unknown;
 
       if (validate) {
         const result = MetadataSchema.safeParse(multiscalesMetadata);
@@ -84,7 +84,7 @@ export class ZarrReader {
             acc[axis.name] = axis.unit;
           }
           return acc;
-        }, {} as Record<string, any>);
+        }, {} as Record<string, string>);
 
         const ngffImage = new NgffImage({
           data: daskArray,
@@ -118,8 +118,8 @@ export class ZarrReader {
   async readArrayData(
     storePath: string,
     arrayPath: string,
-    selection?: any[],
-  ): Promise<any> {
+    selection?: unknown[],
+  ): Promise<unknown> {
     try {
       const store = new zarr.FetchStore(storePath);
       const root = zarr.root(store);
@@ -128,7 +128,7 @@ export class ZarrReader {
       });
 
       if (selection) {
-        return await zarr.get(zarrArray, selection as any);
+        return await zarr.get(zarrArray, selection as unknown);
       } else {
         return await zarr.get(zarrArray);
       }

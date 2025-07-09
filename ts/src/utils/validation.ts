@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z as _z } from "zod";
 import type { Metadata } from "../types/zarr_metadata.ts";
 import { MetadataSchema } from "../schemas/zarr_metadata.ts";
 

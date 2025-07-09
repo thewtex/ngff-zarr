@@ -35,7 +35,7 @@ export class Multiscales {
 
   toString(): string {
     const imagesStr = this.images
-      .map((img, i) => `        ${img.toString().replace(/\n/g, "\n        ")}`)
+      .map((img, _i) => `        ${img.toString().replace(/\n/g, "\n        ")}`)
       .join(",\n");
 
     const metadataStr = JSON.stringify(this.metadata, null, 4)

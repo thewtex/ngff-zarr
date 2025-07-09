@@ -20,13 +20,13 @@ export class ZarrWriter {
     this.useTensorstore = options.useTensorstore ?? false;
   }
 
-  async toNgffZarr(
-    storePath: string,
-    multiscales: Multiscales,
+  toNgffZarr(
+    _storePath: string,
+    _multiscales: Multiscales,
     options: ZarrWriterOptions = {},
   ): Promise<void> {
-    const overwrite = options.overwrite ?? this.overwrite;
-    const version = options.version ?? this.version;
+    const _overwrite = options.overwrite ?? this.overwrite;
+    const _version = options.version ?? this.version;
 
     try {
       // Note: zarrita writing is complex and would need proper store implementation
@@ -44,16 +44,16 @@ export class ZarrWriter {
   }
 
   private async writeImage(
-    group: any,
+    group: unknown,
     image: NgffImage,
     arrayPath: string,
   ): Promise<void> {
     try {
       const chunks = this.getChunksFromImage(image);
 
-      const zarrArray = await zarr.create(group.resolve(arrayPath), {
+      const _zarrArray = await zarr.create((group as { resolve: (path: string) => unknown }).resolve(arrayPath), {
         shape: image.data.shape,
-        data_type: image.data.dtype as any,
+        data_type: image.data.dtype as unknown,
         chunk_shape: chunks,
         fill_value: 0,
       });
@@ -77,11 +77,11 @@ export class ZarrWriter {
     return image.data.shape.map((dim) => Math.min(dim, 1024));
   }
 
-  async writeArrayData(
-    storePath: string,
-    arrayPath: string,
-    data: ArrayLike<number>,
-    selection?: number[][],
+  writeArrayData(
+    _storePath: string,
+    _arrayPath: string,
+    _data: ArrayLike<number>,
+    _selection?: number[][],
   ): Promise<void> {
     try {
       // Note: zarrita doesn't have a direct set method for arrays

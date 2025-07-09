@@ -8,10 +8,11 @@ import type {
   Scale,
   Translation,
 } from "../types/zarr_metadata.ts";
+import type { SupportedDims, AxesType, Units } from "../types/units.ts";
 import type { Methods } from "../types/methods.ts";
 
 export function createNgffImage(
-  data: ArrayBuffer | number[],
+  _data: ArrayBuffer | number[],
   shape: number[],
   dtype: string,
   dims: string[],
@@ -38,14 +39,14 @@ export function createNgffImage(
 }
 
 export function createAxis(
-  name: string,
-  type: "time" | "space" | "channel",
-  unit?: string,
+  name: SupportedDims,
+  type: AxesType,
+  unit?: Units,
 ): Axis {
   return {
-    name: name as any,
+    name,
     type,
-    unit: unit as any || undefined,
+    unit: unit || undefined,
   };
 }
 

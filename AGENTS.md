@@ -26,3 +26,6 @@
 - Import from `.__about__` for version info
 - Use `pathlib.Path` over os.path
 - Pre-commit hooks enforce style automatically
+
+## Typescript Code Style Guidelines
+- Use deno's standard style
