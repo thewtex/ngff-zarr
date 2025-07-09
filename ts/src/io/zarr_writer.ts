@@ -29,10 +29,16 @@ export class ZarrWriter {
     const _version = options.version ?? this.version;
 
     try {
-      // Note: zarrita writing is complex and would need proper store implementation
-      // This is a simplified placeholder
+      // TODO: Implement using zarrita v0.5.2 API
+      // Example implementation would be:
+      // 1. Create a writable store (e.g., FileSystemStore for local files)
+      // 2. Use zarr.root(store) to create a Location
+      // 3. Use zarr.create(root, { attributes: { multiscales: [...] } }) to create group
+      // 4. For each image, use zarr.create(root.resolve(path), { shape, data_type, chunk_shape })
+      // 5. Use zarr.set() to write actual data
+      
       throw new Error(
-        "Writing OME-Zarr files is not yet fully implemented with zarrita",
+        "Writing OME-Zarr files is not yet fully implemented with zarrita v0.5.2",
       );
     } catch (error) {
       throw new Error(
@@ -51,6 +57,12 @@ export class ZarrWriter {
     try {
       const chunks = this.getChunksFromImage(image);
 
+      // TODO: Update to use zarrita v0.5.2 API properly
+      // The new API would use:
+      // const location = (group as { resolve: (path: string) => Location }).resolve(arrayPath);
+      // const zarrArray = await zarr.create(location, { ... });
+      // Then use zarr.set(zarrArray, data, selection) to write data
+      
       const _zarrArray = await zarr.create((group as { resolve: (path: string) => unknown }).resolve(arrayPath), {
         shape: image.data.shape,
         data_type: image.data.dtype as unknown,
@@ -58,8 +70,8 @@ export class ZarrWriter {
         fill_value: 0,
       });
 
-      // Note: zarrita doesn't have attrs.set, this would need to be implemented differently
-      // For now, we'll skip setting array attributes
+      // Note: With zarrita v0.5.2, attributes can be set during creation
+      // or updated using the store's set method for metadata files
     } catch (error) {
       throw new Error(
         `Failed to write image array: ${

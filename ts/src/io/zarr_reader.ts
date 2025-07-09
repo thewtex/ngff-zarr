@@ -24,7 +24,17 @@ export class ZarrReader {
 
     try {
       const store = new zarr.FetchStore(storePath);
-      const group = await zarr.open(store, { kind: "group" });
+      const root = zarr.root(store);
+      
+      // Try to use consolidated metadata for better performance
+      let consolidatedRoot;
+      try {
+        consolidatedRoot = await zarr.tryWithConsolidated(store);
+      } catch {
+        consolidatedRoot = store;
+      }
+      
+      const group = await zarr.open(zarr.root(consolidatedRoot), { kind: "group" });
       const attrs = group.attrs as unknown;
 
       if (!attrs || !(attrs as Record<string, unknown>).multiscales) {
@@ -47,7 +57,6 @@ export class ZarrReader {
 
       for (const dataset of metadata.datasets) {
         const arrayPath = dataset.path;
-        const root = zarr.root(new zarr.FetchStore(storePath));
         const zarrArray = await zarr.open(root.resolve(arrayPath), {
           kind: "array",
         });
