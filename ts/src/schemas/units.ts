@@ -1,0 +1,75 @@
+import { z } from "zod";
+import { spaceUnits, supportedDims, timeUnits, type SupportedDims, type Units } from "../types/units.ts";
+
+export const SupportedDimsSchema = z.enum(["c", "x", "y", "z", "t"]);
+
+export const SpatialDimsSchema = z.enum(["x", "y", "z"]);
+
+export const AxesTypeSchema = z.enum(["time", "space", "channel"]);
+
+export const SpaceUnitsSchema = z.enum([
+  "angstrom",
+  "attometer",
+  "centimeter",
+  "decimeter",
+  "exameter",
+  "femtometer",
+  "foot",
+  "gigameter",
+  "hectometer",
+  "inch",
+  "kilometer",
+  "megameter",
+  "meter",
+  "micrometer",
+  "mile",
+  "millimeter",
+  "nanometer",
+  "parsec",
+  "petameter",
+  "picometer",
+  "terameter",
+  "yard",
+  "yoctometer",
+  "yottameter",
+  "zeptometer",
+  "zettameter",
+]);
+
+export const TimeUnitsSchema = z.enum([
+  "attosecond",
+  "centisecond",
+  "day",
+  "decisecond",
+  "exasecond",
+  "femtosecond",
+  "gigasecond",
+  "hectosecond",
+  "hour",
+  "kilosecond",
+  "megasecond",
+  "microsecond",
+  "millisecond",
+  "minute",
+  "nanosecond",
+  "petasecond",
+  "picosecond",
+  "second",
+  "terasecond",
+  "yoctosecond",
+  "yottasecond",
+  "zeptosecond",
+  "zettasecond",
+]);
+
+export const UnitsSchema = z.union([SpaceUnitsSchema, TimeUnitsSchema]);
+
+export const dimensionValidator = z.string().refine(
+  (dim): dim is SupportedDims => supportedDims.includes(dim as SupportedDims),
+  { message: "Dimension must be one of: c, x, y, z, t" },
+);
+
+export const unitValidator = z.string().refine(
+  (unit): unit is Units => [...timeUnits, ...spaceUnits].includes(unit as Units),
+  { message: "Unit must be a valid time or space unit" },
+);
