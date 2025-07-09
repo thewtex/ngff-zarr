@@ -50,7 +50,7 @@ ngff-zarr -i image.nii.gz -o output.ome.zarr
 
 When converting ITK images (including from NRRD, NIfTI, or DICOM formats),
 anatomical orientation is automatically added based on ITK's LPS coordinate
-system:
+system (see the sections `Anatomical Orientation Values`  and `ITK LPS Coordinate System` below for an explanation):
 
 ```python
 import ngff_zarr
