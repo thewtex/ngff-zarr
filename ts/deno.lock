@@ -63,6 +63,7 @@
   },
   "workspace": {
     "dependencies": [
+      "jsr:@deno/dnt@~0.41.3",
       "jsr:@std/assert@1",
       "jsr:@std/cli@^1.0.20",
       "npm:zarrita@~0.5.2",

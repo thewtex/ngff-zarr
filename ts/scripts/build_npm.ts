@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run --allow-all
 
-import { build, emptyDir } from "https://deno.land/x/dnt@0.40.0/mod.ts";
+import { build, emptyDir } from "dnt";
 
 await emptyDir("./npm");
 
@@ -43,13 +43,7 @@ await build({
         types: "./esm/mod.d.ts",
       },
     },
-    files: [
-      "esm/",
-      "script/",
-      "types/",
-      "README.md",
-      "LICENSE",
-    ],
+    files: ["esm/", "script/", "types/", "README.md", "LICENSE"],
   },
   postBuild() {
     Deno.copyFileSync("../README.md", "npm/README.md");

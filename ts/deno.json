@@ -14,6 +14,7 @@
   "imports": {
     "@std/assert": "jsr:@std/assert@^1.0.0",
     "@std/cli": "jsr:@std/cli@^1.0.20",
+    "dnt": "jsr:@deno/dnt@^0.41.3",
     "zod": "npm:zod@^4.0.2",
     "zarrita": "npm:zarrita@^0.5.2"
   },
