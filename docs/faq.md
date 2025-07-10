@@ -1,4 +1,4 @@
-# Frequently Asked Questions (FAQ)
+# 🤔 Frequently Asked Questions (FAQ)
 
 ## Performance and Memory
 
