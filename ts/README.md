@@ -1,6 +1,6 @@
 # ngff-zarr TypeScript
 
-A TypeScript implementation of ngff-zarr for reading and writing OME-Zarr files, compatible with both Deno and Node.js.
+A TypeScript implementation of ngff-zarr for reading and writing OME-Zarr files, compatible with Deno, Node.js, and the browser.
 
 ## Features
 
@@ -16,7 +16,7 @@ A TypeScript implementation of ngff-zarr for reading and writing OME-Zarr files,
 ### Deno
 
 ```typescript
-import * as ngffZarr from "https://deno.land/x/ngff_zarr_ts/mod.ts";
+import * as ngffZarr from "@fideus-labs/ngff-zarr";
 ```
 
 ### Node.js/npm
@@ -34,9 +34,9 @@ import * as ngffZarr from "@fideus-labs/ngff-zarr";
 ### Reading OME-Zarr files
 
 ```typescript
-import { ZarrReader } from "@fideus-labs/ngff-zarr";
+import { OMEZarrReader } from "@fideus-labs/ngff-zarr";
 
-const reader = new ZarrReader({ validate: true });
+const reader = new OMEZarrReader({ validate: true });
 const multiscales = await reader.fromNgffZarr("path/to/image.ome.zarr");
 
 console.log(`Loaded ${multiscales.images.length} scale levels`);
@@ -50,7 +50,7 @@ import {
   createMetadata,
   createMultiscales,
   createNgffImage,
-  ZarrWriter,
+  OMEZarrWriter,
 } from "@fideus-labs/ngff-zarr";
 
 // Create a simple 2D image
@@ -81,7 +81,7 @@ const metadata = createMetadata(axes, datasets);
 const multiscales = createMultiscales([image], metadata);
 
 // Write to OME-Zarr
-const writer = new ZarrWriter();
+const writer = new OMEZarrWriter();
 await writer.toNgffZarr("output.ome.zarr", multiscales);
 ```
 
@@ -124,8 +124,8 @@ const validatedMetadata2 = validateMetadata(metadata);
 
 ### I/O Classes
 
-- `ZarrReader`: Read OME-Zarr files using zarrita
-- `ZarrWriter`: Write OME-Zarr files using zarrita
+- `OMEZarrReader`: Read OME-Zarr files using zarrita
+- `OMEZarrWriter`: Write OME-Zarr files using zarrita
 
 ### Validation
 

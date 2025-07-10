@@ -6,20 +6,20 @@ import { LazyArray } from "../types/lazy_array.ts";
 import { MetadataSchema } from "../schemas/zarr_metadata.ts";
 import type { Units } from "../types/units.ts";
 
-export interface ZarrReaderOptions {
+export interface OMEZarrReaderOptions {
   validate?: boolean;
 }
 
-export class ZarrReader {
+export class OMEZarrReader {
   private validate: boolean;
 
-  constructor(options: ZarrReaderOptions = {}) {
+  constructor(options: OMEZarrReaderOptions = {}) {
     this.validate = options.validate ?? false;
   }
 
   async fromNgffZarr(
     storePath: string,
-    options: ZarrReaderOptions = {},
+    options: OMEZarrReaderOptions = {}
   ): Promise<Multiscales> {
     const validate = options.validate ?? this.validate;
 
@@ -125,7 +125,7 @@ export class ZarrReader {
       throw new Error(
         `Failed to read OME-Zarr: ${
           error instanceof Error ? error.message : String(error)
-        }`,
+        }`
       );
     }
   }
@@ -133,7 +133,7 @@ export class ZarrReader {
   async readArrayData(
     storePath: string,
     arrayPath: string,
-    selection?: (number | null)[],
+    selection?: (number | null)[]
   ): Promise<unknown> {
     try {
       const store = new zarr.FetchStore(storePath);
@@ -151,7 +151,7 @@ export class ZarrReader {
       throw new Error(
         `Failed to read array data: ${
           error instanceof Error ? error.message : String(error)
-        }`,
+        }`
       );
     }
   }
