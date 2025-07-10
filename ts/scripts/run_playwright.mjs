@@ -62,6 +62,16 @@ async function main() {
       },
     );
 
+    // Handle server process termination
+    serverProcess.on("exit", (code, signal) => {
+      if (code !== null && code !== 0) {
+        console.error(`[Server] Server process exited with code ${code}`);
+      }
+      if (signal) {
+        console.log(`[Server] Server process terminated by signal ${signal}`);
+      }
+    });
+
     // Log server output for debugging
     serverProcess.stdout.on("data", (data) => {
       console.log(`[Server] ${data.toString().trim()}`);
@@ -95,6 +105,8 @@ async function main() {
 
           if (response.statusCode === 200) {
             console.log("✅ Test server is ready!");
+            // Wait a bit longer to ensure server is fully stable
+            await new Promise((resolve) => setTimeout(resolve, 2000));
             return true;
           }
         } catch (_error) {
