@@ -36,7 +36,7 @@ Deno.test("LazyArray toString", () => {
 
   assertEquals(
     str,
-    "dask.array<float_array, shape=(100, 200), dtype=float32, chunksize=(50, 100), chunktype=TypedArray>"
+    "dask.array<float_array, shape=(100, 200), dtype=float32, chunksize=(50, 100), chunktype=TypedArray>",
   );
 });
 

@@ -4,6 +4,7 @@ import { NgffImage } from "../types/ngff_image.ts";
 import type { Metadata } from "../types/zarr_metadata.ts";
 import { LazyArray } from "../types/lazy_array.ts";
 import { MetadataSchema } from "../schemas/zarr_metadata.ts";
+import type { Units } from "../types/units.ts";
 
 export interface ZarrReaderOptions {
   validate?: boolean;
@@ -18,7 +19,7 @@ export class ZarrReader {
 
   async fromNgffZarr(
     storePath: string,
-    options: ZarrReaderOptions = {}
+    options: ZarrReaderOptions = {},
   ): Promise<Multiscales> {
     const validate = options.validate ?? this.validate;
 
@@ -43,8 +44,12 @@ export class ZarrReader {
         throw new Error("No multiscales metadata found in Zarr store");
       }
 
-      const multiscalesMetadata = (attrs as Record<string, unknown>)
-        .multiscales?.[0] as unknown;
+      const multiscalesArray = (attrs as Record<string, unknown>)
+        .multiscales as unknown[];
+      if (!Array.isArray(multiscalesArray) || multiscalesArray.length === 0) {
+        throw new Error("No multiscales metadata found in Zarr store");
+      }
+      const multiscalesMetadata = multiscalesArray[0] as unknown;
 
       if (validate) {
         const result = MetadataSchema.safeParse(multiscalesMetadata);
@@ -53,7 +58,7 @@ export class ZarrReader {
         }
       }
 
-      const metadata: Metadata = multiscalesMetadata;
+      const metadata = multiscalesMetadata as Metadata;
       const images: NgffImage[] = [];
 
       for (const dataset of metadata.datasets) {
@@ -94,7 +99,7 @@ export class ZarrReader {
             acc[axis.name] = axis.unit;
           }
           return acc;
-        }, {} as Record<string, string>);
+        }, {} as Record<string, Units>);
 
         const ngffImage = new NgffImage({
           data: lazyArray,
@@ -120,7 +125,7 @@ export class ZarrReader {
       throw new Error(
         `Failed to read OME-Zarr: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }
@@ -128,7 +133,7 @@ export class ZarrReader {
   async readArrayData(
     storePath: string,
     arrayPath: string,
-    selection?: unknown[]
+    selection?: (number | null)[],
   ): Promise<unknown> {
     try {
       const store = new zarr.FetchStore(storePath);
@@ -138,7 +143,7 @@ export class ZarrReader {
       });
 
       if (selection) {
-        return await zarr.get(zarrArray, selection as unknown);
+        return await zarr.get(zarrArray, selection);
       } else {
         return await zarr.get(zarrArray);
       }
@@ -146,7 +151,7 @@ export class ZarrReader {
       throw new Error(
         `Failed to read array data: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }

@@ -1,5 +1,11 @@
 import { z } from "zod";
-import { spaceUnits, supportedDims, timeUnits, type SupportedDims, type Units } from "../types/units.ts";
+import {
+  spaceUnits,
+  type SupportedDims,
+  supportedDims,
+  timeUnits,
+  type Units,
+} from "../types/units.ts";
 
 export const SupportedDimsSchema = z.enum(["c", "x", "y", "z", "t"]);
 
@@ -70,6 +76,7 @@ export const dimensionValidator = z.string().refine(
 );
 
 export const unitValidator = z.string().refine(
-  (unit): unit is Units => [...timeUnits, ...spaceUnits].includes(unit as Units),
+  (unit): unit is Units =>
+    [...timeUnits, ...spaceUnits].includes(unit as Units),
   { message: "Unit must be a valid time or space unit" },
 );

@@ -8,7 +8,7 @@ import type {
   Scale,
   Translation,
 } from "../types/zarr_metadata.ts";
-import type { SupportedDims, AxesType, Units } from "../types/units.ts";
+import type { AxesType, SupportedDims, Units } from "../types/units.ts";
 import type { Methods } from "../types/methods.ts";
 
 export function createNgffImage(
@@ -18,7 +18,7 @@ export function createNgffImage(
   dims: string[],
   scale: Record<string, number>,
   translation: Record<string, number>,
-  name = "image"
+  name = "image",
 ): NgffImage {
   const lazyArray = new LazyArray({
     shape,
@@ -41,7 +41,7 @@ export function createNgffImage(
 export function createAxis(
   name: SupportedDims,
   type: AxesType,
-  unit?: Units
+  unit?: Units,
 ): Axis {
   return {
     name,
@@ -67,7 +67,7 @@ export function createTranslation(translation: number[]): Translation {
 export function createDataset(
   path: string,
   scale: number[],
-  translation: number[]
+  translation: number[],
 ): Dataset {
   return {
     path,
@@ -82,7 +82,7 @@ export function createMetadata(
   axes: Axis[],
   datasets: Dataset[],
   name = "image",
-  version = "0.4"
+  version = "0.4",
 ): Metadata {
   return {
     axes: [...axes],
@@ -98,7 +98,7 @@ export function createMultiscales(
   images: NgffImage[],
   metadata: Metadata,
   scaleFactors?: (Record<string, number> | number)[],
-  method?: Methods
+  method?: Methods,
 ): Multiscales {
   return new Multiscales({
     images: [...images],
