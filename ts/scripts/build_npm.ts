@@ -10,6 +10,8 @@ await build({
   shims: {
     deno: true,
   },
+  test: false,
+  typeCheck: false,
   package: {
     name: "@fideus-labs/ngff-zarr",
     version: "0.1.0",
@@ -44,23 +46,17 @@ await build({
       },
     },
     files: ["esm/", "script/", "types/", "README.md", "LICENSE"],
+    dependencies: {
+      zod: "^4.0.2",
+      zarrita: "^0.5.2",
+    },
   },
   postBuild() {
     Deno.copyFileSync("../README.md", "npm/README.md");
     Deno.copyFileSync("../LICENSE.txt", "npm/LICENSE");
   },
-  mappings: {
-    "https://deno.land/std@0.208.0/assert/mod.ts": {
-      name: "@types/node",
-      version: "^20.0.0",
-      peerDependency: true,
-    },
-  },
   compilerOptions: {
     lib: ["ES2022", "DOM"],
     target: "ES2022",
-  },
-  filterDiagnostic(diagnostic) {
-    return !diagnostic.messageText?.toString().includes("@std/assert");
   },
 });

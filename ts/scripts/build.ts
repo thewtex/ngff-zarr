@@ -70,7 +70,7 @@ async function main() {
     },
     {
       condition: args.test || args.target === "all" || args.target === "test",
-      cmd: ["deno", "test", "--allow-all"],
+      cmd: ["deno", "test", "--allow-all", "--ignore=test/browser-npm/"],
       description: "Running tests",
     },
     {

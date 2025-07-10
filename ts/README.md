@@ -179,11 +179,51 @@ deno check src/mod.ts
 # Build npm package
 pixi run build-npm
 # or
-deno run --allow-all scripts/build_npm.ts
+deno task build:npm
 
-# Run all checks
-deno run --allow-all scripts/build.ts
+# Browser testing with Playwright
+pixi run test-browser
+# or
+deno task test:browser
+
+# Browser testing with UI
+deno task test:browser:ui
+
+# Run all tests (including browser tests)
+deno task test:all
 ```
+
+### Browser Testing
+
+This project includes comprehensive browser testing using Playwright. The browser tests verify that the npm-transpiled package works correctly in real browser environments.
+
+**Features:**
+
+- Multi-browser testing (Chrome, Firefox, Safari, Mobile)
+- NPM package validation in browser context
+- Import resolution testing for dependencies
+- Schema validation in browser environment
+
+**Quick Start:**
+
+```bash
+# Build npm package and run browser tests
+deno task test:browser:npm
+
+# Run browser tests with interactive UI
+deno task test:browser:ui
+
+# Debug browser tests
+deno task test:browser:debug
+```
+
+**Test Files:**
+
+- `/test/browser-npm/` - Browser test files and configuration
+- `/test/browser/server.ts` - Test server for serving assets
+- `/scripts/run_playwright.mjs` - Node.js wrapper for Playwright execution
+
+See [test/browser/README.md](test/browser/README.md) for detailed browser testing documentation.
 
 ### Project Structure
 
