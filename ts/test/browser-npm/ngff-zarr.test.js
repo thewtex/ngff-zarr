@@ -40,22 +40,20 @@ test.describe("NGFF Zarr NPM Package Tests", () => {
       try {
         const { MetadataSchema } = await import("./npm/esm/mod.js");
 
-        // Test valid metadata
+        // Test valid NGFF metadata
         const validMetadata = {
-          zarr_format: 2,
-          shape: [1000, 1000],
-          chunks: [100, 100],
-          dtype: "float64",
-          compressor: {
-            id: "blosc",
-            cname: "lz4",
-            clevel: 5,
-            shuffle: 1,
-            blocksize: 0,
-          },
-          fill_value: 0.0,
-          order: "C",
-          filters: null,
+          axes: [
+            { name: "y", type: "space", unit: "micrometer" },
+            { name: "x", type: "space", unit: "micrometer" },
+          ],
+          datasets: [
+            {
+              path: "0",
+              coordinateTransformations: [{ type: "scale", scale: [1.0, 1.0] }],
+            },
+          ],
+          name: "test-image",
+          version: "0.4",
         };
 
         const result = MetadataSchema.safeParse(validMetadata);
@@ -124,30 +122,48 @@ test.describe("NGFF Zarr NPM Package Tests", () => {
   test("should handle multiscale validation", async ({ page }) => {
     const multiscaleResult = await page.evaluate(async () => {
       try {
-        const { MultiscalesSchema } = await import("./npm/esm/mod.js");
+        const { MultiscalesOptionsSchema } = await import("./npm/esm/mod.js");
 
-        const validMultiscales = {
-          version: "0.4",
-          name: "test-image",
-          type: "image",
-          axes: [
-            { name: "y", type: "space", unit: "micrometer" },
-            { name: "x", type: "space", unit: "micrometer" },
-          ],
-          datasets: [
+        const validMultiscaleOptions = {
+          images: [
             {
-              path: "0",
-              coordinateTransformations: [
-                {
-                  type: "scale",
-                  scale: [1.0, 1.0],
-                },
-              ],
+              data: {
+                shape: [1000, 1000],
+                dtype: "float64",
+                chunks: [[100, 100]],
+                name: "test-image",
+              },
+              dims: ["y", "x"],
+              scale: { y: 1.0, x: 1.0 },
+              translation: { y: 0.0, x: 0.0 },
+              name: "test-image",
+              axesUnits: { y: "micrometer", x: "micrometer" },
             },
           ],
+          metadata: {
+            axes: [
+              { name: "y", type: "space", unit: "micrometer" },
+              { name: "x", type: "space", unit: "micrometer" },
+            ],
+            datasets: [
+              {
+                path: "0",
+                coordinateTransformations: [
+                  {
+                    type: "scale",
+                    scale: [1.0, 1.0],
+                  },
+                ],
+              },
+            ],
+            name: "test-image",
+            version: "0.4",
+          },
         };
 
-        const result = MultiscalesSchema.safeParse([validMultiscales]);
+        const result = MultiscalesOptionsSchema.safeParse(
+          validMultiscaleOptions,
+        );
         return {
           success: result.success,
           data: result.success ? result.data : undefined,

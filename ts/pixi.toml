@@ -11,7 +11,7 @@ deno = "*"
 
 [tasks]
 dev = "deno run --allow-all src/mod.ts"
-test = "deno test --allow-all"
+test = "deno test --allow-all --ignore=test/browser-npm/"
 lint = "deno lint"
 fmt = "deno fmt"
 check = "deno check src/mod.ts"
@@ -27,7 +27,22 @@ cmd = "deno lint"
 cmd = "deno check src/mod.ts"
 
 [tasks.test-watch]
-cmd = "deno test --allow-all --watch"
+cmd = "deno test --allow-all --ignore=test/browser-npm/ --watch"
 
 [tasks.build-npm]
 cmd = "deno run --allow-all scripts/build_npm.ts"
+
+[tasks.test-browser]
+cmd = "node scripts/run_playwright.mjs"
+
+[tasks.test-browser-ui]
+cmd = "node scripts/run_playwright.mjs --ui"
+
+[tasks.test-browser-npm]
+cmd = "deno run --allow-all scripts/build_npm.ts && node scripts/run_playwright.mjs"
+
+[tasks.test-all]
+cmd = "deno test --allow-all --ignore=test/browser-npm/ && deno run --allow-all scripts/build_npm.ts && node scripts/run_playwright.mjs"
+
+[tasks.test-deno]
+cmd = "which deno && deno --version"

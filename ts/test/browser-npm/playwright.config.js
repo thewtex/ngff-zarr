@@ -66,14 +66,13 @@ const config = {
       },
     },
   ],
-
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: "deno run --allow-all ../../test/browser/server.ts",
-    url: "http://localhost:3000",
-    reuseExistingServer: true,
-    timeout: 120000,
-  },
+  // webServer: {
+  //   command: "cd ../.. && deno run --allow-all test/browser/server.ts",
+  //   url: "http://localhost:3000",
+  //   reuseExistingServer: true,
+  //   timeout: 120000,
+  // },
 };
 
 export default config;
