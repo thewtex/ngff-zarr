@@ -23,7 +23,7 @@ export class OMEZarrWriter {
   toNgffZarr(
     _storePath: string,
     _multiscales: Multiscales,
-    options: OMEZarrWriterOptions = {}
+    options: OMEZarrWriterOptions = {},
   ): Promise<void> {
     const _overwrite = options.overwrite ?? this.overwrite;
     const _version = options.version ?? this.version;
@@ -38,13 +38,13 @@ export class OMEZarrWriter {
       // 5. Use zarr.set() to write actual data
 
       throw new Error(
-        "Writing OME-Zarr files is not yet fully implemented with zarrita v0.5.2"
+        "Writing OME-Zarr files is not yet fully implemented with zarrita v0.5.2",
       );
     } catch (error) {
       throw new Error(
         `Failed to write OME-Zarr: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }
@@ -52,7 +52,7 @@ export class OMEZarrWriter {
   private async writeImage(
     group: unknown,
     image: NgffImage,
-    arrayPath: string
+    arrayPath: string,
   ): Promise<void> {
     try {
       const chunks = this.getChunksFromImage(image);
@@ -80,7 +80,7 @@ export class OMEZarrWriter {
       throw new Error(
         `Failed to write image array: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }
@@ -97,7 +97,7 @@ export class OMEZarrWriter {
     _storePath: string,
     _arrayPath: string,
     _data: ArrayLike<number>,
-    _selection?: number[][]
+    _selection?: number[][],
   ): Promise<void> {
     try {
       // Note: zarrita doesn't have a direct set method for arrays
@@ -107,7 +107,7 @@ export class OMEZarrWriter {
       throw new Error(
         `Failed to write array data: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }

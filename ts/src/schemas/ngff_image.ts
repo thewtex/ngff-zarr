@@ -9,5 +9,5 @@ export const NgffImageOptionsSchema = z.object({
   translation: z.record(z.string(), z.number()),
   name: z.string().default("image"),
   axesUnits: z.record(z.string(), UnitsSchema).optional(),
-  computedCallbacks: z.array(z.function()).default([]),
+  computedCallbacks: z.array(z.any()).default([]),
 });

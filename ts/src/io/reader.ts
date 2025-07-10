@@ -19,7 +19,7 @@ export class OMEZarrReader {
 
   async fromNgffZarr(
     storePath: string,
-    options: OMEZarrReaderOptions = {}
+    options: OMEZarrReaderOptions = {},
   ): Promise<Multiscales> {
     const validate = options.validate ?? this.validate;
 
@@ -125,7 +125,7 @@ export class OMEZarrReader {
       throw new Error(
         `Failed to read OME-Zarr: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }
@@ -133,7 +133,7 @@ export class OMEZarrReader {
   async readArrayData(
     storePath: string,
     arrayPath: string,
-    selection?: (number | null)[]
+    selection?: (number | null)[],
   ): Promise<unknown> {
     try {
       const store = new zarr.FetchStore(storePath);
@@ -151,7 +151,7 @@ export class OMEZarrReader {
       throw new Error(
         `Failed to read array data: ${
           error instanceof Error ? error.message : String(error)
-        }`
+        }`,
       );
     }
   }
