@@ -2,7 +2,9 @@
   "version": "5",
   "specifiers": {
     "jsr:@std/assert@1": "1.0.13",
+    "jsr:@std/cli@^1.0.20": "1.0.20",
     "jsr:@std/internal@^1.0.6": "1.0.8",
+    "npm:zarrita@~0.5.2": "0.5.2",
     "npm:zod@^3.25.0": "3.25.67"
   },
   "jsr": {
@@ -12,11 +14,49 @@
         "jsr:@std/internal"
       ]
     },
+    "@std/cli@1.0.20": {
+      "integrity": "a8c384a2c98cec6ec6a2055c273a916e2772485eb784af0db004c5ab8ba52333"
+    },
     "@std/internal@1.0.8": {
       "integrity": "fc66e846d8d38a47cffd274d80d2ca3f0de71040f855783724bb6b87f60891f5"
     }
   },
   "npm": {
+    "@zarrita/storage@0.1.1": {
+      "integrity": "sha512-6/NUCvpzsIxfxeMv59jRTl/bOZg3GZfMP6iR8EIqrTaaE0S2jLL/ceX1OxcFBKnuA8/Z2YmgX4SFBHwFGrCcsw==",
+      "dependencies": [
+        "reference-spec-reader",
+        "unzipit"
+      ]
+    },
+    "fflate@0.8.2": {
+      "integrity": "sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A=="
+    },
+    "numcodecs@0.3.2": {
+      "integrity": "sha512-6YSPnmZgg0P87jnNhi3s+FVLOcIn3y+1CTIgUulA3IdASzK9fJM87sUFkpyA+be9GibGRaST2wCgkD+6U+fWKw==",
+      "dependencies": [
+        "fflate"
+      ]
+    },
+    "reference-spec-reader@0.2.0": {
+      "integrity": "sha512-q0mfCi5yZSSHXpCyxjgQeaORq3tvDsxDyzaadA/5+AbAUwRyRuuTh0aRQuE/vAOt/qzzxidJ5iDeu1cLHaNBlQ=="
+    },
+    "unzipit@1.4.3": {
+      "integrity": "sha512-gsq2PdJIWWGhx5kcdWStvNWit9FVdTewm4SEG7gFskWs+XCVaULt9+BwuoBtJiRE8eo3L1IPAOrbByNLtLtIlg==",
+      "dependencies": [
+        "uzip-module"
+      ]
+    },
+    "uzip-module@1.0.3": {
+      "integrity": "sha512-AMqwWZaknLM77G+VPYNZLEruMGWGzyigPK3/Whg99B3S6vGHuqsyl5ZrOv1UUF3paGK1U6PM0cnayioaryg/fA=="
+    },
+    "zarrita@0.5.2": {
+      "integrity": "sha512-BN/miFnvBuVqLLObrI08crkbyi+Oc/HWZpgCmWusrWUNIauIV9vR5zlvpSAnhOjZwjomEKFb728K7ax7FiDgJQ==",
+      "dependencies": [
+        "@zarrita/storage",
+        "numcodecs"
+      ]
+    },
     "zod@3.25.67": {
       "integrity": "sha512-idA2YXwpCdqUSKRCACDE6ItZD9TZzy3OZMtpfLoh6oPR47lipysRrJfjzMqFxQ3uJuUPyUeWe1r9vLH33xO/Qw=="
     }
@@ -24,6 +64,7 @@
   "workspace": {
     "dependencies": [
       "jsr:@std/assert@1",
+      "jsr:@std/cli@^1.0.20",
       "npm:zarrita@~0.5.2",
       "npm:zod@^3.25.0"
     ]

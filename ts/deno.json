@@ -13,6 +13,7 @@
   },
   "imports": {
     "@std/assert": "jsr:@std/assert@^1.0.0",
+    "@std/cli": "jsr:@std/cli@^1.0.20",
     "zod": "npm:zod@^3.25.0",
     "zarrita": "npm:zarrita@^0.5.2"
   },

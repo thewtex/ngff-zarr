@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run --allow-all
 
-import { parseArgs } from "https://deno.land/std@0.208.0/cli/parse_args.ts";
+import { parseArgs } from "@std/cli/parse-args";
 
 const args = parseArgs(Deno.args, {
   boolean: ["help", "check", "fmt", "lint", "test"],
@@ -48,9 +48,11 @@ async function runCommand(cmd: string[], description: string) {
 }
 
 async function main() {
-  const tasks: Array<
-    { condition: boolean; cmd: string[]; description: string }
-  > = [
+  const tasks: Array<{
+    condition: boolean;
+    cmd: string[];
+    description: string;
+  }> = [
     {
       condition: args.check || args.target === "all" || args.target === "check",
       cmd: ["deno", "check", "src/mod.ts"],
