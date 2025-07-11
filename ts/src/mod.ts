@@ -12,9 +12,6 @@ export * from "./schemas/zarr_metadata.ts";
 export * from "./schemas/ngff_image.ts";
 export * from "./schemas/multiscales.ts";
 
-export * from "./io/reader.ts";
-export * from "./io/writer.ts";
-
 export {
   isValidDimension,
   isValidUnit,
@@ -28,5 +25,5 @@ export {
   createNgffImage,
 } from "./utils/factory.ts";
 
-export { OMEZarrReader as fromNgffZarr } from "./io/reader.ts";
-export { OMEZarrWriter as toNgffZarr } from "./io/writer.ts";
+export * from "./io/from_ngff_zarr.ts";
+export * from "./io/to_ngff_zarr.ts";
