@@ -4,6 +4,7 @@
     "jsr:@david/code-block-writer@^13.0.2": "13.0.3",
     "jsr:@deno/cache-dir@~0.10.3": "0.10.3",
     "jsr:@deno/dnt@~0.41.3": "0.41.3",
+    "jsr:@deno/graph@~0.73.1": "0.73.1",
     "jsr:@std/assert@0.223": "0.223.0",
     "jsr:@std/assert@0.226": "0.226.0",
     "jsr:@std/assert@1": "1.0.13",
@@ -19,7 +20,7 @@
     "jsr:@std/fs@~0.229.3": "0.229.3",
     "jsr:@std/html@^1.0.4": "1.0.4",
     "jsr:@std/http@^1.0.10": "1.0.19",
-    "jsr:@std/internal@^1.0.6": "1.0.8",
+    "jsr:@std/internal@^1.0.6": "1.0.9",
     "jsr:@std/internal@^1.0.9": "1.0.9",
     "jsr:@std/io@0.223": "0.223.0",
     "jsr:@std/media-types@^1.1.0": "1.1.0",
@@ -33,9 +34,12 @@
     "jsr:@std/streams@^1.0.10": "1.0.10",
     "jsr:@ts-morph/bootstrap@0.24": "0.24.0",
     "jsr:@ts-morph/common@0.24": "0.24.0",
+    "jsr:@zarrita/storage@~0.1.1": "0.1.1",
     "npm:@playwright/test@^1.48.0": "1.53.2",
     "npm:@types/node@*": "22.15.15",
     "npm:playwright@^1.48.0": "1.53.2",
+    "npm:reference-spec-reader@0.2": "0.2.0",
+    "npm:unzipit@^1.4.3": "1.4.3",
     "npm:zarrita@~0.5.2": "0.5.2",
     "npm:zod@^4.0.2": "4.0.2"
   },
@@ -46,6 +50,7 @@
     "@deno/cache-dir@0.10.3": {
       "integrity": "eb022f84ecc49c91d9d98131c6e6b118ff63a29e343624d058646b9d50404776",
       "dependencies": [
+        "jsr:@deno/graph",
         "jsr:@std/fmt@0.223",
         "jsr:@std/fs@0.223",
         "jsr:@std/io",
@@ -62,6 +67,9 @@
         "jsr:@std/path@1",
         "jsr:@ts-morph/bootstrap"
       ]
+    },
+    "@deno/graph@0.73.1": {
+      "integrity": "cd69639d2709d479037d5ce191a422eabe8d71bb68b0098344f6b07411c84d41"
     },
     "@std/assert@0.223.0": {
       "integrity": "eb8d6d879d76e1cc431205bd346ed4d88dc051c6366365b1af47034b0670be24"
@@ -181,6 +189,13 @@
         "jsr:@std/fs@~0.229.3",
         "jsr:@std/path@~0.225.2"
       ]
+    },
+    "@zarrita/storage@0.1.1": {
+      "integrity": "3c99ea9b733bad363f6bee788fdb69d9b6151058b98388398512203c9f315510",
+      "dependencies": [
+        "npm:reference-spec-reader",
+        "npm:unzipit"
+      ]
     }
   },
   "npm": {
@@ -265,6 +280,7 @@
       "jsr:@std/cli@^1.0.20",
       "jsr:@std/http@^1.0.10",
       "jsr:@std/path@^1.0.8",
+      "jsr:@zarrita/storage@~0.1.1",
       "npm:@playwright/test@^1.48.0",
       "npm:playwright@^1.48.0",
       "npm:zarrita@~0.5.2",

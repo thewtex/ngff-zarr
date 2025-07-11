@@ -22,6 +22,7 @@
     "@std/cli": "jsr:@std/cli@^1.0.20",
     "@std/http": "jsr:@std/http@^1.0.10",
     "@std/path": "jsr:@std/path@^1.0.8",
+    "@zarrita/storage": "jsr:@zarrita/storage@^0.1.1",
     "dnt": "jsr:@deno/dnt@^0.41.3",
     "zod": "npm:zod@^4.0.2",
     "zarrita": "npm:zarrita@^0.5.2",

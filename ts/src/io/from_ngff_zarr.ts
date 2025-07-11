@@ -1,4 +1,5 @@
 import * as zarr from "zarrita";
+import { FileSystemStore } from "@zarrita/storage";
 import { Multiscales } from "../types/multiscales.ts";
 import { NgffImage } from "../types/ngff_image.ts";
 import type { Metadata } from "../types/zarr_metadata.ts";
@@ -17,7 +18,16 @@ export async function fromNgffZarr(
   const validate = options.validate ?? false;
 
   try {
-    const store = new zarr.FetchStore(storePath);
+    // Determine the appropriate store type based on the path
+    let store;
+    if (storePath.startsWith("http://") || storePath.startsWith("https://")) {
+      // Use FetchStore for HTTP/HTTPS URLs
+      store = new zarr.FetchStore(storePath);
+    } else {
+      // Use FileSystemStore for local file paths
+      store = new FileSystemStore(storePath);
+    }
+
     const root = zarr.root(store);
 
     // Try to use consolidated metadata for better performance
@@ -28,7 +38,7 @@ export async function fromNgffZarr(
       consolidatedRoot = store;
     }
 
-    const group = await zarr.open(zarr.root(consolidatedRoot), {
+    const group = await zarr.open.v2(zarr.root(consolidatedRoot), {
       kind: "group",
     });
     const attrs = group.attrs as unknown;
@@ -56,7 +66,7 @@ export async function fromNgffZarr(
 
     for (const dataset of metadata.datasets) {
       const arrayPath = dataset.path;
-      const zarrArray = await zarr.open(root.resolve(arrayPath), {
+      const zarrArray = await zarr.open.v2(root.resolve(arrayPath), {
         kind: "array",
       });
 
@@ -131,7 +141,7 @@ export async function readArrayData(
   try {
     const store = new zarr.FetchStore(storePath);
     const root = zarr.root(store);
-    const zarrArray = await zarr.open(root.resolve(arrayPath), {
+    const zarrArray = await zarr.open.v2(root.resolve(arrayPath), {
       kind: "array",
     });
 
