@@ -4,6 +4,7 @@ from typing import Callable, Dict, List, Mapping, Optional, Sequence
 from dask.array.core import Array as DaskArray
 
 from .v04.zarr_metadata import Units
+from .rfc4 import AnatomicalOrientation
 
 ComputedCallback = Callable[[], None]
 
@@ -16,4 +17,5 @@ class NgffImage:
     translation: Dict[str, float]
     name: str = "image"
     axes_units: Optional[Mapping[str, Units]] = None
+    axes_orientations: Optional[Mapping[str, AnatomicalOrientation]] = None
     computed_callbacks: List[ComputedCallback] = field(default_factory=list)

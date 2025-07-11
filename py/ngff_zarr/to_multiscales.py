@@ -360,8 +360,13 @@ def to_multiscales(
         unit = None
         if ngff_image.axes_units and dim in ngff_image.axes_units:
             unit = ngff_image.axes_units[dim]
+
+        orientation = None
+        if ngff_image.axes_orientations and dim in ngff_image.axes_orientations:
+            orientation = ngff_image.axes_orientations[dim]
+
         if dim in {"x", "y", "z"}:
-            axis = Axis(name=dim, type="space", unit=unit)
+            axis = Axis(name=dim, type="space", unit=unit, orientation=orientation)
         elif dim == "c":
             axis = Axis(name=dim, type="channel", unit=unit)
         elif dim == "t":

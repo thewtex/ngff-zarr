@@ -20,6 +20,7 @@ import zarr.storage
 from ._zarr_open_array import open_array
 from .v04.zarr_metadata import Metadata as Metadata_v04
 from .v05.zarr_metadata import Metadata as Metadata_v05
+from .rfc4 import is_rfc4_enabled
 
 # Zarr Python 3
 if hasattr(zarr.storage, "StoreLike"):
@@ -40,10 +41,14 @@ zarr_version = version.parse(zarr.__version__)
 zarr_version_major = zarr_version.major
 
 
-def _pop_metadata_optionals(metadata_dict):
+def _pop_metadata_optionals(metadata_dict, enabled_rfcs: Optional[List[int]] = None):
     for ax in metadata_dict["axes"]:
         if ax["unit"] is None:
             ax.pop("unit")
+
+        # Handle RFC 4: Remove orientation if RFC 4 is not enabled
+        if not is_rfc4_enabled(enabled_rfcs) and "orientation" in ax:
+            ax.pop("orientation")
 
     if metadata_dict["coordinateTransformations"] is None:
         metadata_dict.pop("coordinateTransformations")
@@ -264,7 +269,7 @@ def _validate_ngff_parameters(
 
 
 def _prepare_metadata(
-    multiscales: Multiscales, version: str
+    multiscales: Multiscales, version: str, enabled_rfcs: Optional[List[int]] = None
 ) -> Tuple[Union[Metadata_v04, Metadata_v05], Tuple[str, ...], Dict]:
     """Prepare and convert metadata to the proper version format."""
     metadata = multiscales.metadata
@@ -287,10 +292,6 @@ def _prepare_metadata(
     dimension_names_kwargs = (
         {"dimension_names": dimension_names} if version != "0.4" else {}
     )
-
-    metadata_dict = asdict(metadata)
-    metadata_dict = _pop_metadata_optionals(metadata_dict)
-    metadata_dict["@type"] = "ngff:Image"
 
     return metadata, dimension_names, dimension_names_kwargs
 
@@ -887,6 +888,7 @@ def to_ngff_zarr(
             Dict[str, int],
         ]
     ] = None,
+    enabled_rfcs: Optional[List[int]] = None,
     **kwargs,
 ) -> None:
     """
@@ -917,6 +919,9 @@ def to_ngff_zarr(
     :param chunks_per_shard: Number of chunks along each axis in a shard. If None, no sharding. Requires OME-Zarr version >= 0.5.
     :type  chunks_per_shard: int, tuple, or dict, optional
 
+    :param enabled_rfcs: List of RFC numbers to enable. If RFC 4 is included, anatomical orientation metadata will be preserved in the output.
+    :type  enabled_rfcs: list of int, optional
+
     :param **kwargs: Passed to the zarr.create_array() or zarr.creation.create() function, e.g., compression options.
     """
     # Setup and validation
@@ -926,10 +931,10 @@ def to_ngff_zarr(
 
     # Prepare metadata
     metadata, dimension_names, dimension_names_kwargs = _prepare_metadata(
-        multiscales, version
+        multiscales, version, enabled_rfcs
     )
     metadata_dict = asdict(metadata)
-    metadata_dict = _pop_metadata_optionals(metadata_dict)
+    metadata_dict = _pop_metadata_optionals(metadata_dict, enabled_rfcs)
     metadata_dict["@type"] = "ngff:Image"
 
     # Create Zarr root
