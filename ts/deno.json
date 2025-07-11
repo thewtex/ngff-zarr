@@ -11,7 +11,6 @@
     "test:browser:debug": "node scripts/run_playwright.mjs --debug",
     "test:browser:npm": "deno task build:npm && deno task test:browser",
     "test:all": "deno task test && deno task test:browser:npm",
-    "playwright:install": "node scripts/run_playwright.mjs install",
     "lint": "deno lint",
     "fmt": "deno fmt",
     "check": "deno check src/mod.ts",
