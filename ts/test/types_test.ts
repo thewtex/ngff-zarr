@@ -36,7 +36,7 @@ Deno.test("LazyArray toString", () => {
 
   assertEquals(
     str,
-    "LazyArray(name=float_array, shape=(100, 200), dtype=float32, chunksize=(50, 100), chunktype=TypedArray)"
+    "LazyArray(name=float_array, shape=(100, 200), dtype=float32, chunksize=(50, 100), chunktype=TypedArray)",
   );
 });
 

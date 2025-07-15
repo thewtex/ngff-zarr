@@ -1,5 +1,4 @@
 import * as zarr from "zarrita";
-import { FileSystemStore } from "@zarrita/storage";
 import { Multiscales } from "../types/multiscales.ts";
 import { NgffImage } from "../types/ngff_image.ts";
 import type { Metadata, Omero } from "../types/zarr_metadata.ts";
@@ -13,7 +12,7 @@ export interface FromNgffZarrOptions {
 
 export async function fromNgffZarr(
   storePath: string,
-  options: FromNgffZarrOptions = {}
+  options: FromNgffZarrOptions = {},
 ): Promise<Multiscales> {
   const validate = options.validate ?? false;
 
@@ -24,8 +23,22 @@ export async function fromNgffZarr(
       // Use FetchStore for HTTP/HTTPS URLs
       store = new zarr.FetchStore(storePath);
     } else {
-      // Use FileSystemStore for local file paths
-      store = new FileSystemStore(storePath);
+      // For local paths, check if we're in a browser environment
+      if (typeof window !== "undefined") {
+        throw new Error(
+          "Local file paths are not supported in browser environments. Use HTTP/HTTPS URLs instead.",
+        );
+      }
+
+      // Use dynamic import for FileSystemStore in Node.js/Deno environments
+      try {
+        const { FileSystemStore } = await import("@zarrita/storage");
+        store = new FileSystemStore(storePath);
+      } catch (error) {
+        throw new Error(
+          `Failed to load FileSystemStore: ${error}. Use HTTP/HTTPS URLs for browser compatibility.`,
+        );
+      }
     }
 
     const root = zarr.root(store);
@@ -134,7 +147,7 @@ export async function fromNgffZarr(
     throw new Error(
       `Failed to read OME-Zarr: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 }
@@ -142,7 +155,7 @@ export async function fromNgffZarr(
 export async function readArrayData(
   storePath: string,
   arrayPath: string,
-  selection?: (number | null)[]
+  selection?: (number | null)[],
 ): Promise<unknown> {
   try {
     const store = new zarr.FetchStore(storePath);
@@ -160,7 +173,7 @@ export async function readArrayData(
     throw new Error(
       `Failed to read array data: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 }

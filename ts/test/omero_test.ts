@@ -20,7 +20,7 @@ import { Methods } from "../src/types/methods.ts";
 Deno.test("read omero metadata from test dataset", async () => {
   const storePath = new URL(
     "../../py/test/data/input/13457537.zarr",
-    import.meta.url
+    import.meta.url,
   ).pathname;
 
   const multiscales = await fromNgffZarr(storePath, { validate: true });
@@ -151,7 +151,7 @@ Deno.test("write omero metadata", async () => {
     [image],
     metadata,
     [2, 4],
-    Methods.ITKWASM_GAUSSIAN
+    Methods.ITKWASM_GAUSSIAN,
   );
 
   // Test toNgffZarr functionality - since it's not fully implemented,
@@ -164,7 +164,7 @@ Deno.test("write omero metadata", async () => {
     assertEquals(
       true,
       false,
-      "Expected toNgffZarr to throw 'not yet fully implemented' error"
+      "Expected toNgffZarr to throw 'not yet fully implemented' error",
     );
   } catch (error) {
     // Verify that we get the expected "not implemented" error
@@ -173,7 +173,7 @@ Deno.test("write omero metadata", async () => {
       true,
       `Expected toNgffZarr to throw 'not yet fully implemented' error, got: ${
         (error as Error).message
-      }`
+      }`,
     );
     console.log("✓ toNgffZarr correctly throws 'not implemented' error");
   }
@@ -209,13 +209,13 @@ Deno.test("validate color function", () => {
   assertThrows(
     () => validateColor("FF00000"),
     Error,
-    "Invalid color 'FF00000'"
+    "Invalid color 'FF00000'",
   );
 
   assertThrows(
     () => validateColor("#FF0000"),
     Error,
-    "Invalid color '#FF0000'"
+    "Invalid color '#FF0000'",
   );
 });
 

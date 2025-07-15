@@ -8,7 +8,7 @@ await build({
   entryPoints: ["./src/mod.ts"],
   outDir: "./npm",
   shims: {
-    deno: true,
+    deno: false, // Disable Deno shims for browser compatibility
   },
   test: false,
   typeCheck: false,

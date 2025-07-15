@@ -45,9 +45,14 @@ async function handler(req: Request): Promise<Response> {
     return await serveFile(req, filePath);
   }
 
-  // Serve the npm package files
+  // Serve the npm package files from test directory
   if (url.pathname.startsWith("/npm/")) {
-    const filePath = join(Deno.cwd(), url.pathname.substring(1));
+    const filePath = join(
+      Deno.cwd(),
+      "test",
+      "browser-npm",
+      url.pathname.substring(1),
+    );
     try {
       return await serveFile(req, filePath);
     } catch {
