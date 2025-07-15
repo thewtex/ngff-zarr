@@ -35,8 +35,10 @@
     "jsr:@ts-morph/bootstrap@0.24": "0.24.0",
     "jsr:@ts-morph/common@0.24": "0.24.0",
     "jsr:@zarrita/storage@~0.1.1": "0.1.1",
+    "jsr:@zarrita/zarrita@~0.5.2": "0.5.2",
     "npm:@playwright/test@^1.48.0": "1.53.2",
     "npm:@types/node@*": "22.15.15",
+    "npm:numcodecs@~0.3.2": "0.3.2",
     "npm:playwright@^1.48.0": "1.53.2",
     "npm:reference-spec-reader@0.2": "0.2.0",
     "npm:unzipit@^1.4.3": "1.4.3",
@@ -195,6 +197,13 @@
         "npm:reference-spec-reader",
         "npm:unzipit"
       ]
+    },
+    "@zarrita/zarrita@0.5.2": {
+      "integrity": "7ef5fd1e617437063d3dfaa37bf6f9debc2333ffa776099f67ab1c98356313a5",
+      "dependencies": [
+        "jsr:@zarrita/storage",
+        "npm:numcodecs"
+      ]
     }
   },
   "npm": {
@@ -211,10 +220,19 @@
         "undici-types"
       ]
     },
+    "fflate@0.8.2": {
+      "integrity": "sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A=="
+    },
     "fsevents@2.3.2": {
       "integrity": "sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==",
       "os": ["darwin"],
       "scripts": true
+    },
+    "numcodecs@0.3.2": {
+      "integrity": "sha512-6YSPnmZgg0P87jnNhi3s+FVLOcIn3y+1CTIgUulA3IdASzK9fJM87sUFkpyA+be9GibGRaST2wCgkD+6U+fWKw==",
+      "dependencies": [
+        "fflate"
+      ]
     },
     "playwright-core@1.53.2": {
       "integrity": "sha512-ox/OytMy+2w1jcYEYlOo1Hhp8hZkLCximMTUTMBXjGUA1KoFfiSZ+DU+3a739jsPY0yoKH2TFy9S2fsJas8yAw==",
@@ -257,7 +275,7 @@
       "jsr:@std/http@^1.0.10",
       "jsr:@std/path@^1.0.8",
       "jsr:@zarrita/storage@~0.1.1",
-      "jsr:zarrita@~0.5.2",
+      "jsr:@zarrita/zarrita@~0.5.2",
       "npm:@playwright/test@^1.48.0",
       "npm:playwright@^1.48.0",
       "npm:zod@^4.0.2"

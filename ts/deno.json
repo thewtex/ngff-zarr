@@ -25,7 +25,7 @@
     "@zarrita/storage": "jsr:@zarrita/storage@^0.1.1",
     "dnt": "jsr:@deno/dnt@^0.41.3",
     "zod": "npm:zod@^4.0.2",
-    "zarrita": "jsr:zarrita@^0.5.2",
+    "zarrita": "jsr:@zarrita/zarrita@^0.5.2",
     "playwright": "npm:playwright@^1.48.0",
     "playwright/test": "npm:@playwright/test@^1.48.0"
   },
