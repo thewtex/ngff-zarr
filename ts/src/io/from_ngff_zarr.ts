@@ -2,7 +2,7 @@ import * as zarr from "zarrita";
 import { FileSystemStore } from "@zarrita/storage";
 import { Multiscales } from "../types/multiscales.ts";
 import { NgffImage } from "../types/ngff_image.ts";
-import type { Metadata } from "../types/zarr_metadata.ts";
+import type { Metadata, Omero } from "../types/zarr_metadata.ts";
 import { LazyArray } from "../types/lazy_array.ts";
 import { MetadataSchema } from "../schemas/zarr_metadata.ts";
 import type { Units } from "../types/units.ts";
@@ -13,7 +13,7 @@ export interface FromNgffZarrOptions {
 
 export async function fromNgffZarr(
   storePath: string,
-  options: FromNgffZarrOptions = {},
+  options: FromNgffZarrOptions = {}
 ): Promise<Multiscales> {
   const validate = options.validate ?? false;
 
@@ -62,6 +62,12 @@ export async function fromNgffZarr(
     }
 
     const metadata = multiscalesMetadata as Metadata;
+
+    // Extract omero metadata from root attributes if present
+    if ((attrs as Record<string, unknown>).omero) {
+      metadata.omero = (attrs as Record<string, unknown>).omero as Omero;
+    }
+
     const images: NgffImage[] = [];
 
     for (const dataset of metadata.datasets) {
@@ -128,7 +134,7 @@ export async function fromNgffZarr(
     throw new Error(
       `Failed to read OME-Zarr: ${
         error instanceof Error ? error.message : String(error)
-      }`,
+      }`
     );
   }
 }
@@ -136,7 +142,7 @@ export async function fromNgffZarr(
 export async function readArrayData(
   storePath: string,
   arrayPath: string,
-  selection?: (number | null)[],
+  selection?: (number | null)[]
 ): Promise<unknown> {
   try {
     const store = new zarr.FetchStore(storePath);
@@ -154,7 +160,7 @@ export async function readArrayData(
     throw new Error(
       `Failed to read array data: ${
         error instanceof Error ? error.message : String(error)
-      }`,
+      }`
     );
   }
 }
