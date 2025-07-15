@@ -31,11 +31,12 @@ export class LazyArray {
   }
 
   toString(): string {
-    const chunkStr = this.chunksize.length > 0
-      ? `chunksize=(${this.chunksize.join(", ")})`
-      : "chunksize=()";
-    return `dask.array<${this.name}, shape=(${
-      this.shape.join(", ")
-    }), dtype=${this.dtype}, ${chunkStr}, chunktype=TypedArray>`;
+    const chunkStr =
+      this.chunksize.length > 0
+        ? `chunksize=(${this.chunksize.join(", ")})`
+        : "chunksize=()";
+    return `LazyArray(name=${this.name}, shape=(${this.shape.join(
+      ", "
+    )}), dtype=${this.dtype}, ${chunkStr}, chunktype=TypedArray)`;
   }
 }
