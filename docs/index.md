@@ -37,6 +37,7 @@ installation.md
 python.md
 cli.md
 mcp.md
+spec_features.md
 itk.md
 methods.md
 faq.md

@@ -1,4 +1,3 @@
-<!-- filepath: /home/matt/src/ngff-zarr/docs/rfc4.md -->
 # RFC 4: Anatomical Orientation Support
 
 [RFC 4] adds support for anatomical orientation metadata to OME-NGFF axes,
