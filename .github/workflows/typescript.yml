@@ -24,10 +24,6 @@ jobs:
         run: pixi run test -k test_from_ngff_zarr --maxfail=1 -v
         working-directory: py
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
-        working-directory: ts
-
       - name: Build TypeScript package
         run: pixi run build
         working-directory: ts
