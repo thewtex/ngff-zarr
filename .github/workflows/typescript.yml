@@ -1,4 +1,4 @@
-name: TypeScript CI
+name: TypeScript
 
 on: [push, pull_request]
 
