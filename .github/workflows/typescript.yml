@@ -1,0 +1,67 @@
+name: TypeScript CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022, macos-14]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v0.49.0
+          manifest-path: ./ts/pixi.toml
+          frozen: true
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+        working-directory: ts
+
+      - name: Build TypeScript package
+        run: pixi run build
+        working-directory: ts
+
+      - name: Run all tests
+        run: pixi run test-all
+        working-directory: ts
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results-${{ matrix.os }}
+          path: ts/test-results/
+          retention-days: 7
+
+  lint-and-format:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pixi
+        uses: prefix-dev/setup-pixi@v0.8.1
+        with:
+          pixi-version: v0.49.0
+          manifest-path: ./ts/pixi.toml
+          frozen: true
+
+      - name: Check formatting
+        run: pixi run fmt-check
+        working-directory: ts
+
+      - name: Run linter
+        run: pixi run lint-check
+        working-directory: ts
+
+      - name: Type check
+        run: pixi run typecheck
+        working-directory: ts
