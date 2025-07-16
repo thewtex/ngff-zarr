@@ -4,4 +4,4 @@ export enum Methods {
   ITKWASM_LABEL_IMAGE = "itkwasm_label_image",
 }
 
-export const methodsValues = Object.values(Methods);
+export const methodsValues: Methods[] = Object.values(Methods);
