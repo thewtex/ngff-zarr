@@ -21,10 +21,10 @@ To enable [RFC-4] support when writing OME-NGFF Zarr data, include `4` in the
 `enabled_rfcs` parameter:
 
 ```python
-import ngff_zarr
+import ngff_zarr as nz
 
 # Enable RFC-4 when converting to NGFF Zarr
-ngff_zarr.to_ngff_zarr(
+nz.to_ngff_zarr(
     store="output.ome.zarr",
     multiscales=multiscales,
     enabled_rfcs=[4]  # Enable RFC-4
@@ -53,21 +53,21 @@ anatomical orientation is automatically added based on ITK's LPS coordinate
 system (see the sections `Anatomical Orientation Values`  and `ITK LPS Coordinate System` below for an explanation):
 
 ```python
-import ngff_zarr
+import ngff_zarr as nz
 from itk import imread
 
 # Read a medical image (NRRD, NIfTI, DICOM, etc.)
 image = imread("image.nrrd")
 
 # Convert to NGFF image with anatomical orientation
-ngff_image = ngff_zarr.itk_image_to_ngff_image(
+ngff_image = nz.itk_image_to_ngff_image(
     image,
     add_anatomical_orientation=True
 )
 
 # Convert to multiscales and write to Zarr with RFC-4 enabled
-multiscales = ngff_zarr.to_multiscales(ngff_image)
-ngff_zarr.to_ngff_zarr(
+multiscales = nz.to_multiscales(ngff_image)
+nz.to_ngff_zarr(
     store="output.ome.zarr",
     multiscales=multiscales,
     enabled_rfcs=[4]
@@ -79,14 +79,14 @@ ngff_zarr.to_ngff_zarr(
 Similar support is available for ITK-Wasm:
 
 ```python
-import ngff_zarr
+import ngff_zarr as nz
 from itkwasm_image_io import imread
 
 # Read with ITK-Wasm
 image = imread("image.nii.gz")
 
 # Convert with anatomical orientation
-ngff_image = ngff_zarr.itk_image_to_ngff_image(
+ngff_image = nz.itk_image_to_ngff_image(
     image,
     add_anatomical_orientation=True
 )

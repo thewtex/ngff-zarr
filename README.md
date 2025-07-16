@@ -42,6 +42,7 @@ The main Python package provides:
 - Writes OME-Zarr v0.4 to v0.5
 - [Sharded Zarr] stores
 - Optional writing via [tensorstore]
+- [Anatomical orientation metadata](./docs/rfc4.md) (RFC-4)
 - **Model Context Protocol (MCP) server** for AI agent integration
 
 📖 **Documentation**
