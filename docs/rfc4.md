@@ -1,6 +1,6 @@
-# RFC 4: Anatomical Orientation Support
+# RFC-4: Anatomical Orientation Support
 
-[RFC 4] adds support for anatomical orientation metadata to OME-NGFF axes,
+[RFC-4] adds support for anatomical orientation metadata to OME-NGFF axes,
 enabling precise description of spatial axis directions in biological and
 medical imaging data.
 
@@ -15,34 +15,34 @@ facilitating consistent analysis and interpretation of biological data.
 
 ### Programmatic Usage
 
-#### Enabling RFC 4
+#### Enabling RFC-4
 
-To enable [RFC 4] support when writing OME-NGFF Zarr data, include `4` in the
+To enable [RFC-4] support when writing OME-NGFF Zarr data, include `4` in the
 `enabled_rfcs` parameter:
 
 ```python
 import ngff_zarr
 
-# Enable RFC 4 when converting to NGFF Zarr
+# Enable RFC-4 when converting to NGFF Zarr
 ngff_zarr.to_ngff_zarr(
     store="output.ome.zarr",
     multiscales=multiscales,
-    enabled_rfcs=[4]  # Enable RFC 4
+    enabled_rfcs=[4]  # Enable RFC-4
 )
 ```
 
 ### CLI Usage
 
-RFC 4 can be enabled via the command line using the `--enable-rfc` flag:
+RFC-4 can be enabled via the command line using the `--enable-rfc` flag:
 
 ```bash
-# Convert a medical image with RFC 4 anatomical orientation enabled
+# Convert a medical image with RFC-4 anatomical orientation enabled
 ngff-zarr -i image.nii.gz -o output.ome.zarr --enable-rfc 4
 
 # Enable multiple RFCs (when available)
 ngff-zarr -i image.nii.gz -o output.ome.zarr --enable-rfc 4 --enable-rfc 5
 
-# Without RFC 4 (default behavior - orientation metadata filtered out)
+# Without RFC-4 (default behavior - orientation metadata filtered out)
 ngff-zarr -i image.nii.gz -o output.ome.zarr
 ```
 
@@ -65,7 +65,7 @@ ngff_image = ngff_zarr.itk_image_to_ngff_image(
     add_anatomical_orientation=True
 )
 
-# Convert to multiscales and write to Zarr with RFC 4 enabled
+# Convert to multiscales and write to Zarr with RFC-4 enabled
 multiscales = ngff_zarr.to_multiscales(ngff_image)
 ngff_zarr.to_ngff_zarr(
     store="output.ome.zarr",
@@ -94,7 +94,7 @@ ngff_image = ngff_zarr.itk_image_to_ngff_image(
 
 ## Anatomical Orientation Values
 
-[RFC 4] supports the following anatomical orientation values:
+[RFC-4] supports the following anatomical orientation values:
 
 - `left-to-right`: Describes the directional orientation from the left side to the right lateral side of an anatomical structure or body.
 - `right-to-left`: Describes the directional orientation from the right side to the left lateral side of an anatomical structure or body.
@@ -165,7 +165,7 @@ ngff_image = NgffImage(
 
 ## Metadata Format
 
-When RFC 4 is enabled, spatial axes in the OME-NGFF metadata include an
+When RFC-4 is enabled, spatial axes in the OME-NGFF metadata include an
 `orientation` field:
 
 ```json
@@ -202,7 +202,7 @@ When RFC 4 is enabled, spatial axes in the OME-NGFF metadata include an
 }
 ```
 
-## RFC 4 Functions
+## RFC-4 Functions
 
 ### Core Functions
 
@@ -220,13 +220,13 @@ When RFC 4 is enabled, spatial axes in the OME-NGFF metadata include an
 
 ## Compatibility
 
-When RFC 4 is not enabled (the default), orientation metadata is automatically
+When RFC-4 is not enabled (the default), orientation metadata is automatically
 filtered out during Zarr writing to maintain compatibility with standard
 OME-NGFF consumers.
 
 ## Best Practices
 
-1. **Enable RFC 4** when working with medical/biological images where
+1. **Enable RFC-4** when working with medical/biological images where
    orientation matters
 2. **Use ITK integration** for automatic LPS-based orientation when converting
    from medical image formats
@@ -235,4 +235,4 @@ OME-NGFF consumers.
 4. **Validate orientations** match your expectations, especially when combining
    data from different sources
 
-.. RFC 4: https://ngff.openmicroscopy.org/rfc/4/index.html
+[RFC-4]: https://ngff.openmicroscopy.org/rfc/4/index.html

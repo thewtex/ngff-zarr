@@ -1,4 +1,4 @@
-# Specification Features
+# ✨ Specification Features
 
 This page describes the features of the OME-Zarr specification that are supported by `ngff-zarr`.
 
@@ -21,4 +21,4 @@ This page describes the features of the OME-Zarr specification that are supporte
 
 ## RFCs Supported
 
-- **RFC 4**: [Anatomical orientation support](./rfc4.md), allowing images to include metadata about their anatomical orientation.
+- **RFC-4**: [Anatomical orientation support](./rfc4.md), allowing images to include metadata about their anatomical orientation.
