@@ -36,10 +36,9 @@
     "jsr:@ts-morph/common@0.24": "0.24.0",
     "jsr:@zarrita/storage@~0.1.1": "0.1.1",
     "jsr:@zarrita/zarrita@~0.5.2": "0.5.2",
-    "npm:@playwright/test@^1.48.0": "1.54.1",
+    "npm:@playwright/test@^1.54.1": "1.54.1",
     "npm:@types/node@*": "22.15.15",
     "npm:numcodecs@~0.3.2": "0.3.2",
-    "npm:playwright@^1.48.0": "1.54.1",
     "npm:reference-spec-reader@0.2": "0.2.0",
     "npm:unzipit@^1.4.3": "1.4.3",
     "npm:zod@^4.0.2": "4.0.5"
@@ -270,8 +269,7 @@
       "jsr:@std/path@^1.0.8",
       "jsr:@zarrita/storage@~0.1.1",
       "jsr:@zarrita/zarrita@~0.5.2",
-      "npm:@playwright/test@^1.48.0",
-      "npm:playwright@^1.48.0",
+      "npm:@playwright/test@^1.54.1",
       "npm:zod@^4.0.2"
     ]
   }

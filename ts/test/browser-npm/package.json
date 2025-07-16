@@ -9,10 +9,7 @@
     "test:debug": "playwright test --debug",
     "install-browsers": "playwright install"
   },
-  "dependencies": {
-    "@playwright/test": "^1.48.0"
-  },
   "devDependencies": {
-    "playwright": "^1.48.0"
+    "@playwright/test": "^1.54.1"
   }
 }
