@@ -21,9 +21,10 @@ Deno.test("read omero metadata from test dataset", async () => {
   const storePath = new URL(
     "../../py/test/data/input/13457537.zarr",
     import.meta.url,
-  ).pathname;
+  );
+  const resolvedPath = storePath.pathname.replace(/^\/([A-Za-z]:)/, "$1"); // Fix Windows paths
 
-  const multiscales = await fromNgffZarr(storePath, { validate: true });
+  const multiscales = await fromNgffZarr(resolvedPath, { validate: true });
 
   const omero = multiscales.metadata.omero;
   assertExists(omero);

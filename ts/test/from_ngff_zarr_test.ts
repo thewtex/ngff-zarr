@@ -4,13 +4,15 @@ import { toNgffZarr } from "../src/io/to_ngff_zarr.ts";
 
 Deno.test("omero zarr from_ngff_zarr to_ngff_zarr", async () => {
   const datasetName = "13457537";
+  // Use better cross-platform path handling
   const storePath = new URL(
     "../../py/test/data/input/13457537.zarr",
     import.meta.url,
-  ).pathname; // Use pathname instead of href for local files
+  );
+  const resolvedPath = storePath.pathname.replace(/^\/([A-Za-z]:)/, "$1"); // Fix Windows paths
   const version = "0.4";
 
-  const multiscales = await fromNgffZarr(storePath, { validate: true });
+  const multiscales = await fromNgffZarr(resolvedPath, { validate: true });
 
   // Verify that we got valid multiscales data
   assertExists(multiscales);

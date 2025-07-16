@@ -33,7 +33,9 @@ export async function fromNgffZarr(
       // Use dynamic import for FileSystemStore in Node.js/Deno environments
       try {
         const { FileSystemStore } = await import("@zarrita/storage");
-        store = new FileSystemStore(storePath);
+        // Normalize the path for cross-platform compatibility
+        const normalizedPath = storePath.replace(/^\/([A-Za-z]:)/, "$1");
+        store = new FileSystemStore(normalizedPath);
       } catch (error) {
         throw new Error(
           `Failed to load FileSystemStore: ${error}. Use HTTP/HTTPS URLs for browser compatibility.`,
@@ -51,9 +53,23 @@ export async function fromNgffZarr(
       consolidatedRoot = store;
     }
 
-    const group = await zarr.open.v2(zarr.root(consolidatedRoot), {
-      kind: "group",
-    });
+    // Try to open as zarr v2 first, then v3 if that fails
+    let group;
+    try {
+      group = await zarr.open.v2(zarr.root(consolidatedRoot), {
+        kind: "group",
+      });
+    } catch (v2Error) {
+      try {
+        group = await zarr.open.v3(zarr.root(consolidatedRoot), {
+          kind: "group",
+        });
+      } catch (v3Error) {
+        throw new Error(
+          `Failed to open zarr store as either v2 or v3 format. v2 error: ${v2Error}. v3 error: ${v3Error}`,
+        );
+      }
+    }
     const attrs = group.attrs as unknown;
 
     if (!attrs || !(attrs as Record<string, unknown>).multiscales) {
@@ -85,9 +101,24 @@ export async function fromNgffZarr(
 
     for (const dataset of metadata.datasets) {
       const arrayPath = dataset.path;
-      const zarrArray = await zarr.open.v2(root.resolve(arrayPath), {
-        kind: "array",
-      });
+
+      // Try to open as zarr v2 first, then v3 if that fails
+      let zarrArray;
+      try {
+        zarrArray = await zarr.open.v2(root.resolve(arrayPath), {
+          kind: "array",
+        });
+      } catch (v2Error) {
+        try {
+          zarrArray = await zarr.open.v3(root.resolve(arrayPath), {
+            kind: "array",
+          });
+        } catch (v3Error) {
+          throw new Error(
+            `Failed to open zarr array ${arrayPath} as either v2 or v3 format. v2 error: ${v2Error}. v3 error: ${v3Error}`,
+          );
+        }
+      }
 
       const lazyArray = new LazyArray({
         shape: zarrArray.shape,
@@ -160,9 +191,24 @@ export async function readArrayData(
   try {
     const store = new zarr.FetchStore(storePath);
     const root = zarr.root(store);
-    const zarrArray = await zarr.open.v2(root.resolve(arrayPath), {
-      kind: "array",
-    });
+
+    // Try to open as zarr v2 first, then v3 if that fails
+    let zarrArray;
+    try {
+      zarrArray = await zarr.open.v2(root.resolve(arrayPath), {
+        kind: "array",
+      });
+    } catch (v2Error) {
+      try {
+        zarrArray = await zarr.open.v3(root.resolve(arrayPath), {
+          kind: "array",
+        });
+      } catch (v3Error) {
+        throw new Error(
+          `Failed to open zarr array ${arrayPath} as either v2 or v3 format. v2 error: ${v2Error}. v3 error: ${v3Error}`,
+        );
+      }
+    }
 
     if (selection) {
       return await zarr.get(zarrArray, selection);
