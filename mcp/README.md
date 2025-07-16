@@ -1,7 +1,8 @@
 # ngff-zarr MCP Server
 
-`ngff-zarr-mcp` is a Model Context Protocol (MCP) server that provides AI agents with the ability
-to convert images to OME-Zarr format using the ngff-zarr library.
+`ngff-zarr-mcp` is a Model Context Protocol (MCP) server that provides AI agents
+with the ability to convert images to OME-Zarr format using the ngff-zarr
+library.
 
 [![asciicast](https://asciinema.org/a/726628.png)](https://asciinema.org/a/726628)
 
@@ -199,7 +200,8 @@ for global or `opencode.json` for project-specific):
   "mcp": {
     "ngff-zarr": {
       "type": "local",
-      "command": ["python",
+      "command": [
+        "python",
         "-c",
         "import subprocess; subprocess.run(['pip', 'install', 'ngff-zarr-mcp']); import ngff_zarr_mcp.server; ngff_zarr_mcp.server.main()"
       ],

@@ -1,6 +1,7 @@
 import dask.array as da
 from ngff_zarr import Multiscales, to_multiscales, NgffImage, Methods
 
+
 def test_check_pyramid():
     """
     When creating downscaled versions of images, subsequent resolutions were
@@ -29,5 +30,5 @@ def test_check_pyramid():
                 continue
             scales = [image.scale[k] for k in image.scale]
             for i, d in enumerate(dims):
-                assert d * 0.25 == scales[i]*image.data.shape[i]
+                assert d * 0.25 == scales[i] * image.data.shape[i]
                 assert scales[i] == scale_factors[sf - 1] * 0.25

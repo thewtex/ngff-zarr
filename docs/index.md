@@ -2,7 +2,9 @@
 
 [![PyPI - Version](https://img.shields.io/pypi/v/ngff-zarr.svg)](https://pypi.org/project/ngff-zarr)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ngff-zarr.svg)](https://pypi.org/project/ngff-zarr)
-[![Test](https://github.com/thewtex/ngff-zarr/actions/workflows/pixi-test.yml/badge.svg)](https://github.com/thewtex/ngff-zarr/actions/workflows/pixi-test.yml)
+[![Python CI Testing](https://github.com/thewtex/ngff-zarr/actions/workflows/python.yml/badge.svg)](https://github.com/thewtex/ngff-zarr/actions/workflows/python.yml)
+[![Typescript CI Testing](https://github.com/thewtex/ngff-zarr/actions/workflows/typescript.yml/badge.svg)](https://github.com/thewtex/ngff-zarr/actions/workflows/typescript.yml)
+[![MCP CI Testing](https://github.com/thewtex/ngff-zarr/actions/workflows/mcp-ci.yml/badge.svg)](https://github.com/thewtex/ngff-zarr/actions/workflows/mcp-ci.yml)
 [![DOI](https://zenodo.org/badge/541840158.svg)](https://zenodo.org/badge/latestdoi/541840158)
 [![Documentation Status](https://readthedocs.org/projects/ngff-zarr/badge/?version=latest)](https://ngff-zarr.readthedocs.io/en/latest/?badge=latest)
 [![Give it a star!](https://img.shields.io/github/stars/thewtex/ngff-zarr?style=social)](https://github.com/thewtex/ngff-zarr)

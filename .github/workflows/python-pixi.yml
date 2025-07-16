@@ -1,4 +1,4 @@
-name: Pixi Test
+name: Python Pixi
 
 on: [push, pull_request]
 
