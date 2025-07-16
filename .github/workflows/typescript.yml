@@ -8,7 +8,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, windows-2022, macos-14]
+        os: [ubuntu-24.04, windows-2022, macos-15]
 
     steps:
       - name: Checkout repository
@@ -20,6 +20,9 @@ jobs:
           pixi-version: v0.49.0
           manifest-path: ./ts/pixi.toml
           frozen: true
+      - name: Download test data
+        run: pixi run test -k test_from_ngff_zarr --maxfail=1 -v
+        working-directory: py
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
