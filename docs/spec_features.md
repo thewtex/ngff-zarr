@@ -21,4 +21,6 @@ This page describes the features of the OME-Zarr specification that are supporte
 
 ## RFCs Supported
 
+- **RFC-1**: We support and contribute to the NGFF specification via the "Request for Comments" (RFC) process described in [RFC-1](https://ngff.openmicroscopy.org/rfc/1/index.html).
+- **RFC-2**: Support for Zarr v3, including[Sharded Zarr](https://zarr.dev/zeps/accepted/ZEP0002.html) stores, allowing for scalable data management.
 - **RFC-4**: [Anatomical orientation support](./rfc4.md), allowing images to include metadata about their anatomical orientation.
