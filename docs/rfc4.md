@@ -1,6 +1,7 @@
+<!-- filepath: /home/matt/src/ngff-zarr/docs/rfc4.md -->
 # RFC 4: Anatomical Orientation Support
 
-RFC 4 adds support for anatomical orientation metadata to OME-NGFF axes,
+[RFC 4] adds support for anatomical orientation metadata to OME-NGFF axes,
 enabling precise description of spatial axis directions in biological and
 medical imaging data.
 
@@ -17,7 +18,7 @@ facilitating consistent analysis and interpretation of biological data.
 
 #### Enabling RFC 4
 
-To enable RFC 4 support when writing OME-NGFF Zarr data, include `4` in the
+To enable [RFC 4] support when writing OME-NGFF Zarr data, include `4` in the
 `enabled_rfcs` parameter:
 
 ```python
@@ -94,20 +95,26 @@ ngff_image = ngff_zarr.itk_image_to_ngff_image(
 
 ## Anatomical Orientation Values
 
-RFC 4 supports the following anatomical orientation values:
+[RFC 4] supports the following anatomical orientation values:
 
-- `left-to-right`: From left side to right lateral side
-- `right-to-left`: From right side to left lateral side
-- `anterior-to-posterior`: From front (anterior) to back (posterior)
-- `posterior-to-anterior`: From back (posterior) to front (anterior)
-- `inferior-to-superior`: From below (inferior) to above (superior)
-- `superior-to-inferior`: From above (superior) to below (inferior)
-- `dorsal-to-ventral`: From top/upper (dorsal) to belly/lower (ventral)
-- `ventral-to-dorsal`: From belly/lower (ventral) to top/upper (dorsal)
-- `dorsal-to-palmar`: From top/upper (dorsal) to palm of hand (palmar)
-- `palmar-to-dorsal`: From palm of hand (palmar) to top/upper (dorsal)
-- `dorsal-to-plantar`: From top/upper (dorsal) to sole of foot (plantar)
-- `plantar-to-dorsal`: From sole of foot (plantar) to top/upper (dorsal)
+- `left-to-right`: Describes the directional orientation from the left side to the right lateral side of an anatomical structure or body.
+- `right-to-left`: Describes the directional orientation from the right side to the left lateral side of an anatomical structure or body.
+- `anterior-to-posterior`: Describes the directional orientation from the front (anterior) to the back (posterior) of an anatomical structure or body.
+- `posterior-to-anterior`: Describes the directional orientation from the back (posterior) to the front (anterior) of an anatomical structure or body.
+- `inferior-to-superior`: Describes the directional orientation from below (inferior) to above (superior) in an anatomical structure or body.
+- `superior-to-inferior`: Describes the directional orientation from above (superior) to below (inferior) in an anatomical structure or body.
+- `dorsal-to-ventral`: Describes the directional orientation from the top/upper (dorsal) to the belly/lower (ventral) in an anatomical structure or body.
+- `ventral-to-dorsal`: Describes the directional orientation from the belly/lower (ventral) to the top/upper (dorsal) in an anatomical structure or body.
+- `dorsal-to-palmar`: Describes the directional orientation from the top/upper (dorsal) to the palm of the hand (palmar) in a body.
+- `palmar-to-dorsal`: Describes the directional orientation from the palm of the hand (palmar) to the top/upper (dorsal) in a body.
+- `dorsal-to-plantar`: Describes the directional orientation from the top/upper (dorsal) to the sole of the foot (plantar) in a body.
+- `plantar-to-dorsal`: Describes the directional orientation from the sole of the foot (plantar) to the top/upper (dorsal) in a body.
+- `rostral-to-caudal`: Describes the directional orientation from the nasal (rostral) to the tail (caudal) end of an anatomical structure, typically used in reference to the central nervous system.
+- `caudal-to-rostral`: Describes the directional orientation from the tail (caudal) to the nasal (rostral) end of an anatomical structure, typically used in reference to the central nervous system.
+- `cranial-to-caudal`: Describes the directional orientation from the head (cranial) to the tail (caudal) end of an anatomical structure or body.
+- `caudal-to-cranial`: Describes the directional orientation from the tail (caudal) to the head (cranial) end of an anatomical structure or body.
+- `proximal-to-distal`: Describes the directional orientation from the center of the body to the periphery of an anatomical structure or limb.
+- `distal-to-proximal`: Describes the directional orientation from the periphery of an anatomical structure or limb to the center of the body.
 
 ## ITK LPS Coordinate System
 
@@ -228,3 +235,5 @@ OME-NGFF consumers.
    with oriented data
 4. **Validate orientations** match your expectations, especially when combining
    data from different sources
+
+.. RFC 4: https://ngff.openmicroscopy.org/rfc/4/index.html
