@@ -20,6 +20,7 @@ jobs:
           pixi-version: v0.49.0
           manifest-path: ./ts/pixi.toml
           frozen: true
+
       - name: Download test data
         run: pixi run test -k test_from_ngff_zarr --maxfail=1 -v
         working-directory: py
@@ -31,6 +32,14 @@ jobs:
       - name: Build TypeScript package
         run: pixi run build
         working-directory: ts
+
+      - name: Build JavaScript package
+        run: pixi run build-npm
+        working-directory: ts
+
+      - name: Install browsers for playwright tests
+        run: npx playwright install --with-deps
+        working-directory: ts/test/browser-npm
 
       - name: Run all tests
         run: pixi run test-all
