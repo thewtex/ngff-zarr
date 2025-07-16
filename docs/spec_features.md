@@ -2,15 +2,16 @@
 
 This page describes the features of the OME-Zarr specification that are supported by `ngff-zarr`.
 
-## Supported Features
+## Features Overview
 
 - **Multiscales**: Support for multiscale representations of images.
 - **Multiscales generation**: Ability to generate multiscale representations from single-scale images.
 - **Chunking**: Customizable chunking strategies for efficient data access.
 - **Compression**: Support for various compression algorithms to reduce storage requirements.
 - **Metadata**: Rich metadata support, including spatial metadata.
-- **Anatomical Orientation**: Support for anatomical orientation metadata (RFC 4).
+- **Anatomical Orientation**: Support for anatomical orientation metadata (RFC-4).
 - **Sharded Zarr**: Support for sharded Zarr stores, allowing for scalable data management.
+- **Format conversion**: Conversion of most bioimaging file formats to OME-Zarr.
 - **Tensorstore Writing**: Optional writing via [tensorstore] for advanced use cases.
 - **Model Context Protocol (MCP)**: Integration with the Model Context Protocol for AI agent interaction.
 
