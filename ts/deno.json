@@ -1,6 +1,7 @@
 {
   "name": "@fideus-labs/ngff-zarr",
   "version": "0.0.1",
+  "license": "MIT",
   "exports": "./src/mod.ts",
   "tasks": {
     "dev": "deno run --allow-all src/mod.ts",
