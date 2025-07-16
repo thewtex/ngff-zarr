@@ -39,6 +39,8 @@ from .v04.zarr_metadata import (
 from .rfc4 import (
     AnatomicalOrientation,
     AnatomicalOrientationValues,
+    LPS,
+    RAS,
     itk_lps_to_anatomical_orientation,
     is_rfc4_enabled,
     add_anatomical_orientation_to_axis,
@@ -83,6 +85,8 @@ __all__ = [
     # RFC 4 - Anatomical Orientation
     "AnatomicalOrientation",
     "AnatomicalOrientationValues",
+    "LPS",
+    "RAS",
     "itk_lps_to_anatomical_orientation",
     "is_rfc4_enabled",
     "add_anatomical_orientation_to_axis",

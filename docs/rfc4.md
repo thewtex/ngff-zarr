@@ -21,10 +21,10 @@ To enable [RFC-4] support when writing OME-NGFF Zarr data, include `4` in the
 `enabled_rfcs` parameter:
 
 ```python
-import ngff_zarr as nz
+import ngff_zarr
 
 # Enable RFC-4 when converting to NGFF Zarr
-nz.to_ngff_zarr(
+ngff_zarr.to_ngff_zarr(
     store="output.ome.zarr",
     multiscales=multiscales,
     enabled_rfcs=[4]  # Enable RFC-4
@@ -53,21 +53,21 @@ anatomical orientation is automatically added based on ITK's LPS coordinate
 system (see the sections `Anatomical Orientation Values`  and `ITK LPS Coordinate System` below for an explanation):
 
 ```python
-import ngff_zarr as nz
+import ngff_zarr
 from itk import imread
 
 # Read a medical image (NRRD, NIfTI, DICOM, etc.)
 image = imread("image.nrrd")
 
 # Convert to NGFF image with anatomical orientation
-ngff_image = nz.itk_image_to_ngff_image(
+ngff_image = ngff_zarr.itk_image_to_ngff_image(
     image,
     add_anatomical_orientation=True
 )
 
 # Convert to multiscales and write to Zarr with RFC-4 enabled
-multiscales = nz.to_multiscales(ngff_image)
-nz.to_ngff_zarr(
+multiscales = ngff_zarr.to_multiscales(ngff_image)
+ngff_zarr.to_ngff_zarr(
     store="output.ome.zarr",
     multiscales=multiscales,
     enabled_rfcs=[4]
@@ -79,14 +79,14 @@ nz.to_ngff_zarr(
 Similar support is available for ITK-Wasm:
 
 ```python
-import ngff_zarr as nz
+import ngff_zarr
 from itkwasm_image_io import imread
 
 # Read with ITK-Wasm
 image = imread("image.nii.gz")
 
 # Convert with anatomical orientation
-ngff_image = nz.itk_image_to_ngff_image(
+ngff_image = ngff_zarr.itk_image_to_ngff_image(
     image,
     add_anatomical_orientation=True
 )
@@ -125,9 +125,89 @@ are applied:
 - **Y axis**: `posterior-to-anterior`
 - **Z axis**: `inferior-to-superior`
 
+## Convenience Coordinate Systems
+
+For common use cases, we provide pre-defined orientation dictionaries:
+
+### LPS Coordinate System
+
+The `LPS` constant provides orientations for the DICOM and ITK standard coordinate system:
+
+```python
+import ngff_zarr as nz
+import dask.array as da
+
+# Create image data
+data = da.zeros((100, 100, 100))
+
+# Using the LPS convenience constant
+ngff_image = nz.NgffImage(
+    data=data,
+    dims=("z", "y", "x"),
+    scale={"x": 1.0, "y": 1.0, "z": 1.0},
+    translation={"x": 0.0, "y": 0.0, "z": 0.0},
+    axes_orientations=nz.LPS
+)
+
+# Convert to multiscales and write with RFC-4 enabled
+multiscales = nz.to_multiscales(ngff_image)
+nz.to_ngff_zarr(
+    store="output.ome.zarr",
+    multiscales=multiscales,
+    enabled_rfcs=[4]
+)
+```
+
+The `LPS` constant is equivalent to:
+```python
+{
+    "x": AnatomicalOrientation(type="anatomical", value="left-to-right"),
+    "y": AnatomicalOrientation(type="anatomical", value="posterior-to-anterior"),
+    "z": AnatomicalOrientation(type="anatomical", value="inferior-to-superior")
+}
+```
+
+### RAS Coordinate System
+
+The `RAS` constant provides orientations for the default Nifti neuroimaging coordinate system:
+
+```python
+import ngff_zarr as nz
+import dask.array as da
+
+# Create neuroimaging data
+data = da.zeros((256, 256, 256))
+
+# Using the RAS convenience constant
+ngff_image = nz.NgffImage(
+    data=data,
+    dims=("z", "y", "x"),
+    scale={"x": 1.0, "y": 1.0, "z": 1.0},
+    translation={"x": 0.0, "y": 0.0, "z": 0.0},
+    axes_orientations=ngff_zarr.RAS
+)
+
+# Convert to multiscales and write with RFC-4 enabled
+multiscales = nz.to_multiscales(ngff_image)
+nz.to_ngff_zarr(
+    store="brain_data.ome.zarr",
+    multiscales=multiscales,
+    enabled_rfcs=[4]
+)
+```
+
+The `RAS` constant is equivalent to:
+```python
+{
+    "x": AnatomicalOrientation(type="anatomical", value="right-to-left"),
+    "y": AnatomicalOrientation(type="anatomical", value="anterior-to-posterior"),
+    "z": AnatomicalOrientation(type="anatomical", value="superior-to-inferior")
+}
+```
+
 ## Manual Orientation Specification
 
-You can also manually specify orientations:
+You can also manually specify orientations for custom coordinate systems:
 
 ```python
 from ngff_zarr import (
@@ -218,6 +298,11 @@ When RFC-4 is enabled, spatial axes in the OME-NGFF metadata include an
 - `AnatomicalOrientation`: Orientation specification with type and value
 - `AnatomicalOrientationValues`: Enum of supported orientation values
 
+### Convenience Constants
+
+- `LPS`: Pre-defined orientations for ITK coordinate system (Left-to-right, Posterior-to-anterior, Superior-to-inferior)
+- `RAS`: Pre-defined orientations for neuroimaging coordinate system (Right-to-left, Anterior-to-posterior, Superior-to-inferior)
+
 ## Compatibility
 
 When RFC-4 is not enabled (the default), orientation metadata is automatically
@@ -228,11 +313,12 @@ OME-NGFF consumers.
 
 1. **Enable RFC-4** when working with medical/biological images where
    orientation matters
-2. **Use ITK integration** for automatic LPS-based orientation when converting
+2. **Use convenience constants** (`LPS`, `RAS`) for standard coordinate systems
+3. **Use ITK integration** for automatic LPS-based orientation when converting
    from medical image formats
-3. **Document orientation assumptions** in your analysis pipelines when working
+4. **Document orientation assumptions** in your analysis pipelines when working
    with oriented data
-4. **Validate orientations** match your expectations, especially when combining
+5. **Validate orientations** match your expectations, especially when combining
    data from different sources
 
 [RFC-4]: https://ngff.openmicroscopy.org/rfc/4/index.html

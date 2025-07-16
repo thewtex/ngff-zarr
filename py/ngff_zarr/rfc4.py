@@ -6,7 +6,7 @@ to OME-NGFF axes, based on the LinkML schema.
 
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Optional, Literal
+from typing import Optional, Literal, Dict
 from enum import Enum
 
 
@@ -64,6 +64,58 @@ class AnatomicalOrientation:
     type: Literal["anatomical"] = "anatomical"
 
 
+# Convenience constants for common coordinate systems
+LPS: Dict[str, AnatomicalOrientation] = {
+    "x": AnatomicalOrientation(
+        type="anatomical", value=AnatomicalOrientationValues.left_to_right
+    ),
+    "y": AnatomicalOrientation(
+        type="anatomical", value=AnatomicalOrientationValues.posterior_to_anterior
+    ),
+    "z": AnatomicalOrientation(
+        type="anatomical", value=AnatomicalOrientationValues.inferior_to_superior
+    ),
+}
+"""
+LPS (Left-to-right, Posterior-to-anterior, Superior-to-inferior) coordinate system orientations.
+This is the standard coordinate system used by ITK and many medical imaging applications.
+
+Example usage:
+    ngff_image = NgffImage(
+        data=data,
+        dims=("z", "y", "x"),
+        scale={"x": 1.0, "y": 1.0, "z": 1.0},
+        translation={"x": 0.0, "y": 0.0, "z": 0.0},
+        axes_orientations=LPS
+    )
+"""
+
+RAS: Dict[str, AnatomicalOrientation] = {
+    "x": AnatomicalOrientation(
+        type="anatomical", value=AnatomicalOrientationValues.right_to_left
+    ),
+    "y": AnatomicalOrientation(
+        type="anatomical", value=AnatomicalOrientationValues.anterior_to_posterior
+    ),
+    "z": AnatomicalOrientation(
+        type="anatomical", value=AnatomicalOrientationValues.superior_to_inferior
+    ),
+}
+"""
+RAS (Right-to-left, Anterior-to-posterior, Superior-to-inferior) coordinate system orientations.
+This coordinate system is commonly used in neuroimaging applications like FreeSurfer and FSL.
+
+Example usage:
+    ngff_image = NgffImage(
+        data=data,
+        dims=("z", "y", "x"),
+        scale={"x": 1.0, "y": 1.0, "z": 1.0},
+        translation={"x": 0.0, "y": 0.0, "z": 0.0},
+        axes_orientations=RAS
+    )
+"""
+
+
 def itk_lps_to_anatomical_orientation(
     axis_name: str,
 ) -> Optional[AnatomicalOrientation]:
@@ -83,18 +135,7 @@ def itk_lps_to_anatomical_orientation(
     Optional[AnatomicalOrientation]
         The corresponding anatomical orientation, or None for non-spatial axes
     """
-    lps_orientations = {
-        "x": AnatomicalOrientation(
-            type="anatomical", value=AnatomicalOrientationValues.left_to_right
-        ),
-        "y": AnatomicalOrientation(
-            type="anatomical", value=AnatomicalOrientationValues.posterior_to_anterior
-        ),
-        "z": AnatomicalOrientation(
-            type="anatomical", value=AnatomicalOrientationValues.inferior_to_superior
-        ),
-    }
-    return lps_orientations.get(axis_name)
+    return LPS.get(axis_name)
 
 
 def is_rfc4_enabled(enabled_rfcs: Optional[list[int]]) -> bool:
