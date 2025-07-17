@@ -3,10 +3,12 @@ from dataclasses import asdict
 import dask.array
 
 from .ngff_image import NgffImage
+from .rfc4 import itk_lps_to_anatomical_orientation
 
 
 def itk_image_to_ngff_image(
     itk_image,
+    add_anatomical_orientation: bool = True,
     # anatomical_axes: bool = False,
     # axis_names: List[str] = None,
     # axis_units: List[str] = None,
@@ -72,4 +74,15 @@ def itk_image_to_ngff_image(
     origin = image_dict["origin"]
     translation = {dim: origin[::-1][idx] for idx, dim in enumerate(spatial_dims)}
 
-    return NgffImage(data, dims, scale, translation)
+    # Add anatomical orientation if requested
+    axes_orientations = None
+    if add_anatomical_orientation:
+        axes_orientations = {}
+        for dim in spatial_dims:
+            orientation = itk_lps_to_anatomical_orientation(dim)
+            if orientation is not None:
+                axes_orientations[dim] = orientation
+
+    return NgffImage(
+        data, dims, scale, translation, axes_orientations=axes_orientations
+    )

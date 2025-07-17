@@ -78,6 +78,7 @@ def _multiscales_to_ngff_zarr(
         progress=rich_dask_progress,
         use_tensorstore=args.use_tensorstore,
         version=args.ome_zarr_version,
+        enabled_rfcs=args.enable_rfc,
     )
 
 
@@ -213,6 +214,13 @@ def main():
         help="OME-Zarr version",
         default="0.4",
         choices=["0.4", "0.5"],
+    )
+    metadata_group.add_argument(
+        "--enable-rfc",
+        action="append",
+        type=int,
+        help="Enable specific RFC features. Can be used multiple times. Currently supported: 4 (anatomical orientation)",
+        metavar="RFC_NUMBER",
     )
 
     processing_group = parser.add_argument_group("processing", "Processing options")
