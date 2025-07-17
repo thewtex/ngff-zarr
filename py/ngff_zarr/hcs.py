@@ -3,11 +3,21 @@ High Content Screening (HCS) support for OME-Zarr NGFF.
 
 This module provides functions for reading and writing HCS plate data
 according to the NGFF specification.
+
+Memory Management:
+    The HCS implementation includes bounded caching to prevent memory
+    issues when working with large plates:
+
+    - Wells are cached in HCSPlate with configurable limit (default: 500)
+    - Images are cached in HCSWell with configurable limit (default: 100)
+    - LRU (Least Recently Used) eviction policy prevents unbounded growth
+    - Cache sizes can be configured via ngff_zarr.config or function parameters
 """
 
 from pathlib import Path
 from typing import Optional, List
 import logging
+from collections import OrderedDict
 
 import zarr
 
@@ -24,6 +34,56 @@ from .multiscales import Multiscales
 from .from_ngff_zarr import from_ngff_zarr
 
 
+class LRUCache:
+    """
+    Least Recently Used (LRU) cache with size limit for HCS image caching.
+
+    This prevents unbounded memory growth when accessing many images
+    from large plates.
+    """
+
+    def __init__(self, max_size: int = 100):
+        self.max_size = max_size
+        self.cache = OrderedDict()
+
+    def get(self, key):
+        if key in self.cache:
+            # Move to end (most recently used)
+            self.cache.move_to_end(key)
+            return self.cache[key]
+        return None
+
+    def set(self, key, value):
+        if key in self.cache:
+            # Update existing item
+            self.cache[key] = value
+            self.cache.move_to_end(key)
+        else:
+            # Add new item
+            if len(self.cache) >= self.max_size:
+                # Remove least recently used item before adding
+                self.cache.popitem(last=False)
+            self.cache[key] = value
+
+    def __contains__(self, key):
+        return key in self.cache
+
+    def __getitem__(self, key):
+        """Support dict-like access."""
+        value = self.get(key)
+        if value is None:
+            raise KeyError(key)
+        return value
+
+    def __setitem__(self, key, value):
+        """Support dict-like assignment."""
+        self.set(key, value)
+
+    def clear(self):
+        """Clear all cached items."""
+        self.cache.clear()
+
+
 class HCSPlate:
     """
     High Content Screening plate representation.
@@ -32,10 +92,22 @@ class HCSPlate:
     and their associated images.
     """
 
-    def __init__(self, store, plate_metadata: Plate):
+    def __init__(
+        self,
+        store,
+        plate_metadata: Plate,
+        well_cache_size: Optional[int] = None,
+        image_cache_size: Optional[int] = None,
+    ):
         self.store = store
         self.metadata = plate_metadata
-        self._wells = {}
+        self.image_cache_size = image_cache_size
+
+        # Use bounded cache for wells to prevent memory issues with large plates
+        from .config import config
+
+        cache_size = well_cache_size or config.hcs_well_cache_size
+        self._wells = LRUCache(max_size=cache_size)
 
     @property
     def name(self) -> Optional[str]:
@@ -75,10 +147,10 @@ class HCSPlate:
         if well_meta is None:
             return None
 
-        # Cache wells to avoid reloading
+        # Cache wells to avoid reloading - using bounded cache now
         if well_path not in self._wells:
             self._wells[well_path] = HCSWell.from_store(
-                self.store, well_path, well_meta
+                self.store, well_path, well_meta, self.image_cache_size
             )
 
         return self._wells[well_path]
@@ -108,16 +180,32 @@ class HCSWell:
     """
 
     def __init__(
-        self, store, well_path: str, well_metadata: PlateWell, well_group_metadata: Well
+        self,
+        store,
+        well_path: str,
+        well_metadata: PlateWell,
+        well_group_metadata: Well,
+        image_cache_size: Optional[int] = None,
     ):
         self.store = store
         self.path = well_path
         self.plate_metadata = well_metadata
         self.metadata = well_group_metadata
-        self._images = {}
+
+        # Use bounded cache for images to prevent memory issues
+        from .config import config
+
+        cache_size = image_cache_size or config.hcs_image_cache_size
+        self._images = LRUCache(max_size=cache_size)
 
     @classmethod
-    def from_store(cls, store, well_path: str, well_metadata: PlateWell) -> "HCSWell":
+    def from_store(
+        cls,
+        store,
+        well_path: str,
+        well_metadata: PlateWell,
+        image_cache_size: Optional[int] = None,
+    ) -> "HCSWell":
         """Load a well from a zarr store."""
         root = zarr.open_group(store, mode="r")
         well_group = root[well_path]
@@ -161,7 +249,9 @@ class HCSWell:
 
         well_group_metadata = Well(images=images, version=version)
 
-        return cls(store, well_path, well_metadata, well_group_metadata)
+        return cls(
+            store, well_path, well_metadata, well_group_metadata, image_cache_size
+        )
 
     @property
     def row_index(self) -> int:
@@ -222,7 +312,12 @@ class HCSWell:
         return self.get_image(actual_index)
 
 
-def from_hcs_zarr(store, validate: bool = False) -> HCSPlate:
+def from_hcs_zarr(
+    store,
+    validate: bool = False,
+    well_cache_size: Optional[int] = None,
+    image_cache_size: Optional[int] = None,
+) -> HCSPlate:
     """
     Read an HCS plate from an OME-Zarr NGFF store.
 
@@ -232,6 +327,10 @@ def from_hcs_zarr(store, validate: bool = False) -> HCSPlate:
         Store or path to directory in file system.
     validate : bool
         If True, validate the NGFF metadata against the schema.
+    well_cache_size : int, optional
+        Maximum number of wells to cache. If None, uses config default.
+    image_cache_size : int, optional
+        Maximum number of images to cache per well. If None, uses config default.
 
     Returns
     -------
@@ -351,7 +450,7 @@ def from_hcs_zarr(store, validate: bool = False) -> HCSPlate:
         name=name,
     )
 
-    return HCSPlate(store, plate_metadata)
+    return HCSPlate(store, plate_metadata, well_cache_size, image_cache_size)
 
 
 def to_hcs_zarr(plate: HCSPlate, store) -> None:

@@ -270,8 +270,39 @@ Well Groups (e.g., A/1/.zattrs)
 
 - **Lazy Loading**: Images are loaded on-demand
 - **Dask Integration**: Large datasets can be processed in chunks
-- **Memory Management**: Only requested wells and fields are loaded into memory
+- **Memory Management**: Wells and images use bounded LRU caches to prevent
+  memory bloat with large plates
+  - Wells cache: Configurable limit (default: 500 wells per plate)
+  - Images cache: Configurable limit (default: 100 images per well)
+  - Automatic eviction of least recently used items when limits are exceeded
 - **Parallel Access**: Multiple wells can be processed in parallel using Dask
+
+### Cache Configuration
+
+The HCS implementation includes intelligent caching to balance performance and
+memory usage:
+
+```python
+import ngff_zarr as nz
+
+# Configure cache sizes globally
+nz.config.hcs_well_cache_size = 100   # Max wells to cache per plate
+nz.config.hcs_image_cache_size = 50   # Max images to cache per well
+
+# Or configure per operation
+plate = nz.from_hcs_zarr(
+    "plate.zarr",
+    well_cache_size=50,    # Custom well cache size
+    image_cache_size=25    # Custom image cache size
+)
+```
+
+**Cache Benefits:**
+
+- Prevents memory issues when working with large plates (1000+ wells)
+- Maintains recently accessed data for fast repeated access
+- Automatically manages memory without manual intervention
+- Configurable limits for different hardware and use cases
 
 ## See Also
 
