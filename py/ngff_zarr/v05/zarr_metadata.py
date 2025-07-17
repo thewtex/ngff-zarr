@@ -11,3 +11,4 @@ class Metadata:
     coordinateTransformations: Optional[List[Transform]]
     omero: Optional[Omero] = None
     name: str = "image"
+    type: Optional[str] = None

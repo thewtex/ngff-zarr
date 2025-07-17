@@ -396,11 +396,17 @@ def to_multiscales(
             path=path, coordinateTransformations=coordinateTransformations
         )
         datasets.append(dataset)
+    # Convert method enum to lowercase string for the type field
+    method_type = None
+    if method is not None:
+        method_type = method.value
+    
     metadata = Metadata(
         axes=axes,
         datasets=datasets,
         name=ngff_image.name,
         coordinateTransformations=None,
+        type=method_type,
     )
 
     return Multiscales(images, metadata, scale_factors, method, out_chunks)

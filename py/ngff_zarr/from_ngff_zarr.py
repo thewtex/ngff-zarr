@@ -16,6 +16,7 @@ else:
 
 from .ngff_image import NgffImage
 from .to_multiscales import Multiscales
+from .methods import Methods, methods_values
 from .v04.zarr_metadata import (
     Axis,
     Dataset,
@@ -197,26 +198,39 @@ def from_ngff_zarr(
             ]
         )
 
+    # Extract method type and convert to Methods enum
+    method = None
+    method_type = None
+    if isinstance(metadata, dict) and "type" in metadata and metadata["type"] is not None:
+        method_type = metadata["type"]
+        # Find the corresponding Methods enum
+        for method_enum in Methods:
+            if method_enum.value == method_type:
+                method = method_enum
+                break
+
     if version == "0.5":
         from .v05.zarr_metadata import Metadata
 
-        metadata = Metadata(
+        metadata_obj = Metadata(
             axes=axes,
             datasets=datasets,
             name=name,
             coordinateTransformations=coordinateTransformations,
             omero=omero,
+            type=method_type,
         )
     else:
         from .v04.zarr_metadata import Metadata
 
-        metadata = Metadata(
+        metadata_obj = Metadata(
             axes=axes,
             datasets=datasets,
             name=name,
             version=metadata["version"],
             coordinateTransformations=coordinateTransformations,
             omero=omero,
+            type=method_type,
         )
 
-    return Multiscales(images, metadata)
+    return Multiscales(images, metadata_obj, method=method)

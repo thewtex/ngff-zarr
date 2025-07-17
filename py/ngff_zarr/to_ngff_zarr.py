@@ -273,20 +273,32 @@ def _prepare_metadata(
 ) -> Tuple[Union[Metadata_v04, Metadata_v05], Tuple[str, ...], Dict]:
     """Prepare and convert metadata to the proper version format."""
     metadata = multiscales.metadata
+    
+    # Convert method enum to lowercase string for the type field
+    method_type = None
+    if multiscales.method is not None:
+        method_type = multiscales.method.value
+    
     if version == "0.4" and isinstance(metadata, Metadata_v05):
         metadata = Metadata_v04(
             axes=metadata.axes,
             datasets=metadata.datasets,
             coordinateTransformations=metadata.coordinateTransformations,
             name=metadata.name,
+            type=method_type,
         )
-    if version == "0.5" and isinstance(metadata, Metadata_v04):
+    elif version == "0.5" and isinstance(metadata, Metadata_v04):
         metadata = Metadata_v05(
             axes=metadata.axes,
             datasets=metadata.datasets,
             coordinateTransformations=metadata.coordinateTransformations,
             name=metadata.name,
+            type=method_type,
         )
+    else:
+        # Update the existing metadata object with the type
+        if hasattr(metadata, 'type'):
+            metadata.type = method_type
 
     dimension_names = tuple([ax.name for ax in metadata.axes])
     dimension_names_kwargs = (

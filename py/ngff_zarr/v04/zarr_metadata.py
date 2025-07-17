@@ -202,3 +202,4 @@ class Metadata:
     omero: Optional[Omero] = None
     name: str = "image"
     version: str = "0.4"
+    type: Optional[str] = None
