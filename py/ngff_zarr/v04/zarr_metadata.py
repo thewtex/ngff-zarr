@@ -195,6 +195,13 @@ class Omero:
 
 
 @dataclass
+class MethodMetadata:
+    description: str
+    method: str
+    version: str
+
+
+@dataclass
 class Metadata:
     axes: List[Axis]
     datasets: List[Dataset]
@@ -202,3 +209,5 @@ class Metadata:
     omero: Optional[Omero] = None
     name: str = "image"
     version: str = "0.4"
+    type: Optional[str] = None
+    metadata: Optional[MethodMetadata] = None
