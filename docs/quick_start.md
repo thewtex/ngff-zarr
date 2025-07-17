@@ -25,3 +25,18 @@ multiscales = nz.to_multiscales(data)
 
 nz.to_ngff_zarr('example.ome.zarr', multiscales)
 ```
+
+## High Content Screening (HCS)
+
+```python
+import ngff_zarr as nz
+
+# Load HCS plate data
+plate = nz.from_hcs_zarr('screening_plate.ome.zarr')
+
+# Access a specific well
+well = plate.get_well("A", "1")
+image = well.get_image(0)  # First field
+
+print(f"Image shape: {image.images[0].data.shape}")
+```
