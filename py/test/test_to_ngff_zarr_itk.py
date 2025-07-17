@@ -1,5 +1,3 @@
-import pytest
-
 from ngff_zarr import Methods, to_multiscales, to_ngff_image
 
 from ._data import verify_against_baseline
@@ -55,10 +53,6 @@ def test_bin_shrink_tzyxc():
         pass
 
 
-@pytest.mark.skipif(
-    platform.system() == "Linux" and platform.machine() == "aarch64",
-    reason="Skipping on Linux ARM systems",
-)
 def test_gaussian_isotropic_scale_factors(input_images):
     dataset_name = "cthead1"
     image = input_images[dataset_name]
