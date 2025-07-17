@@ -6,6 +6,8 @@ from typing import Optional, Union, Tuple, Dict, List
 from packaging import version
 import warnings
 
+from .methods._metadata import get_method_metadata
+
 if sys.version_info < (3, 10):
     import importlib_metadata
 else:
@@ -273,12 +275,14 @@ def _prepare_metadata(
 ) -> Tuple[Union[Metadata_v04, Metadata_v05], Tuple[str, ...], Dict]:
     """Prepare and convert metadata to the proper version format."""
     metadata = multiscales.metadata
-    
+
     # Convert method enum to lowercase string for the type field
     method_type = None
+    method_metadata = None
     if multiscales.method is not None:
         method_type = multiscales.method.value
-    
+        method_metadata = get_method_metadata(multiscales.method)
+
     if version == "0.4" and isinstance(metadata, Metadata_v05):
         metadata = Metadata_v04(
             axes=metadata.axes,
@@ -286,6 +290,7 @@ def _prepare_metadata(
             coordinateTransformations=metadata.coordinateTransformations,
             name=metadata.name,
             type=method_type,
+            metadata=method_metadata,
         )
     elif version == "0.5" and isinstance(metadata, Metadata_v04):
         metadata = Metadata_v05(
@@ -294,6 +299,7 @@ def _prepare_metadata(
             coordinateTransformations=metadata.coordinateTransformations,
             name=metadata.name,
             type=method_type,
+            metadata=method_metadata,
         )
     else:
         # Update the existing metadata object with the type

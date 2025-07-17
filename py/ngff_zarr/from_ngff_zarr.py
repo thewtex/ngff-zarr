@@ -16,7 +16,7 @@ else:
 
 from .ngff_image import NgffImage
 from .to_multiscales import Multiscales
-from .methods import Methods, methods_values
+from .methods import Methods
 from .v04.zarr_metadata import (
     Axis,
     Dataset,
@@ -201,13 +201,26 @@ def from_ngff_zarr(
     # Extract method type and convert to Methods enum
     method = None
     method_type = None
-    if isinstance(metadata, dict) and "type" in metadata and metadata["type"] is not None:
-        method_type = metadata["type"]
-        # Find the corresponding Methods enum
-        for method_enum in Methods:
-            if method_enum.value == method_type:
-                method = method_enum
-                break
+    method_metadata = None
+    if isinstance(metadata, dict):
+        if "type" in metadata and metadata["type"] is not None:
+            method_type = metadata["type"]
+            # Find the corresponding Methods enum
+            for method_enum in Methods:
+                if method_enum.value == method_type:
+                    method = method_enum
+                    break
+        
+        # Extract method metadata if present
+        if "metadata" in metadata and metadata["metadata"] is not None:
+            from .v04.zarr_metadata import MethodMetadata
+            metadata_dict = metadata["metadata"]
+            if isinstance(metadata_dict, dict):
+                method_metadata = MethodMetadata(
+                    description=str(metadata_dict.get("description", "")),
+                    method=str(metadata_dict.get("method", "")),
+                    version=str(metadata_dict.get("version", ""))
+                )
 
     if version == "0.5":
         from .v05.zarr_metadata import Metadata
@@ -219,6 +232,7 @@ def from_ngff_zarr(
             coordinateTransformations=coordinateTransformations,
             omero=omero,
             type=method_type,
+            metadata=method_metadata,
         )
     else:
         from .v04.zarr_metadata import Metadata
@@ -231,6 +245,7 @@ def from_ngff_zarr(
             coordinateTransformations=coordinateTransformations,
             omero=omero,
             type=method_type,
+            metadata=method_metadata,
         )
 
     return Multiscales(images, metadata_obj, method=method)

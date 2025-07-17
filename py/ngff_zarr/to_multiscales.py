@@ -31,6 +31,7 @@ from .methods._itk import (
 from .methods._itkwasm import (
     _downsample_itkwasm,
 )
+from .methods._metadata import get_method_metadata
 from .methods._support import _spatial_dims
 from .multiscales import Multiscales
 from .ngff_image import NgffImage
@@ -398,8 +399,10 @@ def to_multiscales(
         datasets.append(dataset)
     # Convert method enum to lowercase string for the type field
     method_type = None
+    method_metadata = None
     if method is not None:
         method_type = method.value
+        method_metadata = get_method_metadata(method)
     
     metadata = Metadata(
         axes=axes,
@@ -407,6 +410,7 @@ def to_multiscales(
         name=ngff_image.name,
         coordinateTransformations=None,
         type=method_type,
+        metadata=method_metadata,
     )
 
     return Multiscales(images, metadata, scale_factors, method, out_chunks)
