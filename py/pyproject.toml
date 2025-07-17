@@ -179,6 +179,7 @@ data = { features = ["data"], no-default-feature = true, solve-group = "default"
 
 [tool.pixi.feature.test.tasks]
 test = { cmd = "pytest", description = "Run the test suite" }
+download-test-data = "pytest -k test_from_ngff_zarr --maxfail=1 -v"
 
 [tool.pixi.feature.lint.dependencies]
 pre-commit = "*"
