@@ -155,29 +155,8 @@ Deno.test("write omero metadata", async () => {
     Methods.ITKWASM_GAUSSIAN,
   );
 
-  // Test toNgffZarr functionality - since it's not fully implemented,
-  // we expect it to throw an error
-  try {
-    await toNgffZarr("memory://test-store", multiscales, { version: "0.4" });
-
-    // If we get here without an error, the implementation has changed
-    // For now, we expect the "not implemented" error
-    assertEquals(
-      true,
-      false,
-      "Expected toNgffZarr to throw 'not yet fully implemented' error",
-    );
-  } catch (error) {
-    // Verify that we get the expected "not implemented" error
-    assertEquals(
-      (error as Error).message.includes("not yet fully implemented"),
-      true,
-      `Expected toNgffZarr to throw 'not yet fully implemented' error, got: ${
-        (error as Error).message
-      }`,
-    );
-    console.log("✓ toNgffZarr correctly throws 'not implemented' error");
-  }
+  const memoryStore = new Map<string, Uint8Array>();
+  await toNgffZarr(memoryStore, multiscales, { version: "0.4" });
 
   // Test the Omero metadata creation and validation directly
   const readOmero = multiscales.metadata.omero;
