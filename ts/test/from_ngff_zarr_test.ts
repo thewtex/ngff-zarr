@@ -7,7 +7,7 @@ Deno.test("omero zarr from_ngff_zarr to_ngff_zarr", async () => {
   // Use better cross-platform path handling
   const storePath = new URL(
     "../../py/test/data/input/13457537.zarr",
-    import.meta.url
+    import.meta.url,
   );
   const resolvedPath = storePath.pathname.replace(/^\/([A-Za-z]:)/, "$1"); // Fix Windows paths
   const version = "0.4";
@@ -37,33 +37,11 @@ Deno.test("omero zarr from_ngff_zarr to_ngff_zarr", async () => {
   console.log(`First image shape: ${firstImage.data.shape}`);
   console.log(`First image dims: ${firstImage.dims}`);
   console.log(
-    `Metadata axes: ${multiscales.metadata.axes.map((a) => a.name).join(", ")}`
+    `Metadata axes: ${multiscales.metadata.axes.map((a) => a.name).join(", ")}`,
   );
 
-  // Test toNgffZarr functionality (equivalent to Python's to_ngff_zarr call)
-  // Since toNgffZarr is not yet implemented, verify it throws the expected error
-  try {
-    // In Python: to_ngff_zarr(test_store, multiscales, version=version)
-    // Create a simulated memory store path for testing
-    await toNgffZarr("memory://test-store", multiscales, { version });
-
-    // If we get here, the function didn't throw - this is unexpected
-    assertEquals(
-      true,
-      false,
-      "Expected toNgffZarr to throw 'not yet fully implemented' error"
-    );
-  } catch (error) {
-    // Verify that we get the expected "not implemented" error
-    assertEquals(
-      (error as Error).message.includes("not yet fully implemented"),
-      true,
-      `Expected toNgffZarr to throw 'not yet fully implemented' error, got: ${
-        (error as Error).message
-      }`
-    );
-    console.log("✓ toNgffZarr correctly throws 'not implemented' error");
-  }
+  const memoryStore = new Map<string, Uint8Array>();
+  await toNgffZarr(memoryStore, multiscales, { version });
 
   // TODO: When toNgffZarr is fully implemented, this test should be updated to:
   // 1. Create a proper memory store (equivalent to Python's MemoryStore())
