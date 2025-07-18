@@ -28,6 +28,19 @@ class ConversionOptions(BaseModel):
     )
     name: Optional[str] = Field(None, description="Image name")
 
+    # RFC 4 - Anatomical Orientation support
+    anatomical_orientation: Optional[str] = Field(
+        None, description="Anatomical orientation preset (LPS, RAS) or custom mapping"
+    )
+    enable_rfc4: bool = Field(
+        False, description="Enable RFC 4 anatomical orientation support"
+    )
+
+    # Storage options for cloud/remote storage
+    storage_options: Optional[Dict[str, Union[str, int, bool]]] = Field(
+        None, description="Storage options for remote stores (S3, GCS, etc.)"
+    )
+
     # Processing options
     chunks: Optional[Union[int, List[int], tuple[int, ...]]] = Field(
         None, description="Dask array chunking specification"
@@ -53,6 +66,12 @@ class ConversionOptions(BaseModel):
         False, description="Use Dask LocalCluster for large datasets"
     )
     cache_dir: Optional[str] = Field(None, description="Directory for caching")
+
+    # RFC and advanced features
+    enabled_rfcs: Optional[List[int]] = Field(
+        None,
+        description="List of RFC numbers to enable (e.g., [4] for anatomical orientation)",
+    )
 
     @field_validator("dims")
     @classmethod
@@ -88,6 +107,14 @@ class StoreInfo(BaseModel):
     compression: Optional[str] = Field(None, description="Compression codec")
     scale_info: Dict = Field(..., description="Scale/spacing information")
     translation_info: Dict = Field(..., description="Translation/origin information")
+    method_type: Optional[str] = Field(None, description="Multiscale method type")
+    method_metadata: Optional[Dict] = Field(
+        None, description="Method metadata information"
+    )
+    anatomical_orientation: Optional[Dict] = Field(
+        None, description="Anatomical orientation information"
+    )
+    rfc_support: Optional[List[int]] = Field(None, description="Enabled RFC features")
 
 
 class SupportedFormats(BaseModel):
@@ -112,6 +139,9 @@ class OptimizationOptions(BaseModel):
     )
     chunks_per_shard: Optional[Union[int, List[int], tuple[int, ...]]] = Field(
         None, description="New sharding configuration"
+    )
+    storage_options: Optional[Dict[str, Union[str, int, bool]]] = Field(
+        None, description="Storage options for remote stores"
     )
 
 

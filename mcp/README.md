@@ -12,6 +12,8 @@ library.
 
 - **convert_images_to_ome_zarr**: Convert various image formats to OME-Zarr with
   full control over metadata, compression, and multiscale generation
+- **read_ome_zarr_store**: Read OME-Zarr data with support for remote storage
+  options
 - **get_ome_zarr_info**: Inspect existing OME-Zarr stores and get detailed
   information
 - **validate_ome_zarr_store**: Validate OME-Zarr structure and metadata
@@ -31,6 +33,17 @@ library.
 - Local directories (Zarr stores)
 - Network URLs (HTTP/HTTPS)
 - S3 URLs (with optional s3fs dependency)
+- Remote storage with authentication (AWS S3, Google Cloud Storage, Azure)
+
+### Advanced Features
+
+- **RFC 4 - Anatomical Orientation**: Support for medical imaging orientation
+  systems (LPS, RAS)
+- **Method Metadata**: Enhanced multiscale metadata with downsampling method
+  information
+- **Storage Options**: Cloud storage authentication and configuration support
+- **Multiscale Type Tracking**: Automatic detection and preservation of
+  downsampling methods
 
 ### Output Optimization
 
