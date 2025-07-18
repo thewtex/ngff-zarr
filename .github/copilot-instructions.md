@@ -191,3 +191,11 @@ export class NgffImage {
 - **`py/ngff_zarr/to_multiscales.py`** - Downsampling pipeline
 - **`ts/src/io/from_ngff_zarr.ts`** - TypeScript read implementation
 - **`py/test/_data.py`** - Test infrastructure and baselines
+
+## Agent Instructions
+
+- When problem-solving Python issues, write temporary test scripts and run them
+  with `pixi run python debug_script.py`, for example. Or, run individual tests
+  with `pixi run pytest tests/test_*.py`. Do not try to use
+  `pixi run pytest ...` or `pixi run python -c '<command>'` as these will not
+  work correctly.

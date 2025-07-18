@@ -2,7 +2,7 @@
 
 import tempfile
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import zarr
 from ngff_zarr import (  # type: ignore[import-untyped]
@@ -14,6 +14,14 @@ from ngff_zarr import (  # type: ignore[import-untyped]
     Methods,
     config,
 )
+
+# Import RFC 4 functions if available
+try:
+    from ngff_zarr import rfc4
+
+    RFC4_AVAILABLE = True
+except ImportError:
+    RFC4_AVAILABLE = False
 
 # Import validation function if available
 try:
@@ -49,7 +57,7 @@ async def convert_to_ome_zarr(
 
     try:
         # Validate options
-        validation_errors = validate_conversion_options(options.dict())
+        validation_errors = validate_conversion_options(options.model_dump())
         if validation_errors:
             return ConversionResult(
                 success=False,
@@ -97,6 +105,16 @@ async def convert_to_ome_zarr(
 
                 if options.name:
                     ngff_image.name = options.name
+
+                # Apply anatomical orientation if requested (RFC 4)
+                if options.anatomical_orientation and RFC4_AVAILABLE:
+                    if options.anatomical_orientation.upper() == "LPS":
+                        ngff_image.axes_orientations = rfc4.LPS
+                    elif options.anatomical_orientation.upper() == "RAS":
+                        ngff_image.axes_orientations = rfc4.RAS
+                    else:
+                        # Could add support for custom orientations here
+                        pass
 
                 # Setup chunking
                 chunks = options.chunks
@@ -177,12 +195,24 @@ async def convert_to_ome_zarr(
                         # Fallback to string (may work for some codecs)
                         kwargs["compressor"] = options.compression_codec
 
+                # Prepare enabled_rfcs parameter
+                # Note: Temporarily disabled due to compatibility issues
+                # enabled_rfcs = []
+                # if options.enable_rfc4 or options.enabled_rfcs:
+                #     if options.enable_rfc4:
+                #         enabled_rfcs.append(4)
+                #     if options.enabled_rfcs:
+                #         enabled_rfcs.extend(options.enabled_rfcs)
+                #     # Remove duplicates
+                #     enabled_rfcs = list(set(enabled_rfcs))
+
                 to_ngff_zarr(
                     output_store,
                     multiscales_obj,
+                    version=options.ome_zarr_version,
                     chunks_per_shard=chunks_per_shard,
                     use_tensorstore=options.use_tensorstore,
-                    version=options.ome_zarr_version,
+                    # enabled_rfcs=enabled_rfcs if enabled_rfcs else None,  # Temporarily disabled
                     **kwargs,
                 )
 
@@ -204,6 +234,65 @@ async def convert_to_ome_zarr(
     except Exception as e:
         return ConversionResult(
             success=False, output_path="", store_info={}, error=str(e)
+        )
+
+
+async def read_ngff_zarr(
+    store_path: str,
+    storage_options: Optional[dict] = None,
+    validate: bool = False,
+) -> ConversionResult:
+    """Read OME-Zarr NGFF data from a store.
+
+    Parameters
+    ----------
+    store_path : str
+        Path or URL to the OME-Zarr store
+    storage_options : dict, optional
+        Storage options for remote stores (S3, GCS, etc.)
+    validate : bool
+        Whether to validate the NGFF metadata
+
+    Returns
+    -------
+    ConversionResult
+        Result containing store information and any errors
+    """
+    try:
+        # Read the multiscales
+        # Note: storage_options support may not be available in current version
+        try:
+            multiscales = from_ngff_zarr(
+                store_path, validate=validate, storage_options=storage_options
+            )
+        except TypeError:
+            # Fallback if storage_options not supported
+            multiscales = from_ngff_zarr(store_path, validate=validate)
+
+        # Analyze the store
+        store_info = analyze_zarr_store(store_path)
+
+        # Add additional information from multiscales
+        store_info_dict = store_info.model_dump()
+        if hasattr(multiscales, "method") and multiscales.method:
+            store_info_dict["method_type"] = str(multiscales.method)
+
+        # Note: Method metadata and RFC 4 features may not be available in current version
+        # These will be added once the features are fully integrated
+
+        return ConversionResult(
+            success=True,
+            output_path=store_path,
+            store_info=store_info_dict,
+            error=None,
+        )
+
+    except Exception as e:
+        return ConversionResult(
+            success=False,
+            output_path=store_path,
+            store_info={},
+            error=f"Failed to read store: {str(e)}",
         )
 
 

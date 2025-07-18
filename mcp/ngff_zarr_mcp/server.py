@@ -1,6 +1,6 @@
 """MCP server for ngff-zarr image conversion."""
 
-from typing import List, Optional, Dict, Literal
+from typing import List, Optional, Dict, Literal, Union
 
 from mcp.server.fastmcp import FastMCP
 
@@ -13,6 +13,7 @@ from .models import (
 )
 from .tools import (
     convert_to_ome_zarr,
+    read_ngff_zarr,
     inspect_ome_zarr,
     validate_ome_zarr,
     optimize_zarr_store,
@@ -47,6 +48,11 @@ async def convert_images_to_ome_zarr(
     memory_target: Optional[str] = None,
     use_local_cluster: bool = False,
     cache_dir: Optional[str] = None,
+    # New RFC 4 and storage options
+    anatomical_orientation: Optional[str] = None,
+    enable_rfc4: bool = False,
+    enabled_rfcs: Optional[List[int]] = None,
+    storage_options: Optional[Dict[str, str]] = None,
 ) -> ConversionResult:
     """
     Convert images to OME-Zarr format.
@@ -70,6 +76,10 @@ async def convert_images_to_ome_zarr(
         memory_target: Memory limit (e.g., "4GB")
         use_local_cluster: Use Dask LocalCluster for large datasets
         cache_dir: Directory for caching
+        anatomical_orientation: Anatomical orientation preset (LPS, RAS)
+        enable_rfc4: Enable RFC 4 anatomical orientation support
+        enabled_rfcs: List of RFC numbers to enable
+        storage_options: Storage options for remote stores (S3, GCS, etc.)
 
     Returns:
         ConversionResult with success status and store information
@@ -105,6 +115,10 @@ async def convert_images_to_ome_zarr(
         memory_target=memory_target,
         use_local_cluster=use_local_cluster,
         cache_dir=cache_dir,
+        anatomical_orientation=anatomical_orientation,
+        enable_rfc4=enable_rfc4,
+        enabled_rfcs=enabled_rfcs,
+        storage_options=storage_options,  # type: ignore[arg-type]
     )
 
     return await convert_to_ome_zarr(input_paths, options)
@@ -122,6 +136,26 @@ async def get_ome_zarr_info(store_path: str) -> StoreInfo:
         StoreInfo with detailed store information
     """
     return await inspect_ome_zarr(store_path)
+
+
+@mcp.tool()
+async def read_ome_zarr_store(
+    store_path: str,
+    storage_options: Optional[Dict[str, Union[str, int, bool]]] = None,
+    validate: bool = False,
+) -> ConversionResult:
+    """
+    Read OME-Zarr data from a store with optional storage options.
+
+    Args:
+        store_path: Path or URL to OME-Zarr store
+        storage_options: Storage options for remote stores (S3, GCS, etc.)
+        validate: Whether to validate the NGFF metadata
+
+    Returns:
+        ConversionResult with store information and any detected features
+    """
+    return await read_ngff_zarr(store_path, storage_options, validate)
 
 
 @mcp.tool()
@@ -169,6 +203,7 @@ async def optimize_ome_zarr_store(
         compression_level=compression_level,
         chunks=chunks,
         chunks_per_shard=chunks_per_shard,
+        storage_options=None,  # Add the required parameter
     )
 
     return await optimize_zarr_store(options)

@@ -182,21 +182,60 @@ def from_ngff_zarr(
     omero = None
     if "omero" in root.attrs:
         omero_data = root.attrs["omero"]
-        omero = Omero(
-            channels=[
-                OmeroChannel(
-                    color=channel["color"],
-                    label=channel.get("label", None),
-                    window=OmeroWindow(
-                        min=channel["window"]["min"],
-                        max=channel["window"]["max"],
-                        start=channel["window"]["start"],
-                        end=channel["window"]["end"],
-                    ),
-                )
-                for channel in omero_data["channels"]
-            ]
-        )
+        if isinstance(omero_data, dict) and "channels" in omero_data:
+            channels_data = omero_data["channels"]
+            if isinstance(channels_data, list):
+                channels = []
+                for channel in channels_data:
+                    if not isinstance(channel, dict) or "window" not in channel:
+                        continue
+
+                    window_data = channel["window"]
+                    if not isinstance(window_data, dict):
+                        continue
+
+                    # Handle backward compatibility for OMERO window metadata
+                    # Some stores use min/max, others use start/end, some have both
+                    if "start" in window_data and "end" in window_data:
+                        # New format with start/end
+                        start = float(window_data["start"])  # type: ignore
+                        end = float(window_data["end"])  # type: ignore
+                        if "min" in window_data and "max" in window_data:
+                            # Both formats present
+                            min_val = float(window_data["min"])  # type: ignore
+                            max_val = float(window_data["max"])  # type: ignore
+                        else:
+                            # Only start/end, use them as min/max
+                            min_val = start
+                            max_val = end
+                    elif "min" in window_data and "max" in window_data:
+                        # Old format with min/max only
+                        min_val = float(window_data["min"])  # type: ignore
+                        max_val = float(window_data["max"])  # type: ignore
+                        # Use min/max as start/end for backward compatibility
+                        start = min_val
+                        end = max_val
+                    else:
+                        # Invalid window data, skip this channel
+                        continue
+
+                    channels.append(
+                        OmeroChannel(
+                            color=str(channel["color"]),  # type: ignore
+                            label=str(channel.get("label", None))
+                            if channel.get("label") is not None
+                            else None,  # type: ignore
+                            window=OmeroWindow(
+                                min=min_val,
+                                max=max_val,
+                                start=start,
+                                end=end,
+                            ),
+                        )
+                    )
+
+                if channels:
+                    omero = Omero(channels=channels)
 
     # Extract method type and convert to Methods enum
     method = None
@@ -210,16 +249,17 @@ def from_ngff_zarr(
                 if method_enum.value == method_type:
                     method = method_enum
                     break
-        
+
         # Extract method metadata if present
         if "metadata" in metadata and metadata["metadata"] is not None:
             from .v04.zarr_metadata import MethodMetadata
+
             metadata_dict = metadata["metadata"]
             if isinstance(metadata_dict, dict):
                 method_metadata = MethodMetadata(
                     description=str(metadata_dict.get("description", "")),
                     method=str(metadata_dict.get("method", "")),
-                    version=str(metadata_dict.get("version", ""))
+                    version=str(metadata_dict.get("version", "")),
                 )
 
     if version == "0.5":

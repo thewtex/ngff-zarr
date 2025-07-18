@@ -171,6 +171,10 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
             translation_info=(
                 dict(first_image.translation) if first_image.translation else {}
             ),
+            method_type=None,  # Will be populated if available
+            method_metadata=None,  # Will be populated if available
+            anatomical_orientation=None,  # Will be populated if available
+            rfc_support=None,  # Will be populated if available
         )
 
     except Exception as e:
