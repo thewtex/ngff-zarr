@@ -126,7 +126,11 @@ function _convertDtypeToZarrType(dtype: string): zarr.DataType {
     f8: "float64",
   };
 
-  return dtypeMap[dtype] || ("float32" as zarr.DataType);
+  if (dtype in dtypeMap) {
+    return dtypeMap[dtype];
+  } else {
+    throw new Error(`Unsupported data type: ${dtype}`);
+  }
 }
 
 async function _writeImage(
