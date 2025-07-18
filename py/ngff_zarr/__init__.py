@@ -18,6 +18,7 @@ from .to_multiscales import to_multiscales
 from .to_ngff_image import to_ngff_image
 from .to_ngff_zarr import to_ngff_zarr
 from .validate import validate
+from .hcs import from_hcs_zarr, to_hcs_zarr, HCSPlate, HCSWell
 from .v04.zarr_metadata import (
     AxesType,
     SpatialDims,
@@ -36,6 +37,13 @@ from .v04.zarr_metadata import (
     Omero,
     OmeroChannel,
     OmeroWindow,
+    Plate,
+    PlateAcquisition,
+    PlateColumn,
+    PlateRow,
+    PlateWell,
+    Well,
+    WellImage,
 )
 from .rfc4 import (
     AnatomicalOrientation,
@@ -84,6 +92,19 @@ __all__ = [
     "Omero",
     "OmeroChannel",
     "OmeroWindow",
+    # HCS (High Content Screening)
+    "Plate",
+    "PlateAcquisition",
+    "PlateColumn",
+    "PlateRow",
+    "PlateWell",
+    "Well",
+    "WellImage",
+    # HCS functions and classes
+    "from_hcs_zarr",
+    "to_hcs_zarr",
+    "HCSPlate",
+    "HCSWell",
     # RFC 4 - Anatomical Orientation
     "AnatomicalOrientation",
     "AnatomicalOrientationValues",

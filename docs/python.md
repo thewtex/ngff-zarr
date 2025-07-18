@@ -268,6 +268,75 @@ nz.to_ngff_zarr('lightsheet.ome.zarr',
                 version=version)
 ```
 
+## High Content Screening (HCS)
+
+NGFF-Zarr provides full support for High Content Screening data, implementing
+the plate and well metadata structures defined in the OME-Zarr specification.
+This enables working with multi-well plate data commonly used in drug discovery
+and high-throughput imaging.
+
+### Reading HCS Data
+
+Use [`from_hcs_zarr`] to load HCS plate data:
+
+```python
+# Load an HCS plate
+plate = nz.from_hcs_zarr('screening_plate.ome.zarr')
+
+print(f"Plate: {plate.metadata.name}")
+print(f"Wells: {len(plate.metadata.wells)}")
+
+# Access a specific well
+well = plate.get_well("A", "1")  # Row A, Column 1
+if well:
+    print(f"Well A/1 has {len(well.images)} field(s)")
+
+    # Get the first field image
+    image = well.get_image(0)
+    if image:
+        print(f"Image shape: {image.images[0].data.shape}")
+```
+
+### Working with Multi-field Wells
+
+Each well can contain multiple fields of view:
+
+```python
+well = plate.get_well("B", "2")
+for field_idx in range(len(well.images)):
+    image = well.get_image(field_idx)
+    if image:
+        # Each field is a standard multiscale image
+        ngff_image = image.images[0]  # First scale level
+        print(f"Field {field_idx}: {ngff_image.data.shape}")
+```
+
+### Time Series and Acquisitions
+
+For plates with multiple acquisitions (time points or conditions):
+
+```python
+if plate.metadata.acquisitions:
+    for acq in plate.metadata.acquisitions:
+        print(f"Acquisition {acq.id}: {acq.name}")
+
+    # Get image from specific acquisition
+    well = plate.get_well("A", "1")
+    image = well.get_image_by_acquisition(acquisition_id=0, field_index=0)
+```
+
+### HCS Validation
+
+Validate HCS metadata during loading:
+
+```python
+# Validate against HCS schema
+plate = nz.from_hcs_zarr('plate.ome.zarr', validate=True)
+```
+
+For more detailed examples and advanced usage, see the
+[HCS documentation](./hcs.md).
+
 ## Convert OME-Zarr versions
 
 To convert from OME-Zarr version 0.4, which uses the Zarr Format Specification
@@ -297,5 +366,6 @@ to_ngff_zarr('cthead1_zarr2.ome.zarr', multiscales, version='0.4')
 [`to_ngff_image`]: ./apidocs/ngff_zarr/ngff_zarr.to_ngff_image.md
 [`to_multiscales`]: ./apidocs/ngff_zarr/ngff_zarr.to_multiscales.md
 [`from_ngff_zarr`]: ./apidocs/ngff_zarr/ngff_zarr.from_ngff_zarr.md
+[`from_hcs_zarr`]: ./apidocs/ngff_zarr/ngff_zarr.hcs.md
 [Sharded Zarr]: https://zarr.dev/zeps/accepted/ZEP0002.html
 [tensorstore]: https://google.github.io/tensorstore/
