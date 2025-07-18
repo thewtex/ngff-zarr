@@ -216,7 +216,7 @@ async function _writeArrayData(
     // Try to write the data using zarr.set with proper selection syntax
     // Based on zarrita docs, the selection should use an array of slices
     try {
-      await zarr.set(zarrArray, [], dummyData);
+      await zarr.set(zarrArray, null, dummyData);
     } catch (error) {
       // If that fails, try writing chunk by chunk
       console.warn(
