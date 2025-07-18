@@ -22,7 +22,7 @@ jobs:
           frozen: true
 
       - name: Download test data
-        run: pixi run test -k test_from_ngff_zarr --maxfail=1 -v
+        run: pixi run download-test-data
         working-directory: py
 
       - name: Normalize line endings
