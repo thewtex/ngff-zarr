@@ -10,18 +10,22 @@ export interface FromNgffZarrOptions {
   validate?: boolean;
 }
 
+export type MemoryStore = Map<string, Uint8Array>;
+
 export async function fromNgffZarr(
-  storePath: string,
+  store: string | MemoryStore | zarr.FetchStore,
   options: FromNgffZarrOptions = {},
 ): Promise<Multiscales> {
   const validate = options.validate ?? false;
 
   try {
     // Determine the appropriate store type based on the path
-    let store;
-    if (storePath.startsWith("http://") || storePath.startsWith("https://")) {
+    let resolvedStore: MemoryStore | zarr.FetchStore;
+    if (store instanceof Map || store instanceof zarr.FetchStore) {
+      resolvedStore = store;
+    } else if (store.startsWith("http://") || store.startsWith("https://")) {
       // Use FetchStore for HTTP/HTTPS URLs
-      store = new zarr.FetchStore(storePath);
+      resolvedStore = new zarr.FetchStore(store);
     } else {
       // For local paths, check if we're in a browser environment
       if (typeof window !== "undefined") {
@@ -32,10 +36,19 @@ export async function fromNgffZarr(
 
       // Use dynamic import for FileSystemStore in Node.js/Deno environments
       try {
-        const { FileSystemStore } = await import("@zarrita/storage");
-        // Normalize the path for cross-platform compatibility
-        const normalizedPath = storePath.replace(/^\/([A-Za-z]:)/, "$1");
-        store = new FileSystemStore(normalizedPath);
+        const { FileSystemStore, ZipFileStore } = await import(
+          "@zarrita/storage"
+        );
+        // @ts-ignore: Node/Deno workaround
+        if (store instanceof FileSystemStore || store instanceof ZipFileStore) {
+          // @ts-ignore: Node/Deno workaround
+          resolvedStore = store;
+        } else {
+          // Normalize the path for cross-platform compatibility
+          const normalizedPath = store.replace(/^\/([A-Za-z]:)/, "$1");
+          // @ts-ignore: Node/Deno workaround
+          resolvedStore = new FileSystemStore(normalizedPath);
+        }
       } catch (error) {
         throw new Error(
           `Failed to load FileSystemStore: ${error}. Use HTTP/HTTPS URLs for browser compatibility.`,
@@ -43,24 +56,27 @@ export async function fromNgffZarr(
       }
     }
 
-    const root = zarr.root(store);
+    const root = zarr.root(resolvedStore);
 
     // Try to use consolidated metadata for better performance
     let consolidatedRoot;
     try {
-      consolidatedRoot = await zarr.tryWithConsolidated(store);
+      // @ts-ignore: tryWithConsolidated typing
+      consolidatedRoot = await zarr.tryWithConsolidated(resolvedStore);
     } catch {
-      consolidatedRoot = store;
+      consolidatedRoot = resolvedStore;
     }
 
     // Try to open as zarr v2 first, then v3 if that fails
     let group;
     try {
+      // @ts-ignore: zarr.open.v2 may not have complete type definitions for all store types
       group = await zarr.open.v2(zarr.root(consolidatedRoot), {
         kind: "group",
       });
     } catch (v2Error) {
       try {
+        // @ts-ignore: zarr.open.v3 may not have complete type definitions for all store types
         group = await zarr.open.v3(zarr.root(consolidatedRoot), {
           kind: "group",
         });
@@ -105,12 +121,16 @@ export async function fromNgffZarr(
       // Try to open as zarr v2 first, then v3 if that fails
       let zarrArray;
       try {
+        // @ts-ignore: zarr.open.v2 may not have complete type definitions for all store types
         zarrArray = await zarr.open.v2(root.resolve(arrayPath), {
+          path: arrayPath,
           kind: "array",
         });
       } catch (v2Error) {
         try {
+          // @ts-ignore: zarr.open.v3 may not have complete type definitions for all store types
           zarrArray = await zarr.open.v3(root.resolve(arrayPath), {
+            path: arrayPath,
             kind: "array",
           });
         } catch (v3Error) {
@@ -120,10 +140,22 @@ export async function fromNgffZarr(
         }
       }
 
+      // Verify we have an array with the expected properties
+      if (
+        !zarrArray ||
+        !("shape" in zarrArray) ||
+        !("dtype" in zarrArray) ||
+        !("chunks" in zarrArray)
+      ) {
+        throw new Error(
+          `Invalid zarr array at path ${arrayPath}: missing shape property`,
+        );
+      }
+
       const lazyArray = new LazyArray({
-        shape: zarrArray.shape,
-        dtype: zarrArray.dtype,
-        chunks: [zarrArray.chunks],
+        shape: zarrArray.shape as number[],
+        dtype: zarrArray.dtype as string,
+        chunks: [zarrArray.chunks as number[]],
         name: arrayPath,
       });
 

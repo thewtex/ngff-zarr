@@ -7,7 +7,7 @@ Deno.test("omero zarr from_ngff_zarr to_ngff_zarr", async () => {
   // Use better cross-platform path handling
   const storePath = new URL(
     "../../py/test/data/input/13457537.zarr",
-    import.meta.url,
+    import.meta.url
   );
   const resolvedPath = storePath.pathname.replace(/^\/([A-Za-z]:)/, "$1"); // Fix Windows paths
   const version = "0.4";
@@ -37,7 +37,7 @@ Deno.test("omero zarr from_ngff_zarr to_ngff_zarr", async () => {
   console.log(`First image shape: ${firstImage.data.shape}`);
   console.log(`First image dims: ${firstImage.dims}`);
   console.log(
-    `Metadata axes: ${multiscales.metadata.axes.map((a) => a.name).join(", ")}`,
+    `Metadata axes: ${multiscales.metadata.axes.map((a) => a.name).join(", ")}`
   );
 
   // Test toNgffZarr functionality (equivalent to Python's to_ngff_zarr call)
@@ -51,7 +51,7 @@ Deno.test("omero zarr from_ngff_zarr to_ngff_zarr", async () => {
     assertEquals(
       true,
       false,
-      "Expected toNgffZarr to throw 'not yet fully implemented' error",
+      "Expected toNgffZarr to throw 'not yet fully implemented' error"
     );
   } catch (error) {
     // Verify that we get the expected "not implemented" error
@@ -60,7 +60,7 @@ Deno.test("omero zarr from_ngff_zarr to_ngff_zarr", async () => {
       true,
       `Expected toNgffZarr to throw 'not yet fully implemented' error, got: ${
         (error as Error).message
-      }`,
+      }`
     );
     console.log("✓ toNgffZarr correctly throws 'not implemented' error");
   }
