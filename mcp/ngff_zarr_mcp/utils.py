@@ -162,7 +162,8 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
         # Determine OME-Zarr version from metadata
         version = "0.4"  # Default
         try:
-            root = zarr.open(store, mode="r")
+            import zarr as zarr_module  # Use a different name to avoid conflicts
+            root = zarr_module.open(store, mode="r")
 
             # Check for v0.5 format first (ome.version)
             if "ome" in root.attrs:
