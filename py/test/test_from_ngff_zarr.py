@@ -138,3 +138,143 @@ def test_from_ngff_zarr_string_url_with_storage_options():
                     mock_from_url.assert_called_once_with(
                         url, storage_options=storage_options
                     )
+
+
+@pytest.mark.skipif(
+    zarr_version_major < 3, reason="storage_options requires zarr-python 3"
+)
+def test_omero_metadata_backward_compatibility():
+    """Test that OMERO metadata with only min/max or only start/end is handled correctly."""
+    import numpy as np
+    from zarr.storage import MemoryStore
+    from ngff_zarr import from_ngff_zarr
+
+    # Create a test store with OMERO metadata using only min/max (old format)
+    store = MemoryStore()
+    zarr_group = zarr.open_group(store, mode="w")
+
+    # Create sample data
+    data = np.random.randint(0, 1000, size=(1, 1, 10, 100, 100), dtype=np.uint16)
+    array = zarr_group.create_array(
+        "0", shape=data.shape, dtype=data.dtype, chunks=(1, 1, 10, 50, 50)
+    )
+    array[:] = data
+
+    # Set attributes with OMERO metadata using old min/max format only
+    attrs = {
+        "multiscales": [
+            {
+                "version": "0.4",
+                "axes": [
+                    {"name": "t", "type": "time", "unit": "second"},
+                    {"name": "c", "type": "channel"},
+                    {"name": "z", "type": "space", "unit": "micrometer"},
+                    {"name": "y", "type": "space", "unit": "micrometer"},
+                    {"name": "x", "type": "space", "unit": "micrometer"},
+                ],
+                "datasets": [
+                    {
+                        "path": "0",
+                        "coordinateTransformations": [
+                            {"type": "scale", "scale": [1.0, 1.0, 1.0, 0.5, 0.5]},
+                            {
+                                "type": "translation",
+                                "translation": [0.0, 0.0, 0.0, 0.0, 0.0],
+                            },
+                        ],
+                    }
+                ],
+            }
+        ],
+        "omero": {
+            "channels": [
+                {
+                    "active": True,
+                    "color": "FFFFFF",
+                    "label": "channel-0",
+                    "window": {
+                        "min": 0,
+                        "max": 1000,
+                        # Note: no start/end keys - this is the old format
+                    },
+                }
+            ],
+            "version": "0.4",
+        },
+    }
+    zarr_group.attrs.update(attrs)
+
+    # This should work without raising KeyError for 'start'
+    multiscales = from_ngff_zarr(store)
+
+    # Verify the result
+    assert multiscales is not None
+    assert len(multiscales.images) == 1
+    assert multiscales.metadata.omero is not None
+    assert len(multiscales.metadata.omero.channels) == 1
+
+    # Check that the window has both min/max and start/end populated
+    channel = multiscales.metadata.omero.channels[0]
+    assert channel.window.min == 0
+    assert channel.window.max == 1000
+    # For backward compatibility, min/max should be used as start/end
+    assert channel.window.start == 0
+    assert channel.window.end == 1000
+
+    # Test with start/end format only (newer format)
+    store2 = MemoryStore()
+    zarr_group2 = zarr.open_group(store2, mode="w")
+    array2 = zarr_group2.create_array(
+        "0", shape=data.shape, dtype=data.dtype, chunks=(1, 1, 10, 50, 50)
+    )
+    array2[:] = data
+
+    attrs2 = attrs.copy()
+    attrs2["omero"]["channels"][0]["window"] = {
+        "start": 10,
+        "end": 900,
+        # Note: no min/max keys - this is a hypothetical newer format
+    }
+    zarr_group2.attrs.update(attrs2)
+
+    # This should also work
+    multiscales2 = from_ngff_zarr(store2)
+
+    # Verify the result
+    assert multiscales2 is not None
+    assert multiscales2.metadata.omero is not None
+    channel2 = multiscales2.metadata.omero.channels[0]
+    # For forward compatibility, start/end should be used as min/max
+    assert channel2.window.start == 10
+    assert channel2.window.end == 900
+    assert channel2.window.min == 10
+    assert channel2.window.max == 900
+
+    # Test with both formats present (most complete)
+    store3 = MemoryStore()
+    zarr_group3 = zarr.open_group(store3, mode="w")
+    array3 = zarr_group3.create_array(
+        "0", shape=data.shape, dtype=data.dtype, chunks=(1, 1, 10, 50, 50)
+    )
+    array3[:] = data
+
+    attrs3 = attrs.copy()
+    attrs3["omero"]["channels"][0]["window"] = {
+        "min": 5,
+        "max": 995,
+        "start": 15,
+        "end": 985,
+    }
+    zarr_group3.attrs.update(attrs3)
+
+    # This should preserve both formats
+    multiscales3 = from_ngff_zarr(store3)
+
+    # Verify the result
+    assert multiscales3 is not None
+    assert multiscales3.metadata.omero is not None
+    channel3 = multiscales3.metadata.omero.channels[0]
+    assert channel3.window.min == 5
+    assert channel3.window.max == 995
+    assert channel3.window.start == 15
+    assert channel3.window.end == 985

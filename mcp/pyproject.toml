@@ -36,6 +36,8 @@ dependencies = [
     "httpx",
     "aiofiles",
     "pathvalidate",
+    "requests",
+    "aiohttp",
 ]
 dynamic = ["version"]
 
