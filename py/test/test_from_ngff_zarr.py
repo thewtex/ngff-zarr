@@ -154,6 +154,7 @@ def test_omero_metadata_backward_compatibility():
     zarr_group = zarr.open_group(store, mode="w")
 
     # Create sample data
+    np.random.seed(42)  # For reproducibility
     data = np.random.randint(0, 1000, size=(1, 1, 10, 100, 100), dtype=np.uint16)
     array = zarr_group.create_array(
         "0", shape=data.shape, dtype=data.dtype, chunks=(1, 1, 10, 50, 50)
