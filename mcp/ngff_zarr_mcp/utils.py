@@ -111,7 +111,38 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
             store = store_path
 
         # Load multiscales
-        multiscales = from_ngff_zarr(store)
+        try:
+            multiscales = from_ngff_zarr(store)
+        except ValueError as e:
+            if "path" in str(e) and "FSMap" in str(e):
+                # Handle zarr v3 FSMap issue by using zarr v2 for remote stores
+                import zarr  # type: ignore[import-untyped]
+
+                if store_path.startswith(("http://", "https://")):
+                    try:
+                        store_v2 = zarr.open(store, mode="r")
+                        multiscales = from_ngff_zarr(store_v2.store)
+                    except KeyError as ke:
+                        if str(ke) == "'start'":
+                            # Handle OMERO metadata compatibility issue for remote stores
+                            raise ValueError(
+                                "Remote store has incompatible OMERO metadata format: missing 'start' key in channel window. This is a known compatibility issue with some OME-Zarr stores that use 'min'/'max' instead of 'start'/'end'."
+                            ) from ke
+                        else:
+                            raise ke
+                else:
+                    raise e
+            else:
+                raise e
+        except KeyError as e:
+            if str(e) == "'start'" and store_path.startswith(("http://", "https://")):
+                # Handle OMERO metadata compatibility issue for remote stores
+                # Some stores have 'min'/'max' instead of 'start'/'end' in channel window
+                raise ValueError(
+                    "Remote store has incompatible OMERO metadata format: missing 'start' key in channel window. This is a known compatibility issue with some OME-Zarr stores that use 'min'/'max' instead of 'start'/'end'."
+                ) from e
+            else:
+                raise e
         first_image = multiscales.images[0]
 
         # Get store size and file count
