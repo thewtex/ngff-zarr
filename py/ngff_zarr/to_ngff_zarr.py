@@ -187,48 +187,67 @@ def _write_with_tensorstore(
             # Build codecs list for zarr v3
             codecs = []
 
-            # Add sharding codec first if needed
-            if internal_chunk_shape:
-                codecs.append({
-                    "name": "sharding_indexed",
-                    "configuration": {"chunk_shape": internal_chunk_shape},
-                })
+            # Helper function to create compression codec
+            def create_compression_codec(compressor):
+                if compressor is None:
+                    return None
 
-            # Add compression codec if specified
-            if compressor is not None:
                 if hasattr(compressor, 'codec_id'):
                     # numcodecs compressor object
                     codec_id = compressor.codec_id
                     if codec_id == 'gzip':
-                        codecs.append({
+                        return {
                             "name": "gzip",
                             "configuration": {"level": getattr(compressor, 'level', 6)}
-                        })
+                        }
                     elif codec_id == 'blosc':
-                        codecs.append({
+                        return {
                             "name": "blosc",
                             "configuration": {
                                 "cname": getattr(compressor, 'cname', 'lz4'),
                                 "clevel": getattr(compressor, 'clevel', 5),
                                 "shuffle": "shuffle" if getattr(compressor, 'shuffle', 1) == 1 else "noshuffle"
                             }
-                        })
+                        }
                     elif codec_id == 'zstd':
-                        codecs.append({
+                        return {
                             "name": "zstd",
                             "configuration": {"level": getattr(compressor, 'level', 3)}
-                        })
+                        }
                     elif codec_id == 'lz4':
-                        codecs.append({"name": "lz4"})
+                        return {"name": "lz4"}
                     else:
                         # Fallback: try to use the codec_id as name
-                        codecs.append({"name": codec_id})
+                        return {"name": codec_id}
                 elif isinstance(compressor, str):
                     # Simple codec name
-                    codecs.append({"name": compressor})
+                    return {"name": compressor}
                 elif isinstance(compressor, dict):
                     # Already in codec format
-                    codecs.append(compressor)
+                    return compressor
+                return None
+
+            # Add sharding codec with inner codecs if needed
+            if internal_chunk_shape:
+                sharding_config = {"chunk_shape": internal_chunk_shape}
+
+                # If compression is specified, add it as inner codec for sharding
+                if compressor is not None:
+                    compression_codec = create_compression_codec(compressor)
+                    if compression_codec:
+                        # For sharding, compression goes in the inner codecs
+                        sharding_config["codecs"] = [compression_codec]
+
+                codecs.append({
+                    "name": "sharding_indexed",
+                    "configuration": sharding_config,
+                })
+            else:
+                # No sharding, add compression codec directly if specified
+                if compressor is not None:
+                    compression_codec = create_compression_codec(compressor)
+                    if compression_codec:
+                        codecs.append(compression_codec)
 
             # Set codecs if any were added
             if codecs:
@@ -483,6 +502,10 @@ def _write_array_with_tensorstore(
     **kwargs,
 ) -> None:
     """Write an array using the TensorStore backend."""
+    # Extract compressor and other conflicting parameters from kwargs to avoid conflicts
+    compressor = kwargs.pop('compressor', None)
+    kwargs.pop('chunks', None)  # Remove chunks from kwargs since it's a positional arg
+
     scale_path = f"{store_path}/{path}"
     if shards is None:
         _write_with_tensorstore(
@@ -494,6 +517,7 @@ def _write_array_with_tensorstore(
             dimension_names=dimension_names,
             full_array_shape=full_array_shape,
             create_dataset=create_dataset,
+            compressor=compressor,
             **kwargs,
         )
     else:  # Sharding
@@ -507,6 +531,7 @@ def _write_array_with_tensorstore(
             internal_chunk_shape=internal_chunk_shape,
             full_array_shape=full_array_shape,
             create_dataset=create_dataset,
+            compressor=compressor,
             **kwargs,
         )
 
