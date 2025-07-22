@@ -38,7 +38,9 @@ jobs:
         working-directory: ts
 
       - name: Install browsers for playwright tests
-        run: npx playwright install --with-deps
+        run: |
+          npm install
+          npx playwright install --with-deps
         working-directory: ts/test/browser-npm
 
       - name: Run all tests

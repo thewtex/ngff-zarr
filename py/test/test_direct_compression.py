@@ -12,7 +12,7 @@ def test_tensorstore_compression():
     if sys.platform == 'win32':
         print('Skipping tensorstore test on Windows')
         return
-        
+
     test_input_file = Path('../mcp/test/data/input/MR-head.nrrd')
     if test_input_file.exists():
         backend = detect_cli_io_backend([str(test_input_file)])
