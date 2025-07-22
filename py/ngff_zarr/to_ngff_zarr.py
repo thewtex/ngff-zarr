@@ -134,7 +134,7 @@ def _write_with_tensorstore(
     # Filter out compression-related kwargs that don't apply to TensorStore
     # TensorStore handles compression through codecs in metadata
     filtered_kwargs = {
-        k: v for k, v in kwargs.items() 
+        k: v for k, v in kwargs.items()
         if k not in ['compressor', 'compression', 'filters']
     }
 
@@ -183,17 +183,17 @@ def _write_with_tensorstore(
                 "name": "regular",
                 "configuration": {"chunk_shape": chunks},
             }
-            
+
             # Build codecs list for zarr v3
             codecs = []
-            
+
             # Add sharding codec first if needed
             if internal_chunk_shape:
                 codecs.append({
                     "name": "sharding_indexed",
                     "configuration": {"chunk_shape": internal_chunk_shape},
                 })
-            
+
             # Add compression codec if specified
             if compressor is not None:
                 if hasattr(compressor, 'codec_id'):
@@ -215,7 +215,7 @@ def _write_with_tensorstore(
                         })
                     elif codec_id == 'zstd':
                         codecs.append({
-                            "name": "zstd", 
+                            "name": "zstd",
                             "configuration": {"level": getattr(compressor, 'level', 3)}
                         })
                     elif codec_id == 'lz4':
@@ -229,7 +229,7 @@ def _write_with_tensorstore(
                 elif isinstance(compressor, dict):
                     # Already in codec format
                     codecs.append(compressor)
-                    
+
             # Set codecs if any were added
             if codecs:
                 spec["metadata"]["codecs"] = codecs
@@ -1007,8 +1007,6 @@ def to_ngff_zarr(
     store_path = str(store) if isinstance(store, (str, Path)) else None
 
     _validate_ngff_parameters(version, chunks_per_shard, use_tensorstore, store)
-
-    # Prepare metadata
     metadata, dimension_names, dimension_names_kwargs = _prepare_metadata(
         multiscales, version, enabled_rfcs
     )
@@ -1076,7 +1074,7 @@ def to_ngff_zarr(
         shards = chunks if chunks_per_shard is not None else None
 
         # Determine write method based on memory requirements
-        if memory_usage(image) > config.memory_target and multiscales.scale_factors:
+        if memory_usage(image) > config.memory_target:
             _handle_large_array_writing(
                 image,
                 arr,
