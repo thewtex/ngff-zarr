@@ -7,6 +7,46 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2025-07-22
+
+### Added
+
+- **Store Input Support**: Enhanced `convert_to_ome_zarr` tool to accept existing OME-Zarr stores as input
+  - Enables conversion and optimization of existing OME-Zarr datasets
+  - Supports both local and remote store inputs with storage options
+- **Enhanced Metadata Population**: Improved metadata extraction and analysis
+  - Populate `method_type` and `method_metadata` fields in store analysis
+  - Better detection of multiscale generation methods
+- **TensorStore Integration**: Added comprehensive TensorStore support
+  - Added `tensorstore` dependency for enhanced performance
+  - Compression testing for TensorStore-based operations
+
+### Changed
+
+- **Dependency Updates**: Bumped ngff-zarr dependency to 0.15.2
+  - Compatibility with latest ngff-zarr features and improvements
+  - Enhanced support for RFC 4 and advanced storage options
+- **Improved Documentation**: Enhanced README and examples
+  - Updated usage patterns for new store input functionality
+
+### Fixed
+
+- **DANDI OMERO Compatibility**: Added workaround for DANDI OMERO dataset compatibility issues
+  - Improved handling of legacy OMERO metadata structures
+  - Better error handling for malformed metadata
+- **Module Import Issues**: Fixed zarr module shadowing in utils.py
+  - Resolved import conflicts that could cause runtime errors
+  - Improved code clarity and maintainability
+- **Dependency Resolution**: Added missing remote storage dependencies
+  - Ensures proper functionality with cloud storage backends
+
+### Technical Details
+
+- Compatible with ngff-zarr Python package versions 0.15.0 and 0.15.2
+- Enhanced test coverage with TensorStore compression testing
+- Improved error handling and logging throughout the codebase
+- Better support for legacy OME-Zarr formats and OMERO datasets
+
 ## [0.3.0] - 2025-01-18
 
 ### Added

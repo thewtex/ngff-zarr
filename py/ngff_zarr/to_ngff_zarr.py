@@ -125,9 +125,18 @@ def _write_with_tensorstore(
     internal_chunk_shape=None,
     full_array_shape=None,
     create_dataset=True,
+    compressor=None,
+    **kwargs,
 ) -> None:
     """Write array using tensorstore backend"""
     import tensorstore as ts
+
+    # Filter out compression-related kwargs that don't apply to TensorStore
+    # TensorStore handles compression through codecs in metadata
+    filtered_kwargs = {
+        k: v for k, v in kwargs.items()
+        if k not in ['compressor', 'compression', 'filters']
+    }
 
     # Use full array shape if provided, otherwise use the region array shape
     dataset_shape = full_array_shape if full_array_shape is not None else array.shape
@@ -150,6 +159,15 @@ def _write_with_tensorstore(
         # Only add chunk info when creating the dataset
         if create_dataset:
             spec["metadata"]["chunks"] = chunks
+            # Add compression for zarr v2 with TensorStore
+            if compressor is not None:
+                # TensorStore zarr2 driver uses compressor in metadata
+                if hasattr(compressor, 'codec_id'):
+                    # numcodecs compressor object
+                    spec["metadata"]["compressor"] = compressor.get_config()
+                else:
+                    # Simple compressor name or config dict
+                    spec["metadata"]["compressor"] = compressor
     elif zarr_format == 3:
         spec["driver"] = "zarr3"
         spec["metadata"]["data_type"] = _numpy_to_zarr_dtype(array.dtype)
@@ -165,13 +183,75 @@ def _write_with_tensorstore(
                 "name": "regular",
                 "configuration": {"chunk_shape": chunks},
             }
+
+            # Build codecs list for zarr v3
+            codecs = []
+
+            # Helper function to create compression codec
+            def create_compression_codec(compressor):
+                if compressor is None:
+                    return None
+
+                if hasattr(compressor, 'codec_id'):
+                    # numcodecs compressor object
+                    codec_id = compressor.codec_id
+                    if codec_id == 'gzip':
+                        return {
+                            "name": "gzip",
+                            "configuration": {"level": getattr(compressor, 'level', 6)}
+                        }
+                    elif codec_id == 'blosc':
+                        return {
+                            "name": "blosc",
+                            "configuration": {
+                                "cname": getattr(compressor, 'cname', 'lz4'),
+                                "clevel": getattr(compressor, 'clevel', 5),
+                                "shuffle": "shuffle" if getattr(compressor, 'shuffle', 1) == 1 else "noshuffle"
+                            }
+                        }
+                    elif codec_id == 'zstd':
+                        return {
+                            "name": "zstd",
+                            "configuration": {"level": getattr(compressor, 'level', 3)}
+                        }
+                    elif codec_id == 'lz4':
+                        return {"name": "lz4"}
+                    else:
+                        # Fallback: try to use the codec_id as name
+                        return {"name": codec_id}
+                elif isinstance(compressor, str):
+                    # Simple codec name
+                    return {"name": compressor}
+                elif isinstance(compressor, dict):
+                    # Already in codec format
+                    return compressor
+                return None
+
+            # Add sharding codec with inner codecs if needed
             if internal_chunk_shape:
-                spec["metadata"]["codecs"] = [
-                    {
-                        "name": "sharding_indexed",
-                        "configuration": {"chunk_shape": internal_chunk_shape},
-                    }
-                ]
+                sharding_config = {"chunk_shape": internal_chunk_shape}
+
+                # If compression is specified, add it as inner codec for sharding
+                if compressor is not None:
+                    compression_codec = create_compression_codec(compressor)
+                    if compression_codec:
+                        # For sharding, compression goes in the inner codecs
+                        sharding_config["codecs"] = [compression_codec]
+
+                codecs.append({
+                    "name": "sharding_indexed",
+                    "configuration": sharding_config,
+                })
+            else:
+                # No sharding, add compression codec directly if specified
+                if compressor is not None:
+                    compression_codec = create_compression_codec(compressor)
+                    if compression_codec:
+                        codecs.append(compression_codec)
+
+            # Set codecs if any were added
+            if codecs:
+                spec["metadata"]["codecs"] = codecs
     else:
         raise ValueError(f"Unsupported zarr format: {zarr_format}")
 
@@ -422,6 +502,10 @@ def _write_array_with_tensorstore(
     **kwargs,
 ) -> None:
     """Write an array using the TensorStore backend."""
+    # Extract compressor and other conflicting parameters from kwargs to avoid conflicts
+    compressor = kwargs.pop('compressor', None)
+    kwargs.pop('chunks', None)  # Remove chunks from kwargs since it's a positional arg
+
     scale_path = f"{store_path}/{path}"
     if shards is None:
         _write_with_tensorstore(
@@ -433,6 +517,7 @@ def _write_array_with_tensorstore(
             dimension_names=dimension_names,
             full_array_shape=full_array_shape,
             create_dataset=create_dataset,
+            compressor=compressor,
             **kwargs,
         )
     else:  # Sharding
@@ -446,6 +531,7 @@ def _write_array_with_tensorstore(
             internal_chunk_shape=internal_chunk_shape,
             full_array_shape=full_array_shape,
             create_dataset=create_dataset,
+            compressor=compressor,
             **kwargs,
         )
 
@@ -946,8 +1032,6 @@ def to_ngff_zarr(
     store_path = str(store) if isinstance(store, (str, Path)) else None
 
     _validate_ngff_parameters(version, chunks_per_shard, use_tensorstore, store)
-
-    # Prepare metadata
     metadata, dimension_names, dimension_names_kwargs = _prepare_metadata(
         multiscales, version, enabled_rfcs
     )
@@ -1015,7 +1099,7 @@ def to_ngff_zarr(
         shards = chunks if chunks_per_shard is not None else None
 
         # Determine write method based on memory requirements
-        if memory_usage(image) > config.memory_target and multiscales.scale_factors:
+        if memory_usage(image) > config.memory_target:
             _handle_large_array_writing(
                 image,
                 arr,

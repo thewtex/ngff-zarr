@@ -22,7 +22,7 @@ jobs:
         with:
           pixi-version: v0.49.0
           manifest-path: ./mcp/pyproject.toml
-          cache: true
+          frozen: true
 
       - name: Install dependencies
         working-directory: ./mcp

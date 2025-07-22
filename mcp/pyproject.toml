@@ -31,7 +31,7 @@ classifiers = [
 ]
 dependencies = [
     "mcp",
-    "ngff-zarr[cli] >= 0.15.1",
+    "ngff-zarr[cli,tensorstore] >= 0.15.2",
     "pydantic >= 2.0",
     "httpx",
     "aiofiles",
@@ -170,6 +170,7 @@ pytest-asyncio = ">=1.0.0,<2"
 
 [tool.pixi.feature.dev.pypi-dependencies]
 ngff-zarr-mcp = { path = ".", editable = true, extras = ["dev"] }
+ngff-zarr = { path = "../py", editable = true, extras = ["cli", "tensorstore"] }
 
 [tool.pixi.feature.dev.tasks]
 test = "pytest tests/"
