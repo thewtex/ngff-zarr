@@ -61,7 +61,6 @@ class ConversionOptions(BaseModel):
     use_tensorstore: bool = Field(False, description="Use TensorStore for I/O")
 
     # Performance options
-    memory_target: Optional[str] = Field(None, description="Memory limit (e.g., 4GB)")
     use_local_cluster: bool = Field(
         False, description="Use Dask LocalCluster for large datasets"
     )

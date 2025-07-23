@@ -19,11 +19,14 @@ def temp_output_dir():
     yield temp_dir
     # Cleanup after test
     import shutil
+
     shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 @pytest.mark.asyncio
-async def test_convert_to_ome_zarr_tensorstore_with_compression(test_input_file, temp_output_dir):
+async def test_convert_to_ome_zarr_tensorstore_with_compression(
+    test_input_file, temp_output_dir
+):
     """Test conversion with TensorStore and compression (reproduces the original bug)."""
     # Verify input file exists
     assert test_input_file.exists(), f"Test input file not found: {test_input_file}"
@@ -56,7 +59,9 @@ async def test_convert_to_ome_zarr_tensorstore_with_compression(test_input_file,
 
 
 @pytest.mark.asyncio
-async def test_convert_to_ome_zarr_tensorstore_with_gzip_compression(test_input_file, temp_output_dir):
+async def test_convert_to_ome_zarr_tensorstore_with_gzip_compression(
+    test_input_file, temp_output_dir
+):
     """Test conversion with TensorStore and gzip compression."""
     # Verify input file exists
     assert test_input_file.exists(), f"Test input file not found: {test_input_file}"
@@ -90,13 +95,17 @@ async def test_convert_to_ome_zarr_tensorstore_with_gzip_compression(test_input_
 
 
 @pytest.mark.asyncio
-async def test_convert_to_ome_zarr_zarr_v3_tensorstore_with_compression(test_input_file, temp_output_dir):
+async def test_convert_to_ome_zarr_zarr_v3_tensorstore_with_compression(
+    test_input_file, temp_output_dir
+):
     """Test conversion with TensorStore, Zarr v3, and compression."""
     # Verify input file exists
     assert test_input_file.exists(), f"Test input file not found: {test_input_file}"
 
     # Setup output path
-    output_path = Path(temp_output_dir) / "mr_head_zarr_v3_tensorstore_compression.ome.zarr"
+    output_path = (
+        Path(temp_output_dir) / "mr_head_zarr_v3_tensorstore_compression.ome.zarr"
+    )
 
     # Configure conversion options with TensorStore, Zarr v3, and compression
     options = ConversionOptions(
