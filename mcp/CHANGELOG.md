@@ -7,11 +7,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-07-23
+
+### Removed
+
+- **Memory Target Option**: Removed `memory_target` parameter from MCP interface
+  - Removed from `ConversionOptions` model
+  - Removed from `convert_images_to_ome_zarr` tool function
+  - Removed from `setup_dask_config` utility function
+  - Memory management now handled automatically by ngff-zarr library defaults
+
+### Changed
+
+- **Simplified Memory Management**: Memory usage is now managed automatically
+  - Removed manual memory limit calculations for Dask LocalCluster
+  - Simplified caching logic to rely on system defaults
+  - LocalCluster now uses default memory management without explicit limits
+
+### Technical Details
+
+- **Breaking Change**: Applications using `memory_target` parameter will need to
+  be updated
+- Memory management delegated to underlying ngff-zarr library configuration
+- Improved code maintainability by removing manual memory management complexity
+- All existing tests updated and passing without memory_target references
+
 ## [0.4.0] - 2025-07-22
 
 ### Added
 
-- **Store Input Support**: Enhanced `convert_to_ome_zarr` tool to accept existing OME-Zarr stores as input
+- **Store Input Support**: Enhanced `convert_to_ome_zarr` tool to accept
+  existing OME-Zarr stores as input
   - Enables conversion and optimization of existing OME-Zarr datasets
   - Supports both local and remote store inputs with storage options
 - **Enhanced Metadata Population**: Improved metadata extraction and analysis
@@ -31,7 +57,8 @@ and this project adheres to
 
 ### Fixed
 
-- **DANDI OMERO Compatibility**: Added workaround for DANDI OMERO dataset compatibility issues
+- **DANDI OMERO Compatibility**: Added workaround for DANDI OMERO dataset
+  compatibility issues
   - Improved handling of legacy OMERO metadata structures
   - Better error handling for malformed metadata
 - **Module Import Issues**: Fixed zarr module shadowing in utils.py
