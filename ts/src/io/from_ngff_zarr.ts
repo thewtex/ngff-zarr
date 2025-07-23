@@ -14,7 +14,7 @@ export type MemoryStore = Map<string, Uint8Array>;
 
 export async function fromNgffZarr(
   store: string | MemoryStore | zarr.FetchStore,
-  options: FromNgffZarrOptions = {},
+  options: FromNgffZarrOptions = {}
 ): Promise<Multiscales> {
   const validate = options.validate ?? false;
 
@@ -30,7 +30,7 @@ export async function fromNgffZarr(
       // For local paths, check if we're in a browser environment
       if (typeof window !== "undefined") {
         throw new Error(
-          "Local file paths are not supported in browser environments. Use HTTP/HTTPS URLs instead.",
+          "Local file paths are not supported in browser environments. Use HTTP/HTTPS URLs instead."
         );
       }
 
@@ -51,42 +51,24 @@ export async function fromNgffZarr(
         }
       } catch (error) {
         throw new Error(
-          `Failed to load FileSystemStore: ${error}. Use HTTP/HTTPS URLs for browser compatibility.`,
+          `Failed to load FileSystemStore: ${error}. Use HTTP/HTTPS URLs for browser compatibility.`
         );
       }
     }
-
-    const root = zarr.root(resolvedStore);
 
     // Try to use consolidated metadata for better performance
-    let consolidatedRoot;
+    let optimizedStore;
     try {
       // @ts-ignore: tryWithConsolidated typing
-      consolidatedRoot = await zarr.tryWithConsolidated(resolvedStore);
+      optimizedStore = await zarr.tryWithConsolidated(resolvedStore);
     } catch {
-      consolidatedRoot = resolvedStore;
+      optimizedStore = resolvedStore;
     }
 
-    // Try to open as zarr v2 first, then v3 if that fails
-    let group;
-    try {
-      // @ts-ignore: zarr.open.v2 may not have complete type definitions for all store types
-      group = await zarr.open.v2(zarr.root(consolidatedRoot), {
-        kind: "group",
-      });
-    } catch (v2Error) {
-      try {
-        // @ts-ignore: zarr.open.v3 may not have complete type definitions for all store types
-        group = await zarr.open.v3(zarr.root(consolidatedRoot), {
-          kind: "group",
-        });
-      } catch (v3Error) {
-        throw new Error(
-          `Failed to open zarr store as either v2 or v3 format. v2 error: ${v2Error}. v3 error: ${v3Error}`,
-        );
-      }
-    }
-    const attrs = group.attrs as unknown;
+    const root = await zarr.open(optimizedStore as zarr.Readable, {
+      kind: "group",
+    });
+    const attrs = root.attrs as unknown;
 
     if (!attrs || !(attrs as Record<string, unknown>).multiscales) {
       throw new Error("No multiscales metadata found in Zarr store");
@@ -118,27 +100,11 @@ export async function fromNgffZarr(
     for (const dataset of metadata.datasets) {
       const arrayPath = dataset.path;
 
-      // Try to open as zarr v2 first, then v3 if that fails
-      let zarrArray;
-      try {
-        // @ts-ignore: zarr.open.v2 may not have complete type definitions for all store types
-        zarrArray = await zarr.open.v2(root.resolve(arrayPath), {
-          path: arrayPath,
-          kind: "array",
-        });
-      } catch (v2Error) {
-        try {
-          // @ts-ignore: zarr.open.v3 may not have complete type definitions for all store types
-          zarrArray = await zarr.open.v3(root.resolve(arrayPath), {
-            path: arrayPath,
-            kind: "array",
-          });
-        } catch (v3Error) {
-          throw new Error(
-            `Failed to open zarr array ${arrayPath} as either v2 or v3 format. v2 error: ${v2Error}. v3 error: ${v3Error}`,
-          );
-        }
-      }
+      // @ts-ignore: zarr.open typing
+      const zarrArray = await zarr.open(root.resolve(arrayPath), {
+        kind: "array",
+        path: arrayPath,
+      });
 
       // Verify we have an array with the expected properties
       if (
@@ -148,7 +114,7 @@ export async function fromNgffZarr(
         !("chunks" in zarrArray)
       ) {
         throw new Error(
-          `Invalid zarr array at path ${arrayPath}: missing shape property`,
+          `Invalid zarr array at path ${arrayPath}: missing shape property`
         );
       }
 
@@ -210,7 +176,7 @@ export async function fromNgffZarr(
     throw new Error(
       `Failed to read OME-Zarr: ${
         error instanceof Error ? error.message : String(error)
-      }`,
+      }`
     );
   }
 }
@@ -218,7 +184,7 @@ export async function fromNgffZarr(
 export async function readArrayData(
   storePath: string,
   arrayPath: string,
-  selection?: (number | null)[],
+  selection?: (number | null)[]
 ): Promise<unknown> {
   try {
     const store = new zarr.FetchStore(storePath);
@@ -237,7 +203,7 @@ export async function readArrayData(
         });
       } catch (v3Error) {
         throw new Error(
-          `Failed to open zarr array ${arrayPath} as either v2 or v3 format. v2 error: ${v2Error}. v3 error: ${v3Error}`,
+          `Failed to open zarr array ${arrayPath} as either v2 or v3 format. v2 error: ${v2Error}. v3 error: ${v3Error}`
         );
       }
     }
@@ -251,7 +217,7 @@ export async function readArrayData(
     throw new Error(
       `Failed to read array data: ${
         error instanceof Error ? error.message : String(error)
-      }`,
+      }`
     );
   }
 }
