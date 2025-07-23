@@ -130,7 +130,7 @@ test.describe("NGFF Zarr NPM Package Tests", () => {
               data: {
                 shape: [1000, 1000],
                 dtype: "float64",
-                chunks: [[100, 100]],
+                chunks: [100, 100],
                 name: "test-image",
               },
               dims: ["y", "x"],
@@ -162,7 +162,7 @@ test.describe("NGFF Zarr NPM Package Tests", () => {
         };
 
         const result = MultiscalesOptionsSchema.safeParse(
-          validMultiscaleOptions,
+          validMultiscaleOptions
         );
         return {
           success: result.success,

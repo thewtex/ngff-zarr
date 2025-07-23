@@ -176,11 +176,9 @@ async function _writeImage(
 }
 
 function getChunksFromImage(image: NgffImage): number[] {
-  // Handle both ArrayLike and zarr.Array
+  // zarr.Array.chunks is a number[] representing chunk shape
   if (image.data.chunks && image.data.chunks.length > 0) {
-    return Array.isArray(image.data.chunks)
-      ? image.data.chunks
-      : [image.data.chunks];
+    return image.data.chunks;
   }
 
   return image.data.shape.map((dim) => Math.min(dim, 1024));

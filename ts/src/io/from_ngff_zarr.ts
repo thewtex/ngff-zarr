@@ -14,7 +14,7 @@ export type MemoryStore = Map<string, Uint8Array>;
 export async function fromNgffZarr(
   // Also accepts FileSystemStore, ZipFileStore objects in Node.js/Deno
   store: string | MemoryStore | zarr.FetchStore,
-  options: FromNgffZarrOptions = {}
+  options: FromNgffZarrOptions = {},
 ): Promise<Multiscales> {
   const validate = options.validate ?? false;
 
@@ -30,7 +30,7 @@ export async function fromNgffZarr(
       // For local paths, check if we're in a browser environment
       if (typeof window !== "undefined") {
         throw new Error(
-          "Local file paths are not supported in browser environments. Use HTTP/HTTPS URLs instead."
+          "Local file paths are not supported in browser environments. Use HTTP/HTTPS URLs instead.",
         );
       }
 
@@ -51,7 +51,7 @@ export async function fromNgffZarr(
         }
       } catch (error) {
         throw new Error(
-          `Failed to load FileSystemStore: ${error}. Use HTTP/HTTPS URLs for browser compatibility.`
+          `Failed to load FileSystemStore: ${error}. Use HTTP/HTTPS URLs for browser compatibility.`,
         );
       }
     }
@@ -112,7 +112,7 @@ export async function fromNgffZarr(
         !("chunks" in zarrArray)
       ) {
         throw new Error(
-          `Invalid zarr array at path ${arrayPath}: missing shape property`
+          `Invalid zarr array at path ${arrayPath}: missing shape property`,
         );
       }
 
@@ -167,7 +167,7 @@ export async function fromNgffZarr(
     throw new Error(
       `Failed to read OME-Zarr: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 }
@@ -175,7 +175,7 @@ export async function fromNgffZarr(
 export async function readArrayData(
   storePath: string,
   arrayPath: string,
-  selection?: (number | null)[]
+  selection?: (number | null)[],
 ): Promise<unknown> {
   try {
     const store = new zarr.FetchStore(storePath);
@@ -194,7 +194,7 @@ export async function readArrayData(
         });
       } catch (v3Error) {
         throw new Error(
-          `Failed to open zarr array ${arrayPath} as either v2 or v3 format. v2 error: ${v2Error}. v3 error: ${v3Error}`
+          `Failed to open zarr array ${arrayPath} as either v2 or v3 format. v2 error: ${v2Error}. v3 error: ${v3Error}`,
         );
       }
     }
@@ -208,7 +208,7 @@ export async function readArrayData(
     throw new Error(
       `Failed to read array data: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 }

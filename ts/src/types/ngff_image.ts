@@ -1,11 +1,10 @@
 import * as zarr from "zarrita";
-import type { ArrayLike } from "./array_interface.ts";
 import type { Units } from "./units.ts";
 
 export type ComputedCallback = () => void;
 
 export interface NgffImageOptions {
-  data: ArrayLike | zarr.Array<zarr.DataType, zarr.Readable>;
+  data: zarr.Array<zarr.DataType, zarr.Readable>;
   dims: string[];
   scale: Record<string, number>;
   translation: Record<string, number>;
@@ -15,7 +14,7 @@ export interface NgffImageOptions {
 }
 
 export class NgffImage {
-  public readonly data: ArrayLike | zarr.Array<zarr.DataType, zarr.Readable>;
+  public readonly data: zarr.Array<zarr.DataType, zarr.Readable>;
   public readonly dims: string[];
   public readonly scale: Record<string, number>;
   public readonly translation: Record<string, number>;
@@ -38,14 +37,11 @@ export class NgffImage {
       ? JSON.stringify(this.axesUnits)
       : "None";
 
-    // Create LazyArray-like string representation
-    const path =
-      "path" in this.data && this.data.path ? this.data.path : this.name;
-    const chunks = Array.isArray(this.data.chunks)
-      ? this.data.chunks.join(", ")
-      : String(this.data.chunks);
+    // Create array string representation using zarr.Array properties
+    const path = this.data.path || this.name;
+    const chunks = this.data.chunks.join(", ");
 
-    const arrayStr = `LazyArray(name=${path}, shape=(${this.data.shape.join(
+    const arrayStr = `Array(name=${path}, shape=(${this.data.shape.join(
       ", "
     )}), dtype=${
       this.data.dtype
