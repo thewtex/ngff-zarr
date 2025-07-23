@@ -2,7 +2,6 @@ import * as zarr from "zarrita";
 import { Multiscales } from "../types/multiscales.ts";
 import { NgffImage } from "../types/ngff_image.ts";
 import type { Metadata, Omero } from "../types/zarr_metadata.ts";
-import { LazyArray } from "../types/lazy_array.ts";
 import { MetadataSchema } from "../schemas/zarr_metadata.ts";
 import type { Units } from "../types/units.ts";
 
@@ -13,6 +12,7 @@ export interface FromNgffZarrOptions {
 export type MemoryStore = Map<string, Uint8Array>;
 
 export async function fromNgffZarr(
+  // Also accepts FileSystemStore, ZipFileStore objects in Node.js/Deno
   store: string | MemoryStore | zarr.FetchStore,
   options: FromNgffZarrOptions = {}
 ): Promise<Multiscales> {
@@ -34,7 +34,7 @@ export async function fromNgffZarr(
         );
       }
 
-      // Use dynamic import for FileSystemStore in Node.js/Deno environments
+      // Use dynamic import for FileSystemStore, ZipFileStore in Node.js/Deno environments
       try {
         const { FileSystemStore, ZipFileStore } = await import(
           "@zarrita/storage"
@@ -100,11 +100,9 @@ export async function fromNgffZarr(
     for (const dataset of metadata.datasets) {
       const arrayPath = dataset.path;
 
-      // @ts-ignore: zarr.open typing
-      const zarrArray = await zarr.open(root.resolve(arrayPath), {
+      const zarrArray = (await zarr.open(root.resolve(arrayPath), {
         kind: "array",
-        path: arrayPath,
-      });
+      })) as zarr.Array<zarr.DataType, zarr.Readable>;
 
       // Verify we have an array with the expected properties
       if (
@@ -117,13 +115,6 @@ export async function fromNgffZarr(
           `Invalid zarr array at path ${arrayPath}: missing shape property`
         );
       }
-
-      const lazyArray = new LazyArray({
-        shape: zarrArray.shape as number[],
-        dtype: zarrArray.dtype as string,
-        chunks: [zarrArray.chunks as number[]],
-        name: arrayPath,
-      });
 
       const scale: Record<string, number> = {};
       const translation: Record<string, number> = {};
@@ -153,7 +144,7 @@ export async function fromNgffZarr(
       }, {} as Record<string, Units>);
 
       const ngffImage = new NgffImage({
-        data: lazyArray,
+        data: zarrArray,
         dims,
         scale,
         translation,

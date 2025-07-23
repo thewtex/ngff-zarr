@@ -1,10 +1,11 @@
-import type { LazyArray } from "./lazy_array.ts";
+import * as zarr from "zarrita";
+import type { ArrayLike } from "./array_interface.ts";
 import type { Units } from "./units.ts";
 
 export type ComputedCallback = () => void;
 
 export interface NgffImageOptions {
-  data: LazyArray;
+  data: ArrayLike | zarr.Array<zarr.DataType, zarr.Readable>;
   dims: string[];
   scale: Record<string, number>;
   translation: Record<string, number>;
@@ -14,7 +15,7 @@ export interface NgffImageOptions {
 }
 
 export class NgffImage {
-  public readonly data: LazyArray;
+  public readonly data: ArrayLike | zarr.Array<zarr.DataType, zarr.Readable>;
   public readonly dims: string[];
   public readonly scale: Record<string, number>;
   public readonly translation: Record<string, number>;
@@ -36,8 +37,22 @@ export class NgffImage {
     const axesUnitsStr = this.axesUnits
       ? JSON.stringify(this.axesUnits)
       : "None";
+
+    // Create LazyArray-like string representation
+    const path =
+      "path" in this.data && this.data.path ? this.data.path : this.name;
+    const chunks = Array.isArray(this.data.chunks)
+      ? this.data.chunks.join(", ")
+      : String(this.data.chunks);
+
+    const arrayStr = `LazyArray(name=${path}, shape=(${this.data.shape.join(
+      ", "
+    )}), dtype=${
+      this.data.dtype
+    }, chunksize=(${chunks}), chunktype=TypedArray)`;
+
     return `NgffImage(
-    data=${this.data.toString()},
+    data=${arrayStr},
     dims=[${this.dims.map((d) => `'${d}'`).join(", ")}],
     scale=${JSON.stringify(this.scale)},
     translation=${JSON.stringify(this.translation)},

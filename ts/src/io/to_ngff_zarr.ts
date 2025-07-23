@@ -176,8 +176,11 @@ async function _writeImage(
 }
 
 function getChunksFromImage(image: NgffImage): number[] {
-  if (image.data.chunks.length > 0 && image.data.chunks[0].length > 0) {
-    return image.data.chunks[0];
+  // Handle both ArrayLike and zarr.Array
+  if (image.data.chunks && image.data.chunks.length > 0) {
+    return Array.isArray(image.data.chunks)
+      ? image.data.chunks
+      : [image.data.chunks];
   }
 
   return image.data.shape.map((dim) => Math.min(dim, 1024));
