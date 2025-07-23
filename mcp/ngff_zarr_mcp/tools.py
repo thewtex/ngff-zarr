@@ -12,7 +12,6 @@ from ngff_zarr import (  # type: ignore[import-untyped]
     to_ngff_zarr,
     from_ngff_zarr,
     Methods,
-    config,
 )
 
 # Import validation function if available
@@ -60,7 +59,6 @@ async def convert_to_ome_zarr(
 
         # Setup Dask if needed
         client = setup_dask_config(
-            memory_target=options.memory_target,
             use_local_cluster=options.use_local_cluster,
             cache_dir=options.cache_dir,
         )
@@ -158,7 +156,7 @@ async def convert_to_ome_zarr(
                     raise ValueError("No valid input image found")
 
                 # Setup caching for large datasets
-                cache = ngff_image.data.nbytes > config.memory_target
+                cache = False  # Let the system handle caching automatically
 
                 # Always use to_multiscales to create proper Multiscales object
                 # If scale_factors is None, create single-scale multiscales

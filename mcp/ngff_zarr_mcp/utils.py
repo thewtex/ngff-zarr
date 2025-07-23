@@ -163,6 +163,7 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
         version = "0.4"  # Default
         try:
             import zarr as zarr_module  # Use a different name to avoid conflicts
+
             root = zarr_module.open(store, mode="r")
 
             # Check for v0.5 format first (ome.version)
@@ -203,8 +204,8 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
             translation_info=(
                 dict(first_image.translation) if first_image.translation else {}
             ),
-            method_type=getattr(multiscales, 'method', None),
-            method_metadata=getattr(multiscales, 'method_metadata', None),
+            method_type=getattr(multiscales, "method", None),
+            method_metadata=getattr(multiscales, "method_metadata", None),
             anatomical_orientation=None,  # Will be populated if available
             rfc_support=None,  # Will be populated if available
         )
@@ -390,15 +391,10 @@ def get_available_compression_codecs() -> List[str]:
 
 
 def setup_dask_config(
-    memory_target: Optional[str] = None,
     use_local_cluster: bool = False,
     cache_dir: Optional[str] = None,
 ) -> Optional[Any]:
     """Setup Dask configuration and return client if using LocalCluster."""
-    import dask
-
-    if memory_target:
-        config.memory_target = dask.utils.parse_bytes(memory_target)  # type: ignore[attr-defined]
 
     if cache_dir:
         cache_path = Path(cache_dir).resolve()
@@ -416,19 +412,16 @@ def setup_dask_config(
             import psutil
 
             n_workers = 4
-            worker_memory_target = config.memory_target // n_workers
 
             try:
                 cpu_count = psutil.cpu_count(False)
                 if cpu_count is not None:
                     n_workers = cpu_count // 2
-                    worker_memory_target = config.memory_target // n_workers
             except Exception:
                 pass
 
             cluster = LocalCluster(
                 n_workers=n_workers,
-                memory_limit=worker_memory_target,
                 processes=True,
                 threads_per_worker=2,
             )

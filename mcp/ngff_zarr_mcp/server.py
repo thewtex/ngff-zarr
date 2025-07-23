@@ -45,7 +45,6 @@ async def convert_images_to_ome_zarr(
     compression_codec: Optional[str] = None,
     compression_level: Optional[int] = None,
     use_tensorstore: bool = False,
-    memory_target: Optional[str] = None,
     use_local_cluster: bool = False,
     cache_dir: Optional[str] = None,
     # New RFC 4 and storage options
@@ -73,7 +72,6 @@ async def convert_images_to_ome_zarr(
         compression_codec: Compression codec
         compression_level: Compression level
         use_tensorstore: Use TensorStore for I/O
-        memory_target: Memory limit (e.g., "4GB")
         use_local_cluster: Use Dask LocalCluster for large datasets
         cache_dir: Directory for caching
         anatomical_orientation: Anatomical orientation preset (LPS, RAS)
@@ -112,7 +110,6 @@ async def convert_images_to_ome_zarr(
         compression_codec=compression_codec,
         compression_level=compression_level,
         use_tensorstore=use_tensorstore,
-        memory_target=memory_target,
         use_local_cluster=use_local_cluster,
         cache_dir=cache_dir,
         anatomical_orientation=anatomical_orientation,
