@@ -40,6 +40,8 @@ Deno.test("omero zarr from_ngff_zarr to_ngff_zarr", async () => {
     `Metadata axes: ${multiscales.metadata.axes.map((a) => a.name).join(", ")}`,
   );
 
+  console.log(`Multiscales:`, multiscales.toString());
+
   const memoryStore = new Map<string, Uint8Array>();
   await toNgffZarr(memoryStore, multiscales, { version });
 

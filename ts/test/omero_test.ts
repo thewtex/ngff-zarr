@@ -1,7 +1,7 @@
 import { assertEquals, assertExists, assertThrows } from "@std/assert";
 import { fromNgffZarr } from "../src/io/from_ngff_zarr.ts";
 import { toNgffZarr } from "../src/io/to_ngff_zarr.ts";
-import { LazyArray } from "../src/types/lazy_array.ts";
+import * as zarr from "zarrita";
 import { NgffImage } from "../src/types/ngff_image.ts";
 import type {
   Omero,
@@ -87,15 +87,17 @@ Deno.test("write omero metadata", async () => {
   }
 
   // Create NgffImage with test data
-  const lazyArray = new LazyArray({
+  const store = new Map<string, Uint8Array>();
+  const root = zarr.root(store);
+
+  const zarrArray = await zarr.create(root.resolve("test_image"), {
     shape: [2, 32, 64, 64],
-    dtype: "uint8",
-    chunks: [[2, 32, 64, 64]],
-    name: "test_image",
+    chunk_shape: [2, 32, 64, 64],
+    data_type: "uint8",
   });
 
   const image = new NgffImage({
-    data: lazyArray,
+    data: zarrArray,
     dims: ["c", "z", "y", "x"],
     scale: { c: 1.0, z: 1.0, y: 1.0, x: 1.0 },
     translation: { c: 0.0, z: 0.0, y: 0.0, x: 0.0 },

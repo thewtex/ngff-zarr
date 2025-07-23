@@ -7,7 +7,6 @@ import {
   TranslationSchema,
 } from "../src/schemas/zarr_metadata.ts";
 import { MethodsSchema } from "../src/schemas/methods.ts";
-import { LazyArrayMetadataSchema } from "../src/schemas/lazy_array.ts";
 
 Deno.test("AxisSchema validation", () => {
   const validAxis = {
@@ -116,34 +115,4 @@ Deno.test("MethodsSchema validation", () => {
   assertEquals(result, "itkwasm_gaussian");
 
   assertThrows(() => MethodsSchema.parse("invalid_method"));
-});
-
-Deno.test("LazyArrayMetadataSchema validation", () => {
-  const validMetadata = {
-    shape: [256, 256],
-    dtype: "uint8",
-    chunks: [
-      [64, 64],
-      [64, 64],
-      [64, 64],
-      [64, 64],
-    ],
-    name: "test_array",
-  };
-
-  const result = LazyArrayMetadataSchema.parse(validMetadata);
-  assertEquals(result.shape, [256, 256]);
-  assertEquals(result.dtype, "uint8");
-  assertEquals(result.name, "test_array");
-});
-
-Deno.test("LazyArrayMetadataSchema validation - negative shape", () => {
-  const invalidMetadata = {
-    shape: [-256, 256],
-    dtype: "uint8",
-    chunks: [[64, 64]],
-    name: "test_array",
-  };
-
-  assertThrows(() => LazyArrayMetadataSchema.parse(invalidMetadata));
 });

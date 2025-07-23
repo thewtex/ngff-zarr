@@ -1,55 +1,38 @@
 import { assertEquals, assertThrows } from "@std/assert";
-import { LazyArray } from "../src/types/lazy_array.ts";
+import * as zarr from "zarrita";
 import { NgffImage } from "../src/types/ngff_image.ts";
 import { Multiscales } from "../src/types/multiscales.ts";
 import { Methods } from "../src/types/methods.ts";
 import { validateColor } from "../src/types/zarr_metadata.ts";
 
-Deno.test("LazyArray creation and properties", () => {
-  const metadata = {
+Deno.test("zarr.Array creation for NgffImage", async () => {
+  const store = new Map<string, Uint8Array>();
+  const root = zarr.root(store);
+
+  const zarrArray = await zarr.create(root.resolve("test_array"), {
     shape: [256, 256],
-    dtype: "uint8",
-    chunks: [[256, 256]],
-    name: "test_array",
-  };
+    chunk_shape: [256, 256],
+    data_type: "uint8",
+  });
 
-  const lazyArray = new LazyArray(metadata);
-
-  assertEquals(lazyArray.shape, [256, 256]);
-  assertEquals(lazyArray.dtype, "uint8");
-  assertEquals(lazyArray.ndim, 2);
-  assertEquals(lazyArray.size, 65536);
-  assertEquals(lazyArray.chunksize, [256, 256]);
-  assertEquals(lazyArray.name, "test_array");
+  assertEquals(zarrArray.shape, [256, 256]);
+  assertEquals(zarrArray.dtype, "uint8");
+  assertEquals(zarrArray.chunks, [256, 256]);
+  assertEquals(zarrArray.path, "/test_array");
 });
 
-Deno.test("LazyArray toString", () => {
-  const metadata = {
-    shape: [100, 200],
-    dtype: "float32",
-    chunks: [[50, 100]],
-    name: "float_array",
-  };
+Deno.test("NgffImage creation", async () => {
+  const store = new Map<string, Uint8Array>();
+  const root = zarr.root(store);
 
-  const lazyArray = new LazyArray(metadata);
-  const str = lazyArray.toString();
-
-  assertEquals(
-    str,
-    "LazyArray(name=float_array, shape=(100, 200), dtype=float32, chunksize=(50, 100), chunktype=TypedArray)",
-  );
-});
-
-Deno.test("NgffImage creation", () => {
-  const lazyArray = new LazyArray({
+  const zarrArray = await zarr.create(root.resolve("image"), {
     shape: [256, 256],
-    dtype: "uint8",
-    chunks: [[64, 64]],
-    name: "image",
+    chunk_shape: [64, 64],
+    data_type: "uint8",
   });
 
   const ngffImage = new NgffImage({
-    data: lazyArray,
+    data: zarrArray,
     dims: ["y", "x"],
     scale: { y: 1.0, x: 1.0 },
     translation: { y: 0.0, x: 0.0 },
@@ -66,16 +49,18 @@ Deno.test("NgffImage creation", () => {
   assertEquals(ngffImage.computedCallbacks.length, 0);
 });
 
-Deno.test("NgffImage with axes units", () => {
-  const lazyArray = new LazyArray({
+Deno.test("NgffImage with axes units", async () => {
+  const store = new Map<string, Uint8Array>();
+  const root = zarr.root(store);
+
+  const zarrArray = await zarr.create(root.resolve("volume"), {
     shape: [100, 100, 100],
-    dtype: "uint16",
-    chunks: [[50, 50, 50]],
-    name: "volume",
+    chunk_shape: [50, 50, 50],
+    data_type: "uint16",
   });
 
   const ngffImage = new NgffImage({
-    data: lazyArray,
+    data: zarrArray,
     dims: ["z", "y", "x"],
     scale: { z: 2.5, y: 1.0, x: 1.0 },
     translation: { z: 0.0, y: 0.0, x: 0.0 },
@@ -91,16 +76,18 @@ Deno.test("NgffImage with axes units", () => {
   });
 });
 
-Deno.test("Multiscales creation", () => {
-  const lazyArray = new LazyArray({
+Deno.test("Multiscales creation", async () => {
+  const store = new Map<string, Uint8Array>();
+  const root = zarr.root(store);
+
+  const zarrArray = await zarr.create(root.resolve("image"), {
     shape: [256, 256],
-    dtype: "uint8",
-    chunks: [[64, 64]],
-    name: "image",
+    chunk_shape: [64, 64],
+    data_type: "uint8",
   });
 
   const ngffImage = new NgffImage({
-    data: lazyArray,
+    data: zarrArray,
     dims: ["y", "x"],
     scale: { y: 1.0, x: 1.0 },
     translation: { y: 0.0, x: 0.0 },

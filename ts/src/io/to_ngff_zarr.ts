@@ -84,6 +84,10 @@ export async function toNgffZarr(
         throw new Error(`No dataset configuration found for image ${i}`);
       }
 
+      console.log(
+        `Writing image ${i + 1}/${multiscales.images.length}: ${dataset.path}`,
+      );
+      console.log(`Image: ${image}`);
       await _writeImage(
         rootGroup as zarr.Group<MemoryStore>,
         image,
@@ -172,8 +176,9 @@ async function _writeImage(
 }
 
 function getChunksFromImage(image: NgffImage): number[] {
-  if (image.data.chunks.length > 0 && image.data.chunks[0].length > 0) {
-    return image.data.chunks[0];
+  // zarr.Array.chunks is a number[] representing chunk shape
+  if (image.data.chunks && image.data.chunks.length > 0) {
+    return image.data.chunks;
   }
 
   return image.data.shape.map((dim) => Math.min(dim, 1024));
@@ -249,5 +254,7 @@ type TypedArray =
   | Uint16Array
   | Int32Array
   | Uint32Array
+  | BigInt64Array
+  | BigUint64Array
   | Float32Array
   | Float64Array;

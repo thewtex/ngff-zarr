@@ -22,13 +22,15 @@ Deno.test("validateMetadata - valid metadata", () => {
       { name: "y", type: "space" },
       { name: "x", type: "space" },
     ],
-    datasets: [{
-      path: "0",
-      coordinateTransformations: [
-        { type: "scale", scale: [1.0, 1.0] },
-        { type: "translation", translation: [0.0, 0.0] },
-      ],
-    }],
+    datasets: [
+      {
+        path: "0",
+        coordinateTransformations: [
+          { type: "scale", scale: [1.0, 1.0] },
+          { type: "translation", translation: [0.0, 0.0] },
+        ],
+      },
+    ],
     name: "test_image",
     version: "0.4",
   };
@@ -40,9 +42,7 @@ Deno.test("validateMetadata - valid metadata", () => {
 
 Deno.test("validateMetadata - invalid metadata", () => {
   const invalidMetadata = {
-    axes: [
-      { name: "invalid", type: "space" },
-    ],
+    axes: [{ name: "invalid", type: "space" }],
     datasets: [],
   };
 
@@ -109,13 +109,8 @@ Deno.test("createDataset", () => {
 });
 
 Deno.test("createMetadata", () => {
-  const axes = [
-    createAxis("y", "space"),
-    createAxis("x", "space"),
-  ];
-  const datasets = [
-    createDataset("0", [1.0, 1.0], [0.0, 0.0]),
-  ];
+  const axes = [createAxis("y", "space"), createAxis("x", "space")];
+  const datasets = [createDataset("0", [1.0, 1.0], [0.0, 0.0])];
 
   const metadata = createMetadata(axes, datasets, "test", "0.4");
   assertEquals(metadata.name, "test");
@@ -124,8 +119,8 @@ Deno.test("createMetadata", () => {
   assertEquals(metadata.datasets.length, 1);
 });
 
-Deno.test("createNgffImage", () => {
-  const image = createNgffImage(
+Deno.test("createNgffImage", async () => {
+  const image = await createNgffImage(
     new ArrayBuffer(256 * 256),
     [256, 256],
     "uint8",
@@ -141,8 +136,8 @@ Deno.test("createNgffImage", () => {
   assertEquals(image.data.dtype, "uint8");
 });
 
-Deno.test("createMultiscales", () => {
-  const image = createNgffImage(
+Deno.test("createMultiscales", async () => {
+  const image = await createNgffImage(
     new ArrayBuffer(256 * 256),
     [256, 256],
     "uint8",
@@ -151,13 +146,8 @@ Deno.test("createMultiscales", () => {
     { y: 0.0, x: 0.0 },
   );
 
-  const axes = [
-    createAxis("y", "space"),
-    createAxis("x", "space"),
-  ];
-  const datasets = [
-    createDataset("0", [1.0, 1.0], [0.0, 0.0]),
-  ];
+  const axes = [createAxis("y", "space"), createAxis("x", "space")];
+  const datasets = [createDataset("0", [1.0, 1.0], [0.0, 0.0])];
   const metadata = createMetadata(axes, datasets);
 
   const multiscales = createMultiscales(

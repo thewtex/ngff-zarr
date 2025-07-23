@@ -1,9 +1,17 @@
 import { z } from "zod";
 import { UnitsSchema } from "./units.ts";
-import { LazyArrayMetadataSchema } from "./lazy_array.ts";
+
+// Since NgffImage now uses zarr.Array directly, we create a basic schema for validation
+const ZarrArraySchema = z.object({
+  shape: z.array(z.number()),
+  dtype: z.string(),
+  chunks: z.array(z.number()),
+  path: z.string().optional(),
+  name: z.string().optional(),
+});
 
 export const NgffImageOptionsSchema: z.ZodObject<{
-  data: typeof LazyArrayMetadataSchema;
+  data: typeof ZarrArraySchema;
   dims: z.ZodArray<z.ZodString>;
   scale: z.ZodRecord<z.ZodString, z.ZodNumber>;
   translation: z.ZodRecord<z.ZodString, z.ZodNumber>;
@@ -11,7 +19,7 @@ export const NgffImageOptionsSchema: z.ZodObject<{
   axesUnits: z.ZodOptional<z.ZodRecord<z.ZodString, typeof UnitsSchema>>;
   computedCallbacks: z.ZodDefault<z.ZodArray<z.ZodAny>>;
 }> = z.object({
-  data: LazyArrayMetadataSchema,
+  data: ZarrArraySchema,
   dims: z.array(z.string()),
   scale: z.record(z.string(), z.number()),
   translation: z.record(z.string(), z.number()),

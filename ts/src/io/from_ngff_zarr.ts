@@ -2,7 +2,6 @@ import * as zarr from "zarrita";
 import { Multiscales } from "../types/multiscales.ts";
 import { NgffImage } from "../types/ngff_image.ts";
 import type { Metadata, Omero } from "../types/zarr_metadata.ts";
-import { LazyArray } from "../types/lazy_array.ts";
 import { MetadataSchema } from "../schemas/zarr_metadata.ts";
 import type { Units } from "../types/units.ts";
 
@@ -13,6 +12,7 @@ export interface FromNgffZarrOptions {
 export type MemoryStore = Map<string, Uint8Array>;
 
 export async function fromNgffZarr(
+  // Also accepts FileSystemStore, ZipFileStore objects in Node.js/Deno
   store: string | MemoryStore | zarr.FetchStore,
   options: FromNgffZarrOptions = {},
 ): Promise<Multiscales> {
@@ -34,7 +34,7 @@ export async function fromNgffZarr(
         );
       }
 
-      // Use dynamic import for FileSystemStore in Node.js/Deno environments
+      // Use dynamic import for FileSystemStore, ZipFileStore in Node.js/Deno environments
       try {
         const { FileSystemStore, ZipFileStore } = await import(
           "@zarrita/storage"
@@ -56,37 +56,19 @@ export async function fromNgffZarr(
       }
     }
 
-    const root = zarr.root(resolvedStore);
-
     // Try to use consolidated metadata for better performance
-    let consolidatedRoot;
+    let optimizedStore;
     try {
       // @ts-ignore: tryWithConsolidated typing
-      consolidatedRoot = await zarr.tryWithConsolidated(resolvedStore);
+      optimizedStore = await zarr.tryWithConsolidated(resolvedStore);
     } catch {
-      consolidatedRoot = resolvedStore;
+      optimizedStore = resolvedStore;
     }
 
-    // Try to open as zarr v2 first, then v3 if that fails
-    let group;
-    try {
-      // @ts-ignore: zarr.open.v2 may not have complete type definitions for all store types
-      group = await zarr.open.v2(zarr.root(consolidatedRoot), {
-        kind: "group",
-      });
-    } catch (v2Error) {
-      try {
-        // @ts-ignore: zarr.open.v3 may not have complete type definitions for all store types
-        group = await zarr.open.v3(zarr.root(consolidatedRoot), {
-          kind: "group",
-        });
-      } catch (v3Error) {
-        throw new Error(
-          `Failed to open zarr store as either v2 or v3 format. v2 error: ${v2Error}. v3 error: ${v3Error}`,
-        );
-      }
-    }
-    const attrs = group.attrs as unknown;
+    const root = await zarr.open(optimizedStore as zarr.Readable, {
+      kind: "group",
+    });
+    const attrs = root.attrs as unknown;
 
     if (!attrs || !(attrs as Record<string, unknown>).multiscales) {
       throw new Error("No multiscales metadata found in Zarr store");
@@ -118,27 +100,9 @@ export async function fromNgffZarr(
     for (const dataset of metadata.datasets) {
       const arrayPath = dataset.path;
 
-      // Try to open as zarr v2 first, then v3 if that fails
-      let zarrArray;
-      try {
-        // @ts-ignore: zarr.open.v2 may not have complete type definitions for all store types
-        zarrArray = await zarr.open.v2(root.resolve(arrayPath), {
-          path: arrayPath,
-          kind: "array",
-        });
-      } catch (v2Error) {
-        try {
-          // @ts-ignore: zarr.open.v3 may not have complete type definitions for all store types
-          zarrArray = await zarr.open.v3(root.resolve(arrayPath), {
-            path: arrayPath,
-            kind: "array",
-          });
-        } catch (v3Error) {
-          throw new Error(
-            `Failed to open zarr array ${arrayPath} as either v2 or v3 format. v2 error: ${v2Error}. v3 error: ${v3Error}`,
-          );
-        }
-      }
+      const zarrArray = (await zarr.open(root.resolve(arrayPath), {
+        kind: "array",
+      })) as zarr.Array<zarr.DataType, zarr.Readable>;
 
       // Verify we have an array with the expected properties
       if (
@@ -151,13 +115,6 @@ export async function fromNgffZarr(
           `Invalid zarr array at path ${arrayPath}: missing shape property`,
         );
       }
-
-      const lazyArray = new LazyArray({
-        shape: zarrArray.shape as number[],
-        dtype: zarrArray.dtype as string,
-        chunks: [zarrArray.chunks as number[]],
-        name: arrayPath,
-      });
 
       const scale: Record<string, number> = {};
       const translation: Record<string, number> = {};
@@ -187,7 +144,7 @@ export async function fromNgffZarr(
       }, {} as Record<string, Units>);
 
       const ngffImage = new NgffImage({
-        data: lazyArray,
+        data: zarrArray,
         dims,
         scale,
         translation,
