@@ -41,11 +41,11 @@ export class NgffImage {
     const path = this.data.path || this.name;
     const chunks = this.data.chunks.join(", ");
 
-    const arrayStr = `Array(name=${path}, shape=(${this.data.shape.join(
-      ", "
-    )}), dtype=${
-      this.data.dtype
-    }, chunksize=(${chunks}), chunktype=TypedArray)`;
+    const arrayStr = `Array(name=${path}, shape=(${
+      this.data.shape.join(
+        ", ",
+      )
+    }), dtype=${this.data.dtype}, chunksize=(${chunks}), chunktype=TypedArray)`;
 
     return `NgffImage(
     data=${arrayStr},

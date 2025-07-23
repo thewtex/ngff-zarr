@@ -4747,7 +4747,7 @@ packages:
   editable: true
 - pypi: ./
   name: ngff-zarr-mcp
-  version: 0.3.0
+  version: 0.4.0
   sha256: 0de3f56b4b53550b2f04c523044ceaa51b2304ff12fa84e3aa54ceb01ee6878a
   requires_dist:
   - aiofiles

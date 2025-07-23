@@ -20,7 +20,7 @@ import { Methods } from "../src/types/methods.ts";
 Deno.test("read omero metadata from test dataset", async () => {
   const storePath = new URL(
     "../../py/test/data/input/13457537.zarr",
-    import.meta.url
+    import.meta.url,
   );
   const resolvedPath = storePath.pathname.replace(/^\/([A-Za-z]:)/, "$1"); // Fix Windows paths
 
@@ -154,7 +154,7 @@ Deno.test("write omero metadata", async () => {
     [image],
     metadata,
     [2, 4],
-    Methods.ITKWASM_GAUSSIAN
+    Methods.ITKWASM_GAUSSIAN,
   );
 
   const memoryStore = new Map<string, Uint8Array>();
@@ -191,13 +191,13 @@ Deno.test("validate color function", () => {
   assertThrows(
     () => validateColor("FF00000"),
     Error,
-    "Invalid color 'FF00000'"
+    "Invalid color 'FF00000'",
   );
 
   assertThrows(
     () => validateColor("#FF0000"),
     Error,
-    "Invalid color '#FF0000'"
+    "Invalid color '#FF0000'",
   );
 });
 

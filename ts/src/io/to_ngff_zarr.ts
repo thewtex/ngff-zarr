@@ -12,7 +12,7 @@ export interface ToNgffZarrOptions {
 export async function toNgffZarr(
   store: string | MemoryStore | zarr.FetchStore,
   multiscales: Multiscales,
-  options: ToNgffZarrOptions = {}
+  options: ToNgffZarrOptions = {},
 ): Promise<void> {
   const _overwrite = options.overwrite ?? true;
   const _version = options.version ?? "0.4";
@@ -24,17 +24,17 @@ export async function toNgffZarr(
       _resolvedStore = store;
     } else if (store instanceof zarr.FetchStore) {
       throw new Error(
-        "FetchStore is read-only and cannot be used for writing. Use a local file path or MemoryStore instead."
+        "FetchStore is read-only and cannot be used for writing. Use a local file path or MemoryStore instead.",
       );
     } else if (store.startsWith("http://") || store.startsWith("https://")) {
       throw new Error(
-        "HTTP/HTTPS URLs are read-only and cannot be used for writing. Use a local file path instead."
+        "HTTP/HTTPS URLs are read-only and cannot be used for writing. Use a local file path instead.",
       );
     } else {
       // For local paths, check if we're in a browser environment
       if (typeof window !== "undefined") {
         throw new Error(
-          "Local file paths are not supported in browser environments. Use a MemoryStore instead."
+          "Local file paths are not supported in browser environments. Use a MemoryStore instead.",
         );
       }
 
@@ -46,7 +46,7 @@ export async function toNgffZarr(
         _resolvedStore = new FileSystemStore(normalizedPath);
       } catch (error) {
         throw new Error(
-          `Failed to load FileSystemStore: ${error}. Use MemoryStore for browser compatibility.`
+          `Failed to load FileSystemStore: ${error}. Use MemoryStore for browser compatibility.`,
         );
       }
     }
@@ -85,20 +85,20 @@ export async function toNgffZarr(
       }
 
       console.log(
-        `Writing image ${i + 1}/${multiscales.images.length}: ${dataset.path}`
+        `Writing image ${i + 1}/${multiscales.images.length}: ${dataset.path}`,
       );
       console.log(`Image: ${image}`);
       await _writeImage(
         rootGroup as zarr.Group<MemoryStore>,
         image,
-        dataset.path
+        dataset.path,
       );
     }
   } catch (error) {
     throw new Error(
       `Failed to write OME-Zarr: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 }
@@ -140,7 +140,7 @@ function _convertDtypeToZarrType(dtype: string): zarr.DataType {
 async function _writeImage(
   group: zarr.Group<MemoryStore>,
   image: NgffImage,
-  arrayPath: string
+  arrayPath: string,
 ): Promise<void> {
   try {
     const chunks = getChunksFromImage(image);
@@ -164,13 +164,13 @@ async function _writeImage(
     // and write each chunk's data using zarr.set()
     await _writeArrayData(
       zarrArray as zarr.Array<zarr.DataType, MemoryStore>,
-      image
+      image,
     );
   } catch (error) {
     throw new Error(
       `Failed to write image array: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 }
@@ -186,7 +186,7 @@ function getChunksFromImage(image: NgffImage): number[] {
 
 async function _writeArrayData(
   zarrArray: zarr.Array<zarr.DataType, MemoryStore>,
-  image: NgffImage
+  image: NgffImage,
 ): Promise<void> {
   try {
     // For now, we'll write a placeholder implementation
@@ -229,20 +229,20 @@ async function _writeArrayData(
     } catch (error) {
       // If that fails, try writing chunk by chunk
       console.warn(
-        `Failed to write full array, trying chunk-based approach: ${error}`
+        `Failed to write full array, trying chunk-based approach: ${error}`,
       );
 
       // For now, just log that we would write the data here
       // A full implementation would iterate through chunks and write each one
       console.log(
-        `Would write ${dummyData.constructor.name} of length ${dummyData.length} to zarr array`
+        `Would write ${dummyData.constructor.name} of length ${dummyData.length} to zarr array`,
       );
     }
   } catch (error) {
     throw new Error(
       `Failed to write array data: ${
         error instanceof Error ? error.message : String(error)
-      }`
+      }`,
     );
   }
 }

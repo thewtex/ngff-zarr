@@ -49,7 +49,7 @@ Deno.test("validateMetadata - invalid metadata", () => {
   assertThrows(
     () => validateMetadata(invalidMetadata),
     Error,
-    "Invalid metadata"
+    "Invalid metadata",
   );
 });
 
@@ -127,7 +127,7 @@ Deno.test("createNgffImage", async () => {
     ["y", "x"],
     { y: 1.0, x: 1.0 },
     { y: 0.0, x: 0.0 },
-    "test_image"
+    "test_image",
   );
 
   assertEquals(image.name, "test_image");
@@ -143,7 +143,7 @@ Deno.test("createMultiscales", async () => {
     "uint8",
     ["y", "x"],
     { y: 1.0, x: 1.0 },
-    { y: 0.0, x: 0.0 }
+    { y: 0.0, x: 0.0 },
   );
 
   const axes = [createAxis("y", "space"), createAxis("x", "space")];
@@ -154,7 +154,7 @@ Deno.test("createMultiscales", async () => {
     [image],
     metadata,
     [2, 4],
-    Methods.ITKWASM_GAUSSIAN
+    Methods.ITKWASM_GAUSSIAN,
   );
 
   assertEquals(multiscales.images.length, 1);

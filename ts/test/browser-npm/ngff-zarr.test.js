@@ -162,7 +162,7 @@ test.describe("NGFF Zarr NPM Package Tests", () => {
         };
 
         const result = MultiscalesOptionsSchema.safeParse(
-          validMultiscaleOptions
+          validMultiscaleOptions,
         );
         return {
           success: result.success,

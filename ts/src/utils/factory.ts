@@ -16,7 +16,7 @@ async function createTestZarrArray(
   shape: number[],
   dtype: string,
   chunks: number[],
-  name: string
+  name: string,
 ): Promise<zarr.Array<zarr.DataType, zarr.Readable>> {
   const store = new Map<string, Uint8Array>();
   const root = zarr.root(store);
@@ -38,7 +38,7 @@ export async function createNgffImage(
   dims: string[],
   scale: Record<string, number>,
   translation: Record<string, number>,
-  name = "image"
+  name = "image",
 ): Promise<NgffImage> {
   const zarrArray = await createTestZarrArray(shape, dtype, shape, name);
 
@@ -56,7 +56,7 @@ export async function createNgffImage(
 export function createAxis(
   name: SupportedDims,
   type: AxesType,
-  unit?: Units
+  unit?: Units,
 ): Axis {
   return {
     name,
@@ -82,7 +82,7 @@ export function createTranslation(translation: number[]): Translation {
 export function createDataset(
   path: string,
   scale: number[],
-  translation: number[]
+  translation: number[],
 ): Dataset {
   return {
     path,
@@ -97,7 +97,7 @@ export function createMetadata(
   axes: Axis[],
   datasets: Dataset[],
   name = "image",
-  version = "0.4"
+  version = "0.4",
 ): Metadata {
   return {
     axes: [...axes],
@@ -113,7 +113,7 @@ export function createMultiscales(
   images: NgffImage[],
   metadata: Metadata,
   scaleFactors?: (Record<string, number> | number)[],
-  method?: Methods
+  method?: Methods,
 ): Multiscales {
   return new Multiscales({
     images: [...images],
