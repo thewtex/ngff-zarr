@@ -25,6 +25,7 @@
     "@std/path": "jsr:@std/path@^1.0.8",
     "@zarrita/storage": "jsr:@zarrita/storage@^0.1.1",
     "dnt": "jsr:@deno/dnt@^0.41.3",
+    "p-queue": "npm:p-queue@^8.1.0",
     "zod": "npm:zod@^4.0.2",
     "zarrita": "jsr:@zarrita/zarrita@^0.5.2",
     "playwright/test": "npm:@playwright/test@^1.54.1"
