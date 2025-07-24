@@ -357,7 +357,7 @@ function convertChunkToTargetType(
       } else {
         // Standard numeric conversion - use typed conversion
         const typedArrayMap = new Map<
-          Function,
+          TypedArrayConstructor,
           (data: ArrayLike<number>) => ArrayBufferView
         >([
           [Uint8Array, (data) => new Uint8Array(Array.from(data))],
