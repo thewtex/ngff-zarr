@@ -2,7 +2,7 @@ import * as zarr from "zarrita";
 import type { Multiscales } from "../types/multiscales.ts";
 import type { NgffImage } from "../types/ngff_image.ts";
 import type { MemoryStore } from "./from_ngff_zarr.ts";
-import { create_queue } from "../utils/create_queue.ts";
+import { createQueue } from "../utils/create_queue.ts";
 
 export interface ToNgffZarrOptions {
   overwrite?: boolean;
@@ -228,7 +228,7 @@ async function _writeArrayData(
     const chunkIndices = calculateChunkIndices(shape, zarrArray.chunks);
 
     // Create a queue for parallel chunk writing
-    const writeQueue = create_queue();
+    const writeQueue = createQueue();
 
     // Queue all chunks for writing
     for (const chunkIndex of chunkIndices) {
