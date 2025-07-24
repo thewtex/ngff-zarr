@@ -356,22 +356,20 @@ function convertChunkToTargetType(
         return bigIntArray;
       } else {
         // Standard numeric conversion - use typed conversion
-        if (targetTypedArrayConstructor === Uint8Array) {
-          return new Uint8Array(Array.from(chunkData));
-        } else if (targetTypedArrayConstructor === Int8Array) {
-          return new Int8Array(Array.from(chunkData));
-        } else if (targetTypedArrayConstructor === Uint16Array) {
-          return new Uint16Array(Array.from(chunkData));
-        } else if (targetTypedArrayConstructor === Int16Array) {
-          return new Int16Array(Array.from(chunkData));
-        } else if (targetTypedArrayConstructor === Uint32Array) {
-          return new Uint32Array(Array.from(chunkData));
-        } else if (targetTypedArrayConstructor === Int32Array) {
-          return new Int32Array(Array.from(chunkData));
-        } else if (targetTypedArrayConstructor === Float32Array) {
-          return new Float32Array(Array.from(chunkData));
-        } else if (targetTypedArrayConstructor === Float64Array) {
-          return new Float64Array(Array.from(chunkData));
+        const typedArrayMap = new Map<Function, (data: ArrayLike<number>) => ArrayBufferView>([
+          [Uint8Array, (data) => new Uint8Array(Array.from(data))],
+          [Int8Array, (data) => new Int8Array(Array.from(data))],
+          [Uint16Array, (data) => new Uint16Array(Array.from(data))],
+          [Int16Array, (data) => new Int16Array(Array.from(data))],
+          [Uint32Array, (data) => new Uint32Array(Array.from(data))],
+          [Int32Array, (data) => new Int32Array(Array.from(data))],
+          [Float32Array, (data) => new Float32Array(Array.from(data))],
+          [Float64Array, (data) => new Float64Array(Array.from(data))],
+        ]);
+
+        const createTypedArray = typedArrayMap.get(targetTypedArrayConstructor);
+        if (createTypedArray) {
+          return createTypedArray(chunkData);
         } else {
           throw new Error(
             `Unsupported target constructor: ${targetTypedArrayConstructor.name}`,
