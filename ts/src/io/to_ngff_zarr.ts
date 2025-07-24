@@ -160,7 +160,7 @@ function getTypedArrayConstructor(dtype: zarr.DataType): TypedArrayConstructor {
       uint64: BigUint64Array,
       float32: Float32Array,
       float64: Float64Array,
-      bool: Uint8Array, // Use Uint8Array for boolean
+      bool: Uint8Array, // Use Uint8Array for boolean, where 0 represents false and 1 represents true
       // Note: float16 and "v2:object" not supported by standard TypedArrays
     };
 
