@@ -356,7 +356,10 @@ function convertChunkToTargetType(
         return bigIntArray;
       } else {
         // Standard numeric conversion - use typed conversion
-        const typedArrayMap = new Map<Function, (data: ArrayLike<number>) => ArrayBufferView>([
+        const typedArrayMap = new Map<
+          Function,
+          (data: ArrayLike<number>) => ArrayBufferView
+        >([
           [Uint8Array, (data) => new Uint8Array(Array.from(data))],
           [Int8Array, (data) => new Int8Array(Array.from(data))],
           [Uint16Array, (data) => new Uint16Array(Array.from(data))],
