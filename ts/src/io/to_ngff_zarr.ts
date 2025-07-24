@@ -223,9 +223,6 @@ async function _writeArrayData(
   try {
     // Get array shape for chunk calculation - we don't need the full data here
     const shape = image.data.shape;
-    const targetTypedArrayConstructor = getTypedArrayConstructor(
-      zarrArray.dtype,
-    );
 
     // Calculate chunk indices for parallel writing
     const chunkIndices = calculateChunkIndices(shape, zarrArray.chunks);
