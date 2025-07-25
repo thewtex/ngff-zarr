@@ -73,6 +73,11 @@ jobs:
           manifest-path: ./py/pyproject.toml
           frozen: true
 
+      - name: Install deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
       - name: Check formatting
         run: pixi run fmt-check
         working-directory: ts
