@@ -38,11 +38,8 @@ async function main() {
     const testDir = join(__dirname, "../test/browser-npm");
     const projectRoot = join(__dirname, "..");
 
-    // Ensure npm package is copied to test directory
-    console.log("📋 Copying npm package to test directory...");
-    await runCommand("cp", ["-r", "npm", "test/browser-npm/"], {
-      cwd: projectRoot,
-    });
+    // Note: We're now using deno bundle instead of npm package
+    console.log("📋 Using bundle instead of npm package...");
 
     // Install npm dependencies first
     await runCommand("npm", ["install"], { cwd: testDir });
@@ -90,7 +87,7 @@ async function main() {
           const http = await import("http");
           const response = await new Promise((resolve, reject) => {
             const req = http.request(
-              "http://localhost:3000/npm-test",
+              "http://localhost:3000/bundle-test",
               (res) => {
                 resolve(res);
               },
