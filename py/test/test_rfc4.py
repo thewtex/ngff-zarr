@@ -31,11 +31,11 @@ def test_itk_lps_to_anatomical_orientation():
     assert y_orientation.type == "anatomical"
     assert y_orientation.value == AnatomicalOrientationValues.posterior_to_anterior
 
-    # Test Z axis (inferior to superior in LPS)
+    # Test Z axis (superior to inferior in LPS)
     z_orientation = itk_lps_to_anatomical_orientation("z")
     assert z_orientation is not None
     assert z_orientation.type == "anatomical"
-    assert z_orientation.value == AnatomicalOrientationValues.inferior_to_superior
+    assert z_orientation.value == AnatomicalOrientationValues.superior_to_inferior
 
     # Test non-spatial axis
     c_orientation = itk_lps_to_anatomical_orientation("c")

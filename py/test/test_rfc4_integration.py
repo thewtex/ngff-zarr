@@ -20,7 +20,7 @@ def test_rfc4_integration_with_enabled_rfcs():
             value=AnatomicalOrientationValues.posterior_to_anterior
         ),
         "z": AnatomicalOrientation(
-            value=AnatomicalOrientationValues.inferior_to_superior
+            value=AnatomicalOrientationValues.superior_to_inferior
         ),
     }
 
@@ -73,7 +73,7 @@ def test_rfc4_integration_with_enabled_rfcs():
             elif axis["name"] == "z":
                 assert "orientation" in axis
                 assert axis["orientation"]["type"] == "anatomical"
-                assert axis["orientation"]["value"] == "inferior-to-superior"
+                assert axis["orientation"]["value"] == "superior-to-inferior"
 
 
 def test_rfc4_integration_without_enabled_rfcs():
@@ -88,7 +88,7 @@ def test_rfc4_integration_without_enabled_rfcs():
             value=AnatomicalOrientationValues.posterior_to_anterior
         ),
         "z": AnatomicalOrientation(
-            value=AnatomicalOrientationValues.inferior_to_superior
+            value=AnatomicalOrientationValues.superior_to_inferior
         ),
     }
 
@@ -143,7 +143,7 @@ def test_rfc4_integration_with_other_rfcs():
             value=AnatomicalOrientationValues.posterior_to_anterior
         ),
         "z": AnatomicalOrientation(
-            value=AnatomicalOrientationValues.inferior_to_superior
+            value=AnatomicalOrientationValues.superior_to_inferior
         ),
     }
 
