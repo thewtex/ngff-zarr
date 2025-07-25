@@ -2,7 +2,13 @@ import { z } from "zod";
 import { UnitsSchema } from "./units.ts";
 
 // Since NgffImage now uses zarr.Array directly, we create a basic schema for validation
-const ZarrArraySchema = z.object({
+const ZarrArraySchema: z.ZodObject<{
+  shape: z.ZodArray<z.ZodNumber>;
+  dtype: z.ZodString;
+  chunks: z.ZodArray<z.ZodNumber>;
+  path: z.ZodOptional<z.ZodString>;
+  name: z.ZodOptional<z.ZodString>;
+}> = z.object({
   shape: z.array(z.number()),
   dtype: z.string(),
   chunks: z.array(z.number()),
