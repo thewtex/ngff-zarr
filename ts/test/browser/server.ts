@@ -45,6 +45,39 @@ async function handler(req: Request): Promise<Response> {
     return await serveFile(req, filePath);
   }
 
+  // Serve the bundle test page
+  if (url.pathname === "/bundle-test") {
+    const filePath = join(
+      Deno.cwd(),
+      "test",
+      "browser-npm",
+      "bundle-test.html",
+    );
+    return await serveFile(req, filePath);
+  }
+
+  // Serve the simple test page
+  if (url.pathname === "/simple-test") {
+    const filePath = join(
+      Deno.cwd(),
+      "test",
+      "browser-npm",
+      "simple-test.html",
+    );
+    return await serveFile(req, filePath);
+  }
+
+  // Serve the browser test page
+  if (url.pathname === "/browser-test") {
+    const filePath = join(
+      Deno.cwd(),
+      "test",
+      "browser-npm",
+      "browser-test.html",
+    );
+    return await serveFile(req, filePath);
+  }
+
   // Serve the npm package files from test directory
   if (url.pathname.startsWith("/npm/")) {
     const filePath = join(
@@ -55,6 +88,42 @@ async function handler(req: Request): Promise<Response> {
     );
     try {
       return await serveFile(req, filePath);
+    } catch {
+      return new Response("Not Found", { status: 404 });
+    }
+  }
+
+  // Serve the bundle file
+  if (url.pathname === "/ngff-zarr.bundle.js") {
+    const filePath = join(
+      Deno.cwd(),
+      "test",
+      "browser-npm",
+      "ngff-zarr.bundle.js",
+    );
+    try {
+      const response = await serveFile(req, filePath);
+      // Ensure correct MIME type for ES modules
+      response.headers.set("Content-Type", "application/javascript");
+      return response;
+    } catch {
+      return new Response("Not Found", { status: 404 });
+    }
+  }
+
+  // Serve the browser bundle file
+  if (url.pathname === "/ngff-zarr-browser.bundle.js") {
+    const filePath = join(
+      Deno.cwd(),
+      "test",
+      "browser-npm",
+      "ngff-zarr-browser.bundle.js",
+    );
+    try {
+      const response = await serveFile(req, filePath);
+      // Ensure correct MIME type for ES modules
+      response.headers.set("Content-Type", "application/javascript");
+      return response;
     } catch {
       return new Response("Not Found", { status: 404 });
     }

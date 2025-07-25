@@ -7,7 +7,6 @@ channels = ["conda-forge"]
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 
 [dependencies]
-deno = "*"
 
 [tasks]
 dev = "deno run --allow-all src/mod.ts"
@@ -26,11 +25,8 @@ cmd = "deno lint"
 [tasks.typecheck]
 cmd = "deno check src/mod.ts"
 
-[tasks.test-watch]
-cmd = "deno test --allow-all --ignore=test/browser-npm/ --watch"
-
-[tasks.build-npm]
-cmd = "deno run --allow-all scripts/build_npm.ts"
+[tasks.dev-server]
+cmd = "deno run --allow-all test/browser/server.ts"
 
 [tasks.test-browser]
 cmd = "node scripts/run_playwright.mjs"
@@ -38,11 +34,20 @@ cmd = "node scripts/run_playwright.mjs"
 [tasks.test-browser-ui]
 cmd = "node scripts/run_playwright.mjs --ui"
 
+[tasks.test-browser-debug]
+cmd = "node scripts/run_playwright.mjs --debug"
+
+[tasks.test-browser-bundle]
+cmd = "deno task build:bundle && deno task test:browser"
+
 [tasks.test-browser-npm]
-cmd = "deno run --allow-all scripts/build_npm.ts && node scripts/run_playwright.mjs"
+cmd = "deno task build:npm && deno task test:browser"
 
 [tasks.test-all]
-cmd = "deno test --allow-all --ignore=test/browser-npm/ && deno run --allow-all scripts/build_npm.ts && node scripts/run_playwright.mjs"
+cmd = "deno task test && deno task test:browser:bundle"
 
-[tasks.test-deno]
-cmd = "which deno && deno --version"
+[tasks.build-npm]
+cmd = "deno run --allow-all scripts/build_npm.ts"
+
+[tasks.build-bundle]
+cmd = "deno bundle --platform=browser --format=esm --minify -o test/browser-npm/ngff-zarr.bundle.js src/browser-mod.ts"

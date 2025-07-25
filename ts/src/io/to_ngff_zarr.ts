@@ -2,6 +2,7 @@ import * as zarr from "zarrita";
 import type { Multiscales } from "../types/multiscales.ts";
 import type { NgffImage } from "../types/ngff_image.ts";
 import type { MemoryStore } from "./from_ngff_zarr.ts";
+import { createQueue } from "../utils/create_queue.ts";
 
 export interface ToNgffZarrOptions {
   overwrite?: boolean;
@@ -84,10 +85,6 @@ export async function toNgffZarr(
         throw new Error(`No dataset configuration found for image ${i}`);
       }
 
-      console.log(
-        `Writing image ${i + 1}/${multiscales.images.length}: ${dataset.path}`,
-      );
-      console.log(`Image: ${image}`);
       await _writeImage(
         rootGroup as zarr.Group<MemoryStore>,
         image,
@@ -137,6 +134,44 @@ function _convertDtypeToZarrType(dtype: string): zarr.DataType {
   }
 }
 
+type TypedArrayConstructor =
+  | Uint8ArrayConstructor
+  | Int8ArrayConstructor
+  | Uint16ArrayConstructor
+  | Int16ArrayConstructor
+  | Uint32ArrayConstructor
+  | Int32ArrayConstructor
+  | Float32ArrayConstructor
+  | Float64ArrayConstructor
+  | BigInt64ArrayConstructor
+  | BigUint64ArrayConstructor;
+
+function getTypedArrayConstructor(dtype: zarr.DataType): TypedArrayConstructor {
+  // Map zarrita data types to TypedArray constructors
+  const constructorMap: Partial<Record<zarr.DataType, TypedArrayConstructor>> =
+    {
+      int8: Int8Array,
+      int16: Int16Array,
+      int32: Int32Array,
+      int64: BigInt64Array,
+      uint8: Uint8Array,
+      uint16: Uint16Array,
+      uint32: Uint32Array,
+      uint64: BigUint64Array,
+      float32: Float32Array,
+      float64: Float64Array,
+      bool: Uint8Array, // Use Uint8Array for boolean, where 0 represents false and 1 represents true
+      // Note: float16 and "v2:object" not supported by standard TypedArrays
+    };
+
+  const constructor = constructorMap[dtype];
+  if (constructor) {
+    return constructor;
+  } else {
+    throw new Error(`Unsupported data type for typed array: ${dtype}`);
+  }
+}
+
 async function _writeImage(
   group: zarr.Group<MemoryStore>,
   image: NgffImage,
@@ -159,9 +194,6 @@ async function _writeImage(
       fill_value: 0,
     });
 
-    // Write the data - for now we'll implement a placeholder
-    // In a real implementation, this would iterate through the LazyArray chunks
-    // and write each chunk's data using zarr.set()
     await _writeArrayData(
       zarrArray as zarr.Array<zarr.DataType, MemoryStore>,
       image,
@@ -189,55 +221,24 @@ async function _writeArrayData(
   image: NgffImage,
 ): Promise<void> {
   try {
-    // For now, we'll write a placeholder implementation
-    // In a full implementation, this would:
-    // 1. Create typed arrays from the LazyArray data
-    // 2. Use zarr.set(zarrArray, selection, data) to write each chunk
+    // Get array shape for chunk calculation - we don't need the full data here
+    const shape = image.data.shape;
 
-    // Create a dummy typed array filled with zeros as placeholder
-    const totalSize = image.data.shape.reduce((acc, dim) => acc * dim, 1);
+    // Calculate chunk indices for parallel writing
+    const chunkIndices = calculateChunkIndices(shape, zarrArray.chunks);
 
-    // Create appropriate typed array based on the data type
-    let dummyData: TypedArray;
-    const dtype = image.data.dtype.toLowerCase();
+    // Create a queue for parallel chunk writing
+    const writeQueue = createQueue();
 
-    if (dtype.includes("int8") || dtype === "i1") {
-      dummyData = new Int8Array(totalSize);
-    } else if (dtype.includes("uint8") || dtype === "u1") {
-      dummyData = new Uint8Array(totalSize);
-    } else if (dtype.includes("int16") || dtype === "i2") {
-      dummyData = new Int16Array(totalSize);
-    } else if (dtype.includes("uint16") || dtype === "u2") {
-      dummyData = new Uint16Array(totalSize);
-    } else if (dtype.includes("int32") || dtype === "i4") {
-      dummyData = new Int32Array(totalSize);
-    } else if (dtype.includes("uint32") || dtype === "u4") {
-      dummyData = new Uint32Array(totalSize);
-    } else if (dtype.includes("float32") || dtype === "f4") {
-      dummyData = new Float32Array(totalSize);
-    } else if (dtype.includes("float64") || dtype === "f8") {
-      dummyData = new Float64Array(totalSize);
-    } else {
-      // Default to Float32Array for unknown types
-      dummyData = new Float32Array(totalSize);
+    // Queue all chunks for writing
+    for (const chunkIndex of chunkIndices) {
+      writeQueue.add(async () => {
+        await writeChunkWithGet(zarrArray, image, chunkIndex);
+      });
     }
 
-    // Try to write the data using zarr.set with proper selection syntax
-    // Based on zarrita docs, the selection should use an array of slices
-    try {
-      await zarr.set(zarrArray, null, dummyData);
-    } catch (error) {
-      // If that fails, try writing chunk by chunk
-      console.warn(
-        `Failed to write full array, trying chunk-based approach: ${error}`,
-      );
-
-      // For now, just log that we would write the data here
-      // A full implementation would iterate through chunks and write each one
-      console.log(
-        `Would write ${dummyData.constructor.name} of length ${dummyData.length} to zarr array`,
-      );
-    }
+    // Wait for all chunks to be written
+    await writeQueue.onIdle();
   } catch (error) {
     throw new Error(
       `Failed to write array data: ${
@@ -247,14 +248,175 @@ async function _writeArrayData(
   }
 }
 
-type TypedArray =
-  | Int8Array
-  | Uint8Array
-  | Int16Array
-  | Uint16Array
-  | Int32Array
-  | Uint32Array
-  | BigInt64Array
-  | BigUint64Array
-  | Float32Array
-  | Float64Array;
+async function writeChunkWithGet(
+  zarrArray: zarr.Array<zarr.DataType, MemoryStore>,
+  image: NgffImage,
+  chunkIndex: number[],
+): Promise<void> {
+  // Calculate the chunk bounds
+  const shape = image.data.shape;
+  const chunkStart = chunkIndex.map((idx, dim) => idx * zarrArray.chunks[dim]);
+  const chunkEnd = chunkStart.map((start, dim) =>
+    Math.min(start + zarrArray.chunks[dim], shape[dim])
+  );
+
+  // Calculate chunk shape
+  const chunkShape = chunkEnd.map((end, dim) => end - chunkStart[dim]);
+
+  // Create selection for this chunk from the source data
+  const sourceSelection = chunkStart.map((start, dim) =>
+    zarr.slice(start, chunkEnd[dim])
+  );
+
+  // Get only the chunk data we need from the source
+  const { data: chunkSourceData } = await zarr.get(image.data, sourceSelection);
+
+  // Convert chunk data to target type
+  const targetTypedArrayConstructor = getTypedArrayConstructor(zarrArray.dtype);
+  const chunkTargetData = convertChunkToTargetType(
+    chunkSourceData as ArrayBufferView,
+    zarrArray.dtype,
+    targetTypedArrayConstructor,
+  );
+
+  // Create the selection for writing to the target zarr array
+  const targetSelection = chunkStart.map((start, dim) =>
+    zarr.slice(start, chunkEnd[dim])
+  );
+
+  // Write the chunk using zarrita's set function
+  await zarr.set(zarrArray, targetSelection, {
+    data: chunkTargetData,
+    shape: chunkShape,
+    stride: calculateChunkStride(chunkShape),
+  });
+}
+
+function convertChunkToTargetType(
+  chunkData: ArrayBufferView,
+  targetDtype: zarr.DataType,
+  targetTypedArrayConstructor: TypedArrayConstructor,
+): ArrayBufferView {
+  // Handle different source data types
+  if (
+    chunkData instanceof BigInt64Array ||
+    chunkData instanceof BigUint64Array
+  ) {
+    // Handle BigInt arrays separately
+    if (chunkData.constructor === targetTypedArrayConstructor) {
+      return chunkData as ArrayBufferView;
+    } else if (targetDtype === "int64" || targetDtype === "uint64") {
+      // BigInt to BigInt conversion
+      const bigIntArray = new targetTypedArrayConstructor(chunkData.length) as
+        | BigInt64Array
+        | BigUint64Array;
+      for (let i = 0; i < chunkData.length; i++) {
+        bigIntArray[i] = chunkData[i];
+      }
+      return bigIntArray;
+    } else {
+      // BigInt to regular number conversion
+      const numberArray = new targetTypedArrayConstructor(chunkData.length) as
+        | Uint8Array
+        | Int8Array
+        | Uint16Array
+        | Int16Array
+        | Uint32Array
+        | Int32Array
+        | Float32Array
+        | Float64Array;
+      for (let i = 0; i < chunkData.length; i++) {
+        numberArray[i] = Number(chunkData[i]);
+      }
+      return numberArray;
+    }
+  } else if (
+    chunkData instanceof Uint8Array ||
+    chunkData instanceof Int8Array ||
+    chunkData instanceof Uint16Array ||
+    chunkData instanceof Int16Array ||
+    chunkData instanceof Uint32Array ||
+    chunkData instanceof Int32Array ||
+    chunkData instanceof Float32Array ||
+    chunkData instanceof Float64Array
+  ) {
+    // Handle regular typed arrays
+    if (chunkData.constructor === targetTypedArrayConstructor) {
+      return chunkData as ArrayBufferView;
+    } else {
+      // Convert between typed arrays
+      if (targetDtype === "int64" || targetDtype === "uint64") {
+        // Regular number to BigInt conversion
+        const bigIntArray = new targetTypedArrayConstructor(
+          chunkData.length,
+        ) as BigInt64Array | BigUint64Array;
+        for (let i = 0; i < chunkData.length; i++) {
+          bigIntArray[i] = BigInt(chunkData[i]);
+        }
+        return bigIntArray;
+      } else {
+        // Standard numeric conversion - use typed conversion
+        const typedArrayMap = new Map<
+          TypedArrayConstructor,
+          (data: ArrayLike<number>) => ArrayBufferView
+        >([
+          [Uint8Array, (data) => new Uint8Array(Array.from(data))],
+          [Int8Array, (data) => new Int8Array(Array.from(data))],
+          [Uint16Array, (data) => new Uint16Array(Array.from(data))],
+          [Int16Array, (data) => new Int16Array(Array.from(data))],
+          [Uint32Array, (data) => new Uint32Array(Array.from(data))],
+          [Int32Array, (data) => new Int32Array(Array.from(data))],
+          [Float32Array, (data) => new Float32Array(Array.from(data))],
+          [Float64Array, (data) => new Float64Array(Array.from(data))],
+        ]);
+
+        const createTypedArray = typedArrayMap.get(targetTypedArrayConstructor);
+        if (createTypedArray) {
+          return createTypedArray(chunkData);
+        } else {
+          throw new Error(
+            `Unsupported target constructor: ${targetTypedArrayConstructor.name}`,
+          );
+        }
+      }
+    }
+  } else {
+    // Handle other types (fallback)
+    throw new Error(
+      `Unsupported source data type: ${chunkData.constructor.name}`,
+    );
+  }
+}
+
+function calculateChunkIndices(shape: number[], chunks: number[]): number[][] {
+  const indices: number[][] = [];
+
+  function generateIndices(dimIndex: number, currentIndex: number[]): void {
+    if (dimIndex === shape.length) {
+      indices.push([...currentIndex]);
+      return;
+    }
+
+    const chunkSize = chunks[dimIndex];
+    const dimSize = shape[dimIndex];
+
+    for (let i = 0; i < Math.ceil(dimSize / chunkSize); i++) {
+      currentIndex[dimIndex] = i;
+      generateIndices(dimIndex + 1, currentIndex);
+    }
+  }
+
+  generateIndices(0, new Array(shape.length));
+  return indices;
+}
+
+function calculateChunkStride(chunkShape: number[]): number[] {
+  const stride = new Array(chunkShape.length);
+  stride[chunkShape.length - 1] = 1;
+
+  for (let i = chunkShape.length - 2; i >= 0; i--) {
+    stride[i] = stride[i + 1] * chunkShape[i + 1];
+  }
+
+  return stride;
+}

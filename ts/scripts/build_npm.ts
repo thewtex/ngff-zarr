@@ -47,6 +47,7 @@ await build({
     },
     files: ["esm/", "script/", "types/", "README.md", "LICENSE"],
     dependencies: {
+      "p-queue": "^8.1.0",
       "@zarrita/storage": "^0.1.1",
       zod: "^4.0.2",
       zarrita: "^0.5.2",

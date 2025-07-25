@@ -1,19 +1,19 @@
 import { expect, test } from "@playwright/test";
 
-test.describe("NGFF Zarr NPM Package Tests", () => {
+test.describe("NGFF Zarr Browser Bundle Tests", () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to a test page that loads the npm package
-    await page.goto("/npm-test");
+    // Navigate to the bundle test page
+    await page.goto("/bundle-test");
 
     // Wait for the page to fully load
     await page.waitForLoadState("networkidle");
   });
 
-  test("should load the npm package successfully", async ({ page }) => {
+  test("should load the browser-compatible bundle successfully", async ({ page }) => {
     const loadResult = await page.evaluate(async () => {
       try {
-        // Import the npm package
-        const ngffZarr = await import("./npm/esm/mod.js");
+        // Import the browser-compatible bundle
+        const ngffZarr = await import("./ngff-zarr.bundle.js");
         return {
           success: true,
           exports: Object.keys(ngffZarr),
@@ -38,7 +38,7 @@ test.describe("NGFF Zarr NPM Package Tests", () => {
   test("should validate zarr metadata using schemas", async ({ page }) => {
     const validationResult = await page.evaluate(async () => {
       try {
-        const { MetadataSchema } = await import("./npm/esm/mod.js");
+        const { MetadataSchema } = await import("./ngff-zarr.bundle.js");
 
         // Test valid NGFF metadata
         const validMetadata = {
@@ -79,7 +79,7 @@ test.describe("NGFF Zarr NPM Package Tests", () => {
     const unitsResult = await page.evaluate(async () => {
       try {
         const { isValidDimension, isValidUnit } = await import(
-          "./npm/esm/mod.js"
+          "./ngff-zarr.bundle.js"
         );
 
         return {
@@ -122,7 +122,9 @@ test.describe("NGFF Zarr NPM Package Tests", () => {
   test("should handle multiscale validation", async ({ page }) => {
     const multiscaleResult = await page.evaluate(async () => {
       try {
-        const { MultiscalesOptionsSchema } = await import("./npm/esm/mod.js");
+        const { MultiscalesOptionsSchema } = await import(
+          "./ngff-zarr.bundle.js"
+        );
 
         const validMultiscaleOptions = {
           images: [
@@ -185,7 +187,7 @@ test.describe("NGFF Zarr NPM Package Tests", () => {
   test("should handle performance benchmarks", async ({ page }) => {
     const performanceResult = await page.evaluate(async () => {
       try {
-        const { MetadataSchema } = await import("./npm/esm/mod.js");
+        const { MetadataSchema } = await import("./ngff-zarr.bundle.js");
 
         const start = performance.now();
 
