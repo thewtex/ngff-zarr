@@ -26,12 +26,10 @@ repos:
       - id: requirements-txt-fixer
       - id: trailing-whitespace
 
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: "v3.0.0"
+  - repo: https://github.com/nozaq/pre-commit-deno
+    rev: "0.1.0"
     hooks:
-      - id: prettier
-        types_or: [yaml, markdown, html, css, scss, javascript, json]
-        args: [--prose-wrap=always]
+      - id: deno-fmt
 
   - repo: https://github.com/codespell-project/codespell
     rev: "v2.2.5"

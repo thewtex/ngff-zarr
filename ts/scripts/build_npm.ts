@@ -14,7 +14,7 @@ await build({
   typeCheck: false,
   package: {
     name: "@fideus-labs/ngff-zarr",
-    version: "0.0.1",
+    version: "0.0.2",
     description:
       "TypeScript implementation of ngff-zarr for reading and writing OME-Zarr files",
     license: "MIT",
