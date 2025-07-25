@@ -123,7 +123,7 @@ are applied:
 
 - **X axis**: `left-to-right`
 - **Y axis**: `posterior-to-anterior`
-- **Z axis**: `inferior-to-superior`
+- **Z axis**: `superior-to-inferior`
 
 ## Convenience Coordinate Systems
 
@@ -163,7 +163,7 @@ The `LPS` constant is equivalent to:
 {
     "x": AnatomicalOrientation(type="anatomical", value="left-to-right"),
     "y": AnatomicalOrientation(type="anatomical", value="posterior-to-anterior"),
-    "z": AnatomicalOrientation(type="anatomical", value="inferior-to-superior")
+    "z": AnatomicalOrientation(type="anatomical", value="superior-to-inferior")
 }
 ```
 
@@ -225,7 +225,7 @@ y_orientation = AnatomicalOrientation(
     value=AnatomicalOrientationValues.anterior_to_posterior
 )
 z_orientation = AnatomicalOrientation(
-    value=AnatomicalOrientationValues.inferior_to_superior
+    value=AnatomicalOrientationValues.superior_to_inferior
 )
 
 # Create NGFF image with orientations
@@ -257,7 +257,7 @@ When RFC-4 is enabled, spatial axes in the OME-NGFF metadata include an
       "unit": "micrometer",
       "orientation": {
         "type": "anatomical",
-        "value": "inferior-to-superior"
+        "value": "superior-to-inferior"
       }
     },
     {

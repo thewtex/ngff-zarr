@@ -73,7 +73,7 @@ LPS: Dict[str, AnatomicalOrientation] = {
         type="anatomical", value=AnatomicalOrientationValues.posterior_to_anterior
     ),
     "z": AnatomicalOrientation(
-        type="anatomical", value=AnatomicalOrientationValues.inferior_to_superior
+        type="anatomical", value=AnatomicalOrientationValues.superior_to_inferior
     ),
 }
 """

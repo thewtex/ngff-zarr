@@ -9,17 +9,9 @@ from .rfc4 import itk_lps_to_anatomical_orientation
 def itk_image_to_ngff_image(
     itk_image,
     add_anatomical_orientation: bool = True,
-    # anatomical_axes: bool = False,
-    # axis_names: List[str] = None,
     # axis_units: List[str] = None,
 ):
     """Convert an itk.Image or an itkwasm.Image to an NgffImage, preserving spatial metadata."""
-
-    # Handle anatomical axes
-    # Todo: add axis names support to NGFF
-    # axis_names = None
-    # if anatomical_axes and (axis_names is None):
-    #     axis_names = {"x": "right-left", "y": "anterior-posterior", "z": "inferior-superior"}
 
     # # Orient 3D image so that direction is identity wrt RAI coordinates
     # image_dimension = image.GetImageDimension()
