@@ -19,6 +19,9 @@ build = "deno run --allow-all scripts/build.ts"
 [tasks.fmt-check]
 cmd = "deno fmt --check"
 
+[tasks.lint-check]
+cmd = "deno lint"
+
 [tasks.typecheck]
 cmd = "deno check src/mod.ts"
 
