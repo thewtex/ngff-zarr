@@ -21,6 +21,11 @@ jobs:
           manifest-path: ./ts/pixi.toml
           frozen: true
 
+      - name: Install deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
       - name: Download test data
         run: pixi run download-test-data
         working-directory: py
