@@ -26,11 +26,6 @@ repos:
       - id: requirements-txt-fixer
       - id: trailing-whitespace
 
-  - repo: https://github.com/nozaq/pre-commit-deno
-    rev: "0.1.0"
-    hooks:
-      - id: deno-fmt
-
   - repo: https://github.com/codespell-project/codespell
     rev: "v2.2.5"
     hooks:
