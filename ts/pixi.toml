@@ -7,7 +7,6 @@ channels = ["conda-forge"]
 platforms = ["linux-64", "osx-64", "osx-arm64", "win-64"]
 
 [dependencies]
-deno = "*"
 
 [tasks]
 dev = "deno run --allow-all src/mod.ts"
