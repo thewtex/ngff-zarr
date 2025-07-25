@@ -108,8 +108,8 @@ multiscales = from_ngff_zarr(store)
 
 **Authentication Options:**
 
-In addition to specification of credentials explicitly, [there are other
-options](https://s3fs.readthedocs.io/en/latest/#credentials).
+In addition to specification of credentials explicitly,
+[there are other options](https://s3fs.readthedocs.io/en/latest/#credentials).
 
 - **Environment variables**: Set `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`,
   etc.

@@ -50,7 +50,8 @@ ngff-zarr -i image.nii.gz -o output.ome.zarr
 
 When converting ITK images (including from NRRD, NIfTI, or DICOM formats),
 anatomical orientation is automatically added based on ITK's LPS coordinate
-system (see the sections `Anatomical Orientation Values`  and `ITK LPS Coordinate System` below for an explanation):
+system (see the sections `Anatomical Orientation Values` and
+`ITK LPS Coordinate System` below for an explanation):
 
 ```python
 import ngff_zarr
@@ -96,24 +97,45 @@ ngff_image = ngff_zarr.itk_image_to_ngff_image(
 
 [RFC-4] supports the following anatomical orientation values:
 
-- `left-to-right`: Describes the directional orientation from the left side to the right lateral side of an anatomical structure or body.
-- `right-to-left`: Describes the directional orientation from the right side to the left lateral side of an anatomical structure or body.
-- `anterior-to-posterior`: Describes the directional orientation from the front (anterior) to the back (posterior) of an anatomical structure or body.
-- `posterior-to-anterior`: Describes the directional orientation from the back (posterior) to the front (anterior) of an anatomical structure or body.
-- `inferior-to-superior`: Describes the directional orientation from below (inferior) to above (superior) in an anatomical structure or body.
-- `superior-to-inferior`: Describes the directional orientation from above (superior) to below (inferior) in an anatomical structure or body.
-- `dorsal-to-ventral`: Describes the directional orientation from the top/upper (dorsal) to the belly/lower (ventral) in an anatomical structure or body.
-- `ventral-to-dorsal`: Describes the directional orientation from the belly/lower (ventral) to the top/upper (dorsal) in an anatomical structure or body.
-- `dorsal-to-palmar`: Describes the directional orientation from the top/upper (dorsal) to the palm of the hand (palmar) in a body.
-- `palmar-to-dorsal`: Describes the directional orientation from the palm of the hand (palmar) to the top/upper (dorsal) in a body.
-- `dorsal-to-plantar`: Describes the directional orientation from the top/upper (dorsal) to the sole of the foot (plantar) in a body.
-- `plantar-to-dorsal`: Describes the directional orientation from the sole of the foot (plantar) to the top/upper (dorsal) in a body.
-- `rostral-to-caudal`: Describes the directional orientation from the nasal (rostral) to the tail (caudal) end of an anatomical structure, typically used in reference to the central nervous system.
-- `caudal-to-rostral`: Describes the directional orientation from the tail (caudal) to the nasal (rostral) end of an anatomical structure, typically used in reference to the central nervous system.
-- `cranial-to-caudal`: Describes the directional orientation from the head (cranial) to the tail (caudal) end of an anatomical structure or body.
-- `caudal-to-cranial`: Describes the directional orientation from the tail (caudal) to the head (cranial) end of an anatomical structure or body.
-- `proximal-to-distal`: Describes the directional orientation from the center of the body to the periphery of an anatomical structure or limb.
-- `distal-to-proximal`: Describes the directional orientation from the periphery of an anatomical structure or limb to the center of the body.
+- `left-to-right`: Describes the directional orientation from the left side to
+  the right lateral side of an anatomical structure or body.
+- `right-to-left`: Describes the directional orientation from the right side to
+  the left lateral side of an anatomical structure or body.
+- `anterior-to-posterior`: Describes the directional orientation from the front
+  (anterior) to the back (posterior) of an anatomical structure or body.
+- `posterior-to-anterior`: Describes the directional orientation from the back
+  (posterior) to the front (anterior) of an anatomical structure or body.
+- `inferior-to-superior`: Describes the directional orientation from below
+  (inferior) to above (superior) in an anatomical structure or body.
+- `superior-to-inferior`: Describes the directional orientation from above
+  (superior) to below (inferior) in an anatomical structure or body.
+- `dorsal-to-ventral`: Describes the directional orientation from the top/upper
+  (dorsal) to the belly/lower (ventral) in an anatomical structure or body.
+- `ventral-to-dorsal`: Describes the directional orientation from the
+  belly/lower (ventral) to the top/upper (dorsal) in an anatomical structure or
+  body.
+- `dorsal-to-palmar`: Describes the directional orientation from the top/upper
+  (dorsal) to the palm of the hand (palmar) in a body.
+- `palmar-to-dorsal`: Describes the directional orientation from the palm of the
+  hand (palmar) to the top/upper (dorsal) in a body.
+- `dorsal-to-plantar`: Describes the directional orientation from the top/upper
+  (dorsal) to the sole of the foot (plantar) in a body.
+- `plantar-to-dorsal`: Describes the directional orientation from the sole of
+  the foot (plantar) to the top/upper (dorsal) in a body.
+- `rostral-to-caudal`: Describes the directional orientation from the nasal
+  (rostral) to the tail (caudal) end of an anatomical structure, typically used
+  in reference to the central nervous system.
+- `caudal-to-rostral`: Describes the directional orientation from the tail
+  (caudal) to the nasal (rostral) end of an anatomical structure, typically used
+  in reference to the central nervous system.
+- `cranial-to-caudal`: Describes the directional orientation from the head
+  (cranial) to the tail (caudal) end of an anatomical structure or body.
+- `caudal-to-cranial`: Describes the directional orientation from the tail
+  (caudal) to the head (cranial) end of an anatomical structure or body.
+- `proximal-to-distal`: Describes the directional orientation from the center of
+  the body to the periphery of an anatomical structure or limb.
+- `distal-to-proximal`: Describes the directional orientation from the periphery
+  of an anatomical structure or limb to the center of the body.
 
 ## ITK LPS Coordinate System
 
@@ -131,7 +153,8 @@ For common use cases, we provide pre-defined orientation dictionaries:
 
 ### LPS Coordinate System
 
-The `LPS` constant provides orientations for the DICOM and ITK standard coordinate system:
+The `LPS` constant provides orientations for the DICOM and ITK standard
+coordinate system:
 
 ```python
 import ngff_zarr as nz
@@ -159,6 +182,7 @@ nz.to_ngff_zarr(
 ```
 
 The `LPS` constant is equivalent to:
+
 ```python
 {
     "x": AnatomicalOrientation(type="anatomical", value="left-to-right"),
@@ -169,7 +193,8 @@ The `LPS` constant is equivalent to:
 
 ### RAS Coordinate System
 
-The `RAS` constant provides orientations for the default Nifti neuroimaging coordinate system:
+The `RAS` constant provides orientations for the default Nifti neuroimaging
+coordinate system:
 
 ```python
 import ngff_zarr as nz
@@ -197,6 +222,7 @@ nz.to_ngff_zarr(
 ```
 
 The `RAS` constant is equivalent to:
+
 ```python
 {
     "x": AnatomicalOrientation(type="anatomical", value="right-to-left"),
@@ -300,8 +326,10 @@ When RFC-4 is enabled, spatial axes in the OME-NGFF metadata include an
 
 ### Convenience Constants
 
-- `LPS`: Pre-defined orientations for ITK coordinate system (Left-to-right, Posterior-to-anterior, Superior-to-inferior)
-- `RAS`: Pre-defined orientations for neuroimaging coordinate system (Right-to-left, Anterior-to-posterior, Superior-to-inferior)
+- `LPS`: Pre-defined orientations for ITK coordinate system (Left-to-right,
+  Posterior-to-anterior, Superior-to-inferior)
+- `RAS`: Pre-defined orientations for neuroimaging coordinate system
+  (Right-to-left, Anterior-to-posterior, Superior-to-inferior)
 
 ## Compatibility
 
