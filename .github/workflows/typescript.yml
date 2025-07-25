@@ -18,7 +18,7 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: v0.49.0
-          manifest-path: ./ts/pixi.toml
+          manifest-path: ./py/pyproject.toml
           frozen: true
 
       - name: Install deno
@@ -70,7 +70,7 @@ jobs:
         uses: prefix-dev/setup-pixi@v0.8.1
         with:
           pixi-version: v0.49.0
-          manifest-path: ./ts/pixi.toml
+          manifest-path: ./py/pyproject.toml
           frozen: true
 
       - name: Check formatting
