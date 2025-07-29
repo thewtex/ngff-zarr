@@ -1,6 +1,7 @@
 # ngff-zarr TypeScript
 
-A TypeScript implementation of ngff-zarr for reading and writing OME-Zarr files, compatible with Deno, Node.js, and the browser.
+A TypeScript implementation of ngff-zarr for reading and writing OME-Zarr files,
+compatible with Deno, Node.js, and the browser.
 
 ## Features
 
@@ -9,7 +10,8 @@ A TypeScript implementation of ngff-zarr for reading and writing OME-Zarr files,
 - 🔍 **Type-safe**: Full TypeScript support with Zod schema validation
 - 🗂️ **OME-Zarr support**: Read and write OME-Zarr files using zarrita
 - 🧪 **Well-tested**: Comprehensive test suite using @std/assert
-- 🏗️ **Mirrors Python API**: TypeScript classes and types mirror the Python dataclasses
+- 🏗️ **Mirrors Python API**: TypeScript classes and types mirror the Python
+  dataclasses
 
 ## Installation
 
@@ -195,7 +197,9 @@ deno task test:all
 
 ### Browser Testing
 
-This project includes comprehensive browser testing using Playwright. The browser tests verify that the npm-transpiled package works correctly in real browser environments.
+This project includes comprehensive browser testing using Playwright. The
+browser tests verify that the npm-transpiled package works correctly in real
+browser environments.
 
 **Features:**
 
@@ -223,7 +227,8 @@ deno task test:browser:debug
 - `/test/browser/server.ts` - Test server for serving assets
 - `/scripts/run_playwright.mjs` - Node.js wrapper for Playwright execution
 
-See [test/browser/README.md](test/browser/README.md) for detailed browser testing documentation.
+See [test/browser/README.md](test/browser/README.md) for detailed browser
+testing documentation.
 
 ### Project Structure
 

@@ -195,7 +195,7 @@ export class NgffImage {
 ## Agent Instructions
 
 - When problem-solving Python issues, write temporary test scripts and run them
-  with `pixi run python debug_script.py`, for example. Or, run individual tests
-  with `pixi run pytest tests/test_*.py`. Do not try to use
+  with `pixi run -e test python debug_script.py`, for example. Or, run individual tests
+  with `pixi run -e test pytest tests/test_*.py`. Do not try to use
   `pixi run pytest ...` or `pixi run python -c '<command>'` as these will not
   work correctly.

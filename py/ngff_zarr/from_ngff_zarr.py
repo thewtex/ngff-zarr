@@ -17,6 +17,7 @@ else:
 from .ngff_image import NgffImage
 from .to_multiscales import Multiscales
 from .methods import Methods
+from .rfc4_validation import validate_rfc4_orientation, has_rfc4_orientation_metadata
 from .v04.zarr_metadata import (
     Axis,
     Dataset,
@@ -178,6 +179,19 @@ def from_ngff_zarr(
     coordinateTransformations = None
     if "coordinateTransformations" in metadata:
         coordinateTransformations = metadata["coordinateTransformations"]
+
+    # RFC 4 validation for anatomical orientation
+    if validate and isinstance(metadata, dict) and "axes" in metadata:
+        # Check if any axes have orientation metadata and validate if present
+        axes_data = metadata["axes"]
+        if isinstance(axes_data, list):
+            # Type cast each axis item to dict for validation
+            axes_dicts = []
+            for axis in axes_data:
+                if isinstance(axis, dict):
+                    axes_dicts.append(axis)
+            if axes_dicts and has_rfc4_orientation_metadata(axes_dicts):
+                validate_rfc4_orientation(axes_dicts)
 
     omero = None
     if "omero" in root.attrs:

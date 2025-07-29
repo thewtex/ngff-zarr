@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>NGFF Zarr Bundle Test</title>
     <style>
       body {
@@ -91,7 +91,7 @@
             hasSchemas: "AxisSchema" in ngffZarr,
             hasTypes: "SupportedDims" in ngffZarr,
             hasUtils: "isValidDimension" in ngffZarr,
-            version: "bundle-0.0.1",
+            version: "bundle-0.0.2",
           };
 
           packageDetails.textContent = JSON.stringify(
@@ -161,13 +161,16 @@
             };
 
             const dimensionsPassed = dimensionTests.x &&
-              dimensionTests.y && dimensionTests.z &&
-              dimensionTests.t && dimensionTests.c &&
+              dimensionTests.y &&
+              dimensionTests.z &&
+              dimensionTests.t &&
+              dimensionTests.c &&
               !dimensionTests.invalid;
 
             const unitsPassed = unitTests.micrometer &&
               unitTests.millimeter &&
-              unitTests.second && !unitTests.invalid;
+              unitTests.second &&
+              !unitTests.invalid;
 
             results.push(
               `✓ Dimension validation: ${
@@ -210,7 +213,9 @@
 
             results.push(
               `✓ Performance test: ${
-                Math.round(validationsPerSecond)
+                Math.round(
+                  validationsPerSecond,
+                )
               } validations/sec`,
             );
           } catch (error) {

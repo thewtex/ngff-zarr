@@ -1,6 +1,7 @@
 # AGENTS.md - Development Guide for AI Coding Agents
 
 ## Build/Test Commands
+
 - **All commands use pixi**: `pixi run <command>`
 - **Main package (py/)**: `pixi run test` (uses pytest with test environment)
 - **MCP package (mcp/)**: `cd mcp && pixi run test` (dev environment)
@@ -11,6 +12,7 @@
 - **TypeScript**: `cd ts && pixi run test`, `pixi run lint`, `pixi run fmt`
 
 ## Python Code Style Guidelines
+
 - **Line length**: 88 characters (Black/Ruff standard)
 - **Imports**: Use absolute imports, group by standard/third-party/local
 - **Types**: Use type hints, especially for public APIs
@@ -20,6 +22,7 @@
 - **Comments**: Minimal, focus on why not what
 
 ## Key Python Conventions
+
 - Use `pytest` for testing with fixtures in conftest.py
 - Follow Ruff linting rules (see pyproject.toml [tool.lint])
 - Use `dask.array` for large array processing
@@ -28,6 +31,7 @@
 - Pre-commit hooks enforce style automatically
 
 ## TypeScript Code Style Guidelines
+
 - Use Deno's standard style (80 char line width, 2 space indent, semicolons)
 - Strict TypeScript compiler options enabled
 - Use JSR imports (@std/assert) and npm: prefix for npm packages
