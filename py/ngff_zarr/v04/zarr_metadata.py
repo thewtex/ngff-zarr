@@ -202,6 +202,56 @@ class MethodMetadata:
 
 
 @dataclass
+class PlateAcquisition:
+    id: int
+    name: Optional[str] = None
+    maximumfieldcount: Optional[int] = None
+    description: Optional[str] = None
+    starttime: Optional[int] = None
+    endtime: Optional[int] = None
+
+
+@dataclass
+class PlateColumn:
+    name: str
+
+
+@dataclass
+class PlateRow:
+    name: str
+
+
+@dataclass
+class PlateWell:
+    path: str
+    rowIndex: int
+    columnIndex: int
+
+
+@dataclass
+class Plate:
+    columns: List[PlateColumn]
+    rows: List[PlateRow]
+    wells: List[PlateWell]
+    version: str = "0.4"
+    acquisitions: Optional[List[PlateAcquisition]] = None
+    field_count: Optional[int] = None
+    name: Optional[str] = None
+
+
+@dataclass
+class WellImage:
+    path: str
+    acquisition: Optional[int] = None
+
+
+@dataclass
+class Well:
+    images: List[WellImage]
+    version: str = "0.4"
+
+
+@dataclass
 class Metadata:
     axes: List[Axis]
     datasets: List[Dataset]

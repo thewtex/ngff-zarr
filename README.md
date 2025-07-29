@@ -43,6 +43,7 @@ The main Python package provides:
 - [Sharded Zarr] stores
 - Optional writing via [tensorstore]
 - [Anatomical orientation metadata](./docs/rfc4.md) (RFC-4)
+- **High Content Screening (HCS) support** for plate and well data
 - **Model Context Protocol (MCP) server** for AI agent integration
 
 📖 **Documentation**
