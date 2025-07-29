@@ -14,6 +14,8 @@ supported by `ngff-zarr`.
 - **Metadata**: Rich metadata support, including spatial metadata.
 - **Anatomical Orientation**: Support for anatomical orientation metadata
   (RFC-4).
+- **High Content Screening (HCS)**: Complete support for plate and well data
+  structures.
 - **Sharded Zarr**: Support for sharded Zarr stores, allowing for scalable data
   management.
 - **Format conversion**: Conversion of most bioimaging file formats to OME-Zarr.
@@ -28,6 +30,22 @@ supported by `ngff-zarr`.
   Python data classes with Dask arrays.
 - **OME-Zarr v0.4 to v0.5**: Writes OME-Zarr versions 0.4 to 0.5, including
   support for RFC 4.
+
+## High Content Screening (HCS)
+
+Complete implementation of the HCS specification defined in OME-Zarr v0.4+:
+
+- **Plate Metadata**: Support for plate-level metadata including rows, columns,
+  wells, and acquisitions
+- **Well Structure**: Hierarchical well organization with multiple fields per
+  well
+- **Multi-field Imaging**: Support for multiple fields of view within each well
+- **Time Series**: Support for acquisition metadata and time series data
+- **Validation**: HCS-specific metadata validation using the appropriate JSON
+  schema
+
+See the [HCS documentation](./hcs.md) for detailed usage examples and
+implementation details.
 
 ## RFCs Supported
 

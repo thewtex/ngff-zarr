@@ -38,5 +38,9 @@ class NgffZarrConfig:
     task_target: int = 50000
     cache_store: StoreLike = field(default_factory=default_store_factory)
 
+    # HCS cache settings
+    hcs_image_cache_size: int = 100  # Max number of images to cache per well
+    hcs_well_cache_size: int = 500  # Max number of wells to cache per plate
+
 
 config = NgffZarrConfig()
