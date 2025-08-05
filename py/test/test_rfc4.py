@@ -19,23 +19,23 @@ def test_anatomical_orientation_creation():
 
 def test_itk_lps_to_anatomical_orientation():
     """Test ITK LPS coordinate mapping."""
-    # Test X axis (left to right in LPS)
+    # Test X axis (right to left in LPS)
     x_orientation = itk_lps_to_anatomical_orientation("x")
     assert x_orientation is not None
     assert x_orientation.type == "anatomical"
-    assert x_orientation.value == AnatomicalOrientationValues.left_to_right
+    assert x_orientation.value == AnatomicalOrientationValues.right_to_left
 
-    # Test Y axis (posterior to anterior in LPS)
+    # Test Y axis (anterior to posterior in LPS)
     y_orientation = itk_lps_to_anatomical_orientation("y")
     assert y_orientation is not None
     assert y_orientation.type == "anatomical"
-    assert y_orientation.value == AnatomicalOrientationValues.posterior_to_anterior
+    assert y_orientation.value == AnatomicalOrientationValues.anterior_to_posterior
 
-    # Test Z axis (superior to inferior in LPS)
+    # Test Z axis (inferior to superior in LPS)
     z_orientation = itk_lps_to_anatomical_orientation("z")
     assert z_orientation is not None
     assert z_orientation.type == "anatomical"
-    assert z_orientation.value == AnatomicalOrientationValues.superior_to_inferior
+    assert z_orientation.value == AnatomicalOrientationValues.inferior_to_superior
 
     # Test non-spatial axis
     c_orientation = itk_lps_to_anatomical_orientation("c")
