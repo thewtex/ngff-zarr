@@ -139,13 +139,18 @@ ngff_image = ngff_zarr.itk_image_to_ngff_image(
 
 ## ITK LPS Coordinate System
 
-ITK uses the LPS (Left-to-right, Posterior-to-anterior, Superior-to-inferior)
-coordinate system by default. When converting ITK images, the following mappings
-are applied:
+ITK uses the LPS (Left-Posterior-Superior) coordinate system by default. In LPS,
+the axis directions indicate the direction of increasing coordinate values:
 
-- **X axis**: `left-to-right`
-- **Y axis**: `posterior-to-anterior`
-- **Z axis**: `superior-to-inferior`
+- **L (Left)**: The X-axis increases from right-to-left
+- **P (Posterior)**: The Y-axis increases from anterior-to-posterior
+- **S (Superior)**: The Z-axis increases from inferior-to-superior
+
+When converting ITK images, the following mappings are applied:
+
+- **X axis**: `right-to-left` (L = Left direction)
+- **Y axis**: `anterior-to-posterior` (P = Posterior direction)
+- **Z axis**: `inferior-to-superior` (S = Superior direction)
 
 ## Convenience Coordinate Systems
 
@@ -154,7 +159,11 @@ For common use cases, we provide pre-defined orientation dictionaries:
 ### LPS Coordinate System
 
 The `LPS` constant provides orientations for the DICOM and ITK standard
-coordinate system:
+coordinate system. LPS stands for Left-Posterior-Superior, where:
+
+- **L (Left)**: X-axis increases from right-to-left
+- **P (Posterior)**: Y-axis increases from anterior-to-posterior
+- **S (Superior)**: Z-axis increases from inferior-to-superior
 
 ```python
 import ngff_zarr as nz
@@ -185,16 +194,20 @@ The `LPS` constant is equivalent to:
 
 ```python
 {
-    "x": AnatomicalOrientation(type="anatomical", value="left-to-right"),
-    "y": AnatomicalOrientation(type="anatomical", value="posterior-to-anterior"),
-    "z": AnatomicalOrientation(type="anatomical", value="superior-to-inferior")
+    "x": AnatomicalOrientation(type="anatomical", value="right-to-left"),
+    "y": AnatomicalOrientation(type="anatomical", value="anterior-to-posterior"),
+    "z": AnatomicalOrientation(type="anatomical", value="inferior-to-superior")
 }
 ```
 
 ### RAS Coordinate System
 
-The `RAS` constant provides orientations for the default Nifti neuroimaging
-coordinate system:
+The `RAS` constant provides orientations for the neuroimaging coordinate system
+used in NIfTI. RAS stands for Right-Anterior-Superior, where:
+
+- **R (Right)**: X-axis increases from left-to-right
+- **A (Anterior)**: Y-axis increases from posterior-to-anterior
+- **S (Superior)**: Z-axis increases from inferior-to-superior
 
 ```python
 import ngff_zarr as nz
@@ -225,9 +238,9 @@ The `RAS` constant is equivalent to:
 
 ```python
 {
-    "x": AnatomicalOrientation(type="anatomical", value="right-to-left"),
-    "y": AnatomicalOrientation(type="anatomical", value="anterior-to-posterior"),
-    "z": AnatomicalOrientation(type="anatomical", value="superior-to-inferior")
+    "x": AnatomicalOrientation(type="anatomical", value="left-to-right"),
+    "y": AnatomicalOrientation(type="anatomical", value="posterior-to-anterior"),
+    "z": AnatomicalOrientation(type="anatomical", value="inferior-to-superior")
 }
 ```
 
@@ -245,13 +258,13 @@ import dask.array as da
 
 # Create orientation objects
 x_orientation = AnatomicalOrientation(
-    value=AnatomicalOrientationValues.left_to_right
+    value=AnatomicalOrientationValues.right_to_left
 )
 y_orientation = AnatomicalOrientation(
     value=AnatomicalOrientationValues.anterior_to_posterior
 )
 z_orientation = AnatomicalOrientation(
-    value=AnatomicalOrientationValues.superior_to_inferior
+    value=AnatomicalOrientationValues.inferior_to_superior
 )
 
 # Create NGFF image with orientations
@@ -283,7 +296,7 @@ When RFC-4 is enabled, spatial axes in the OME-NGFF metadata include an
       "unit": "micrometer",
       "orientation": {
         "type": "anatomical",
-        "value": "superior-to-inferior"
+        "value": "inferior-to-superior"
       }
     },
     {
@@ -292,7 +305,7 @@ When RFC-4 is enabled, spatial axes in the OME-NGFF metadata include an
       "unit": "micrometer",
       "orientation": {
         "type": "anatomical",
-        "value": "posterior-to-anterior"
+        "value": "anterior-to-posterior"
       }
     },
     {
@@ -301,7 +314,7 @@ When RFC-4 is enabled, spatial axes in the OME-NGFF metadata include an
       "unit": "micrometer",
       "orientation": {
         "type": "anatomical",
-        "value": "left-to-right"
+        "value": "right-to-left"
       }
     }
   ]
@@ -326,10 +339,14 @@ When RFC-4 is enabled, spatial axes in the OME-NGFF metadata include an
 
 ### Convenience Constants
 
-- `LPS`: Pre-defined orientations for ITK coordinate system (Left-to-right,
-  Posterior-to-anterior, Superior-to-inferior)
-- `RAS`: Pre-defined orientations for neuroimaging coordinate system
-  (Right-to-left, Anterior-to-posterior, Superior-to-inferior)
+- `LPS`: Pre-defined orientations for ITK coordinate system:
+  - L (Left): X-axis from right-to-left
+  - P (Posterior): Y-axis from anterior-to-posterior
+  - S (Superior): Z-axis from inferior-to-superior
+- `RAS`: Pre-defined orientations for neuroimaging coordinate system:
+  - R (Right): X-axis from left-to-right
+  - A (Anterior): Y-axis from posterior-to-anterior
+  - S (Superior): Z-axis from inferior-to-superior
 
 ## Compatibility
 

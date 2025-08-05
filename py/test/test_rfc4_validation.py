@@ -27,19 +27,19 @@ def test_has_rfc4_orientation_metadata():
             "name": "x",
             "type": "space",
             "unit": "micrometer",
-            "orientation": {"type": "anatomical", "value": "left-to-right"},
+            "orientation": {"type": "anatomical", "value": "right-to-left"},
         },
         {
             "name": "y",
             "type": "space",
             "unit": "micrometer",
-            "orientation": {"type": "anatomical", "value": "posterior-to-anterior"},
+            "orientation": {"type": "anatomical", "value": "anterior-to-posterior"},
         },
         {
             "name": "z",
             "type": "space",
             "unit": "micrometer",
-            "orientation": {"type": "anatomical", "value": "superior-to-inferior"},
+            "orientation": {"type": "anatomical", "value": "inferior-to-superior"},
         },
     ]
     assert has_rfc4_orientation_metadata(axes_with_orientation)
@@ -83,19 +83,19 @@ def test_validate_rfc4_orientation_mixed_types():
             "name": "x",
             "type": "space",
             "unit": "micrometer",
-            "orientation": {"type": "anatomical", "value": "left-to-right"},
+            "orientation": {"type": "anatomical", "value": "right-to-left"},
         },
         {
             "name": "y",
             "type": "space",
             "unit": "micrometer",
-            "orientation": {"type": "anatomical", "value": "posterior-to-anterior"},
+            "orientation": {"type": "anatomical", "value": "anterior-to-posterior"},
         },
         {
             "name": "z",
             "type": "space",
             "unit": "micrometer",
-            "orientation": {"type": "anatomical", "value": "superior-to-inferior"},
+            "orientation": {"type": "anatomical", "value": "inferior-to-superior"},
         },
     ]
 
@@ -111,13 +111,13 @@ def test_validate_rfc4_orientation_incomplete():
             "name": "x",
             "type": "space",
             "unit": "micrometer",
-            "orientation": {"type": "anatomical", "value": "left-to-right"},
+            "orientation": {"type": "anatomical", "value": "right-to-left"},
         },
         {
             "name": "y",
             "type": "space",
             "unit": "micrometer",
-            "orientation": {"type": "anatomical", "value": "posterior-to-anterior"},
+            "orientation": {"type": "anatomical", "value": "anterior-to-posterior"},
         },
         {
             "name": "z",
@@ -141,19 +141,19 @@ def test_validate_rfc4_orientation_inconsistent_types():
             "name": "x",
             "type": "space",
             "unit": "micrometer",
-            "orientation": {"type": "anatomical", "value": "left-to-right"},
+            "orientation": {"type": "anatomical", "value": "right-to-left"},
         },
         {
             "name": "y",
             "type": "space",
             "unit": "micrometer",
-            "orientation": {"type": "different_type", "value": "posterior-to-anterior"},
+            "orientation": {"type": "different_type", "value": "anterior-to-posterior"},
         },
         {
             "name": "z",
             "type": "space",
             "unit": "micrometer",
-            "orientation": {"type": "anatomical", "value": "superior-to-inferior"},
+            "orientation": {"type": "anatomical", "value": "inferior-to-superior"},
         },
     ]
 
@@ -179,13 +179,13 @@ def test_validate_rfc4_orientation_invalid_value():
             "name": "y",
             "type": "space",
             "unit": "micrometer",
-            "orientation": {"type": "anatomical", "value": "posterior-to-anterior"},
+            "orientation": {"type": "anatomical", "value": "anterior-to-posterior"},
         },
         {
             "name": "z",
             "type": "space",
             "unit": "micrometer",
-            "orientation": {"type": "anatomical", "value": "superior-to-inferior"},
+            "orientation": {"type": "anatomical", "value": "inferior-to-superior"},
         },
     ]
 
@@ -213,19 +213,19 @@ def test_from_ngff_zarr_with_rfc4_validation():
                 "name": "x",
                 "type": "space",
                 "unit": "micrometer",
-                "orientation": {"type": "anatomical", "value": "left-to-right"},
+                "orientation": {"type": "anatomical", "value": "right-to-left"},
             },
             {
                 "name": "y",
                 "type": "space",
                 "unit": "micrometer",
-                "orientation": {"type": "anatomical", "value": "posterior-to-anterior"},
+                "orientation": {"type": "anatomical", "value": "anterior-to-posterior"},
             },
             {
                 "name": "z",
                 "type": "space",
                 "unit": "micrometer",
-                "orientation": {"type": "anatomical", "value": "superior-to-inferior"},
+                "orientation": {"type": "anatomical", "value": "inferior-to-superior"},
             },
         ],
         "datasets": [
@@ -265,13 +265,13 @@ def test_from_ngff_zarr_with_rfc4_validation_invalid():
                 "name": "x",
                 "type": "space",
                 "unit": "micrometer",
-                "orientation": {"type": "anatomical", "value": "left-to-right"},
+                "orientation": {"type": "anatomical", "value": "right-to-left"},
             },
             {
                 "name": "y",
                 "type": "space",
                 "unit": "micrometer",
-                "orientation": {"type": "anatomical", "value": "posterior-to-anterior"},
+                "orientation": {"type": "anatomical", "value": "anterior-to-posterior"},
             },
             {
                 "name": "z",
@@ -317,13 +317,13 @@ def test_from_ngff_zarr_without_rfc4_validation():
                 "name": "x",
                 "type": "space",
                 "unit": "micrometer",
-                "orientation": {"type": "anatomical", "value": "left-to-right"},
+                "orientation": {"type": "anatomical", "value": "right-to-left"},
             },
             {
                 "name": "y",
                 "type": "space",
                 "unit": "micrometer",
-                "orientation": {"type": "anatomical", "value": "posterior-to-anterior"},
+                "orientation": {"type": "anatomical", "value": "anterior-to-posterior"},
             },
             {
                 "name": "z",

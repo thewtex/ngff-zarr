@@ -67,17 +67,21 @@ class AnatomicalOrientation:
 # Convenience constants for common coordinate systems
 LPS: Dict[str, AnatomicalOrientation] = {
     "x": AnatomicalOrientation(
-        type="anatomical", value=AnatomicalOrientationValues.left_to_right
+        type="anatomical", value=AnatomicalOrientationValues.right_to_left
     ),
     "y": AnatomicalOrientation(
-        type="anatomical", value=AnatomicalOrientationValues.posterior_to_anterior
+        type="anatomical", value=AnatomicalOrientationValues.anterior_to_posterior
     ),
     "z": AnatomicalOrientation(
-        type="anatomical", value=AnatomicalOrientationValues.superior_to_inferior
+        type="anatomical", value=AnatomicalOrientationValues.inferior_to_superior
     ),
 }
 """
-LPS (Left-to-right, Posterior-to-anterior, Superior-to-inferior) coordinate system orientations.
+LPS (Left-Posterior-Superior) coordinate system orientations.
+In LPS, the axes increase from:
+- X: right-to-left (L = Left)
+- Y: anterior-to-posterior (P = Posterior)
+- Z: inferior-to-superior (S = Superior)
 This is the standard coordinate system used by ITK and many medical imaging applications.
 
 Example usage:
@@ -92,17 +96,21 @@ Example usage:
 
 RAS: Dict[str, AnatomicalOrientation] = {
     "x": AnatomicalOrientation(
-        type="anatomical", value=AnatomicalOrientationValues.right_to_left
+        type="anatomical", value=AnatomicalOrientationValues.left_to_right
     ),
     "y": AnatomicalOrientation(
-        type="anatomical", value=AnatomicalOrientationValues.anterior_to_posterior
+        type="anatomical", value=AnatomicalOrientationValues.posterior_to_anterior
     ),
     "z": AnatomicalOrientation(
-        type="anatomical", value=AnatomicalOrientationValues.superior_to_inferior
+        type="anatomical", value=AnatomicalOrientationValues.inferior_to_superior
     ),
 }
 """
-RAS (Right-to-left, Anterior-to-posterior, Superior-to-inferior) coordinate system orientations.
+RAS (Right-Anterior-Superior) coordinate system orientations.
+In RAS, the axes increase from:
+- X: left-to-right (R = Right)
+- Y: posterior-to-anterior (A = Anterior)
+- Z: inferior-to-superior (S = Superior)
 This coordinate system is commonly used in neuroimaging applications like FreeSurfer and FSL.
 
 Example usage:
@@ -122,8 +130,11 @@ def itk_lps_to_anatomical_orientation(
     """
     Convert ITK LPS coordinate system to anatomical orientation.
 
-    ITK uses the LPS (Left-to-right, Posterior-to-anterior, Superior-to-inferior)
-    coordinate system by default.
+    ITK uses the LPS (Left-Posterior-Superior) coordinate system by default.
+    In LPS, the axes increase from:
+    - X: right-to-left (L = Left)
+    - Y: anterior-to-posterior (P = Posterior)
+    - Z: inferior-to-superior (S = Superior)
 
     Parameters
     ----------
