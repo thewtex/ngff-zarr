@@ -75,19 +75,25 @@ export async function itkImageToNgffImage(
   const allSpatialDims = new Set(["x", "y", "z"]);
   const spatialDims = dims.filter((dim) => allSpatialDims.has(dim));
 
-  // Create scale mapping from spacing (ITK order matches spatial dims order)
+  // Create scale mapping from spacing (ITK order: [z, y, x] for 3D, [y, x] for 2D)
   const scale: Record<string, number> = {};
-  spatialDims.forEach((dim, idx) => {
-    // Map spatial dimensions to spacing - ITK uses [z, y, x] order for 3D, [y, x] for 2D
-    const spatialIndex = spatialDims.length - 1 - idx; // Reverse index
+  // Define canonical ITK spatial order for up to 3D
+  const itkSpatialOrder = ["z", "y", "x"].slice(-spatialDims.length);
+  spatialDims.forEach((dim) => {
+    const spatialIndex = itkSpatialOrder.indexOf(dim);
+    if (spatialIndex === -1) {
+      throw new Error(`Unknown spatial dimension: ${dim}`);
+    }
     scale[dim] = spacing[spatialIndex];
   });
 
-  // Create translation mapping from origin (ITK order matches spatial dims order)
+  // Create translation mapping from origin (ITK order: [z, y, x] for 3D, [y, x] for 2D)
   const translation: Record<string, number> = {};
-  spatialDims.forEach((dim, idx) => {
-    // Map spatial dimensions to origin - ITK uses [z, y, x] order for 3D, [y, x] for 2D
-    const spatialIndex = spatialDims.length - 1 - idx; // Reverse index
+  spatialDims.forEach((dim) => {
+    const spatialIndex = itkSpatialOrder.indexOf(dim);
+    if (spatialIndex === -1) {
+      throw new Error(`Unknown spatial dimension: ${dim}`);
+    }
     translation[dim] = origin[spatialIndex];
   });
 
