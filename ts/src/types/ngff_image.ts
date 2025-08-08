@@ -1,5 +1,6 @@
 import * as zarr from "zarrita";
 import type { Units } from "./units.ts";
+import type { AnatomicalOrientation } from "./rfc4.ts";
 
 export type ComputedCallback = () => void;
 
@@ -10,6 +11,7 @@ export interface NgffImageOptions {
   translation: Record<string, number>;
   name: string | undefined;
   axesUnits: Record<string, Units> | undefined;
+  axesOrientations?: Record<string, AnatomicalOrientation> | undefined;
   computedCallbacks: ComputedCallback[] | undefined;
 }
 
@@ -20,6 +22,9 @@ export class NgffImage {
   public readonly translation: Record<string, number>;
   public readonly name: string;
   public readonly axesUnits: Record<string, Units> | undefined;
+  public readonly axesOrientations:
+    | Record<string, AnatomicalOrientation>
+    | undefined;
   public readonly computedCallbacks: ComputedCallback[];
 
   constructor(options: NgffImageOptions) {
@@ -29,6 +34,9 @@ export class NgffImage {
     this.translation = { ...options.translation };
     this.name = options.name ?? "image";
     this.axesUnits = options.axesUnits ? { ...options.axesUnits } : undefined;
+    this.axesOrientations = options.axesOrientations
+      ? { ...options.axesOrientations }
+      : undefined;
     this.computedCallbacks = [...(options.computedCallbacks ?? [])];
   }
 
@@ -37,15 +45,19 @@ export class NgffImage {
       ? JSON.stringify(this.axesUnits)
       : "None";
 
+    const axesOrientationsStr = this.axesOrientations
+      ? JSON.stringify(this.axesOrientations)
+      : "None";
+
     // Create array string representation using zarr.Array properties
     const path = this.data.path || this.name;
     const chunks = this.data.chunks.join(", ");
 
-    const arrayStr = `Array(name=${path}, shape=(${
-      this.data.shape.join(
-        ", ",
-      )
-    }), dtype=${this.data.dtype}, chunksize=(${chunks}), chunktype=TypedArray)`;
+    const arrayStr = `Array(name=${path}, shape=(${this.data.shape.join(
+      ", "
+    )}), dtype=${
+      this.data.dtype
+    }, chunksize=(${chunks}), chunktype=TypedArray)`;
 
     return `NgffImage(
     data=${arrayStr},
@@ -54,6 +66,7 @@ export class NgffImage {
     translation=${JSON.stringify(this.translation)},
     name='${this.name}',
     axes_units=${axesUnitsStr},
+    axes_orientations=${axesOrientationsStr},
     computed_callbacks=[${this.computedCallbacks.length} callbacks]
 )`;
   }
