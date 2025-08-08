@@ -1,10 +1,10 @@
-import { assertEquals, assert } from "@std/assert";
+import { assert, assertEquals } from "@std/assert";
 import {
-  IntTypes,
   FloatTypes,
-  PixelTypes,
   Image as ITKImage,
   ImageType as ITKImageType,
+  IntTypes,
+  PixelTypes,
 } from "itk-wasm";
 import { ngffImageToItkImage } from "../src/io/ngff_image_to_itk_image.ts";
 import { itkImageToNgffImage } from "../src/io/itk_image_to_ngff_image.ts";
@@ -168,18 +168,18 @@ Deno.test(
       assertEquals(
         reconvertedItkImage.imageType.componentType,
         componentType,
-        `Failed for component type: ${componentType}`
+        `Failed for component type: ${componentType}`,
       );
       assert(
         reconvertedItkImage.data,
-        `Data should not be null for ${componentType}`
+        `Data should not be null for ${componentType}`,
       );
       assert(
         reconvertedItkImage.data instanceof arrayType,
-        `Expected ${arrayType.name} for ${componentType}, got ${reconvertedItkImage.data.constructor.name}`
+        `Expected ${arrayType.name} for ${componentType}, got ${reconvertedItkImage.data.constructor.name}`,
       );
     }
-  }
+  },
 );
 
 Deno.test("ngffImageToItkImage round-trip conversion", async () => {
@@ -219,26 +219,26 @@ Deno.test("ngffImageToItkImage round-trip conversion", async () => {
   // Verify properties are preserved
   assertEquals(
     reconvertedItkImage.imageType.dimension,
-    originalImageType.dimension
+    originalImageType.dimension,
   );
   assertEquals(
     reconvertedItkImage.imageType.componentType,
-    originalImageType.componentType
+    originalImageType.componentType,
   );
   assertEquals(
     reconvertedItkImage.imageType.pixelType,
-    originalImageType.pixelType
+    originalImageType.pixelType,
   );
   assertEquals(
     reconvertedItkImage.imageType.components,
-    originalImageType.components
+    originalImageType.components,
   );
 
   // Note: ITK->NGFF->ITK may reorder dimensions - check that spatial info is preserved
   // The actual order depends on how itkImageToNgffImage maps dimensions
   assertEquals(
     reconvertedItkImage.size.reduce((a, b) => a * b, 1),
-    originalSize.reduce((a, b) => a * b, 1)
+    originalSize.reduce((a, b) => a * b, 1),
   );
 
   // Check spacing and origin arrays have same values (may be reordered)
@@ -264,7 +264,7 @@ Deno.test("ngffImageToItkImage round-trip conversion", async () => {
     const diff = Math.abs(reconvertedValue - originalValue);
     assert(
       diff < 1e-6,
-      `Data mismatch at index ${i}: ${reconvertedValue} != ${originalValue}`
+      `Data mismatch at index ${i}: ${reconvertedValue} != ${originalValue}`,
     );
   }
 });
@@ -310,7 +310,7 @@ Deno.test("ngffImageToItkImage 2D round-trip conversion", async () => {
   // Check that total data size is preserved
   assertEquals(
     reconvertedItkImage.size.reduce((a, b) => a * b, 1),
-    originalSize.reduce((a, b) => a * b, 1)
+    originalSize.reduce((a, b) => a * b, 1),
   );
 
   // Check spacing and origin values are preserved (may be reordered)
@@ -329,7 +329,7 @@ Deno.test("ngffImageToItkImage 2D round-trip conversion", async () => {
     assertEquals(
       reconvertedItkImage.data[i],
       originalData[i],
-      `Data mismatch at index ${i}`
+      `Data mismatch at index ${i}`,
     );
   }
 });

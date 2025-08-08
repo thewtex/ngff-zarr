@@ -27,11 +27,11 @@ Deno.test("RFC-4 types compile", async () => {
   assertEquals(itkLpsToAnatomicalOrientation("x")?.value, "right-to-left");
   assertEquals(
     itkLpsToAnatomicalOrientation("y")?.value,
-    "anterior-to-posterior"
+    "anterior-to-posterior",
   );
   assertEquals(
     itkLpsToAnatomicalOrientation("z")?.value,
-    "inferior-to-superior"
+    "inferior-to-superior",
   );
   assertEquals(itkLpsToAnatomicalOrientation("t"), undefined);
 });

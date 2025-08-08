@@ -41,9 +41,11 @@ Deno.test("ITK-Wasm data writing test", async () => {
   // Verify anatomical orientations
   if (ngffImage.axesOrientations) {
     console.log("✅ Orientations present:");
-    for (const [axis, orientation] of Object.entries(
-      ngffImage.axesOrientations
-    )) {
+    for (
+      const [axis, orientation] of Object.entries(
+        ngffImage.axesOrientations,
+      )
+    ) {
       console.log(`   ${axis}: ${orientation.value}`);
     }
   }
@@ -69,7 +71,7 @@ Deno.test("ITK-Wasm data writing test", async () => {
   } catch (error) {
     console.log(
       "❌ Error reading data back:",
-      error instanceof Error ? error.message : String(error)
+      error instanceof Error ? error.message : String(error),
     );
   }
 });
@@ -79,9 +81,9 @@ Deno.test("Test anatomical orientation constants", () => {
   console.log(`   LeftToRight: ${AnatomicalOrientationValues.LeftToRight}`);
   console.log(`   RightToLeft: ${AnatomicalOrientationValues.RightToLeft}`);
   console.log(
-    `   AnteriorToPosterior: ${AnatomicalOrientationValues.AnteriorToPosterior}`
+    `   AnteriorToPosterior: ${AnatomicalOrientationValues.AnteriorToPosterior}`,
   );
   console.log(
-    `   PosteriorToAnterior: ${AnatomicalOrientationValues.PosteriorToAnterior}`
+    `   PosteriorToAnterior: ${AnatomicalOrientationValues.PosteriorToAnterior}`,
   );
 });

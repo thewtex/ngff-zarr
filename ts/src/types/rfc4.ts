@@ -62,7 +62,7 @@ export interface AnatomicalOrientation {
  * Create an anatomical orientation object.
  */
 export function createAnatomicalOrientation(
-  value: AnatomicalOrientationValues
+  value: AnatomicalOrientationValues,
 ): AnatomicalOrientation {
   return {
     type: "anatomical",
@@ -81,10 +81,10 @@ export function createAnatomicalOrientation(
 export const LPS: Record<string, AnatomicalOrientation> = {
   x: createAnatomicalOrientation(AnatomicalOrientationValues.RightToLeft),
   y: createAnatomicalOrientation(
-    AnatomicalOrientationValues.AnteriorToPosterior
+    AnatomicalOrientationValues.AnteriorToPosterior,
   ),
   z: createAnatomicalOrientation(
-    AnatomicalOrientationValues.InferiorToSuperior
+    AnatomicalOrientationValues.InferiorToSuperior,
   ),
 };
 
@@ -99,10 +99,10 @@ export const LPS: Record<string, AnatomicalOrientation> = {
 export const RAS: Record<string, AnatomicalOrientation> = {
   x: createAnatomicalOrientation(AnatomicalOrientationValues.LeftToRight),
   y: createAnatomicalOrientation(
-    AnatomicalOrientationValues.PosteriorToAnterior
+    AnatomicalOrientationValues.PosteriorToAnterior,
   ),
   z: createAnatomicalOrientation(
-    AnatomicalOrientationValues.InferiorToSuperior
+    AnatomicalOrientationValues.InferiorToSuperior,
   ),
 };
 
@@ -119,7 +119,7 @@ export const RAS: Record<string, AnatomicalOrientation> = {
  * @returns The corresponding anatomical orientation, or undefined for non-spatial axes
  */
 export function itkLpsToAnatomicalOrientation(
-  axisName: string
+  axisName: string,
 ): AnatomicalOrientation | undefined {
   return LPS[axisName];
 }
@@ -140,7 +140,7 @@ export function isRfc4Enabled(enabledRfcs?: number[]): boolean {
  */
 export function addAnatomicalOrientationToAxis(
   axisDict: Record<string, unknown>,
-  orientation: AnatomicalOrientation
+  orientation: AnatomicalOrientation,
 ): Record<string, unknown> {
   return {
     ...axisDict,
@@ -158,7 +158,7 @@ export function addAnatomicalOrientationToAxis(
  * @returns The modified axis object
  */
 export function removeAnatomicalOrientationFromAxis(
-  axisDict: Record<string, unknown>
+  axisDict: Record<string, unknown>,
 ): Record<string, unknown> {
   const { orientation: _orientation, ...rest } = axisDict;
   return rest;

@@ -3,10 +3,10 @@
  */
 
 import type {
+  FloatTypes,
   Image,
   ImageType,
   IntTypes,
-  FloatTypes,
   PixelTypes,
   TypedArray,
 } from "itk-wasm";
@@ -31,7 +31,7 @@ export interface NgffImageToItkImageOptions {
  * Convert the data type from zarr DataType to ITK-Wasm component type
  */
 function dataTypeToComponentType(
-  dataType: zarr.DataType
+  dataType: zarr.DataType,
 ):
   | (typeof IntTypes)[keyof typeof IntTypes]
   | (typeof FloatTypes)[keyof typeof FloatTypes] {
@@ -108,7 +108,7 @@ function moveChannelDimToLast(ngffImage: NgffImage): NgffImage {
  */
 export async function ngffImageToItkImage(
   ngffImage: NgffImage,
-  options: NgffImageToItkImageOptions = {}
+  options: NgffImageToItkImageOptions = {},
 ): Promise<Image> {
   const { tIndex, cIndex } = options;
 
@@ -119,10 +119,10 @@ export async function ngffImageToItkImage(
     const tDimIndex = workingImage.dims.indexOf("t");
     const newDims = workingImage.dims.filter((dim) => dim !== "t");
     const newScale = Object.fromEntries(
-      Object.entries(workingImage.scale).filter(([dim]) => dim !== "t")
+      Object.entries(workingImage.scale).filter(([dim]) => dim !== "t"),
     );
     const newTranslation = Object.fromEntries(
-      Object.entries(workingImage.translation).filter(([dim]) => dim !== "t")
+      Object.entries(workingImage.translation).filter(([dim]) => dim !== "t"),
     );
 
     // Extract the time slice from zarr array
@@ -156,17 +156,17 @@ export async function ngffImageToItkImage(
       name: workingImage.name,
       axesUnits: workingImage.axesUnits
         ? Object.fromEntries(
-            Object.entries(workingImage.axesUnits).filter(
-              ([dim]) => dim !== "t"
-            )
-          )
+          Object.entries(workingImage.axesUnits).filter(
+            ([dim]) => dim !== "t",
+          ),
+        )
         : undefined,
       axesOrientations: workingImage.axesOrientations
         ? Object.fromEntries(
-            Object.entries(workingImage.axesOrientations).filter(
-              ([dim]) => dim !== "t"
-            )
-          )
+          Object.entries(workingImage.axesOrientations).filter(
+            ([dim]) => dim !== "t",
+          ),
+        )
         : undefined,
       computedCallbacks: workingImage.computedCallbacks,
     });
@@ -177,10 +177,10 @@ export async function ngffImageToItkImage(
     const cDimIndex = workingImage.dims.indexOf("c");
     const newDims = workingImage.dims.filter((dim) => dim !== "c");
     const newScale = Object.fromEntries(
-      Object.entries(workingImage.scale).filter(([dim]) => dim !== "c")
+      Object.entries(workingImage.scale).filter(([dim]) => dim !== "c"),
     );
     const newTranslation = Object.fromEntries(
-      Object.entries(workingImage.translation).filter(([dim]) => dim !== "c")
+      Object.entries(workingImage.translation).filter(([dim]) => dim !== "c"),
     );
 
     // Extract the channel slice from zarr array
@@ -214,17 +214,17 @@ export async function ngffImageToItkImage(
       name: workingImage.name,
       axesUnits: workingImage.axesUnits
         ? Object.fromEntries(
-            Object.entries(workingImage.axesUnits).filter(
-              ([dim]) => dim !== "c"
-            )
-          )
+          Object.entries(workingImage.axesUnits).filter(
+            ([dim]) => dim !== "c",
+          ),
+        )
         : undefined,
       axesOrientations: workingImage.axesOrientations
         ? Object.fromEntries(
-            Object.entries(workingImage.axesOrientations).filter(
-              ([dim]) => dim !== "c"
-            )
-          )
+          Object.entries(workingImage.axesOrientations).filter(
+            ([dim]) => dim !== "c",
+          ),
+        )
         : undefined,
       computedCallbacks: workingImage.computedCallbacks,
     });
@@ -249,7 +249,7 @@ export async function ngffImageToItkImage(
   // Create ITK spacing, origin, and size arrays
   const spacing = sortedItkDims.map((dim) => workingImage.scale[dim] || 1.0);
   const origin = sortedItkDims.map(
-    (dim) => workingImage.translation[dim] || 0.0
+    (dim) => workingImage.translation[dim] || 0.0,
   );
   const size = sortedItkDims.map((dim) => data.shape[dims.indexOf(dim)]);
   const dimension = sortedItkDims.length;
