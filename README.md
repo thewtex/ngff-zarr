@@ -41,7 +41,7 @@ The main Python package provides:
 - Optional OME-Zarr data model validation during reading
 - Writes OME-Zarr v0.4 to v0.5
 - [Sharded Zarr] stores
-- Optional writing via [tensorstore]
+- Optional writing via zarr-python 2, zarr-python 3, [tensorstore] or zarrita (TypeScript)
 - [Anatomical orientation metadata](./docs/rfc4.md) (RFC-4)
 - **High Content Screening (HCS) support** for plate and well data
 - **Model Context Protocol (MCP) server** for AI agent integration
