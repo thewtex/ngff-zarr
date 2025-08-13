@@ -72,7 +72,8 @@ async function walkFileSystemStore(
 
     for (const entry of entries) {
       const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
-      const key = `/${relativePath}`;
+      const normalizedRelativePath = relativePath.replace(/\\/g, "/");
+      const key = `/${normalizedRelativePath}`;
 
       if (entry.isFile()) {
         keys.add(key);
