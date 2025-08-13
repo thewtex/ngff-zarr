@@ -9,7 +9,14 @@ import { assert } from "@std/assert";
  */
 export function getTestDataDir(): string {
   const testDir = new URL("../../py/test/data", import.meta.url);
-  return testDir.pathname.replace(/^\/([A-Za-z]:)/, "$1"); // Fix Windows paths
+import { fromFileUrl } from "@std/path";
+
+/**
+ * Get the test data directory path
+ */
+export function getTestDataDir(): string {
+  const testDir = new URL("../../py/test/data", import.meta.url);
+  return fromFileUrl(testDir);
 }
 
 /**
