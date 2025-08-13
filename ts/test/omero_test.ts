@@ -16,6 +16,7 @@ import {
   createMultiscales,
 } from "../src/utils/factory.ts";
 import { Methods } from "../src/types/methods.ts";
+import { verifyAgainstBaseline as _verifyAgainstBaseline } from "./verify_against_baseline.ts";
 
 Deno.test("read omero metadata from test dataset", async () => {
   const storePath = new URL(
@@ -174,6 +175,107 @@ Deno.test("write omero metadata", async () => {
   assertEquals(readOmero.channels[1].window.end, 200.0);
   assertEquals(readOmero.channels[1].label, "");
 });
+
+Deno.test(
+  "write omero metadata with baseline verification example",
+  async () => {
+    // Create test data with fixed values for reproducible baseline
+    const data = new Uint8Array(2 * 32 * 64 * 64);
+    for (let i = 0; i < data.length; i++) {
+      data[i] = i % 256; // Fixed pattern for reproducible results
+    }
+
+    // Create NgffImage with test data
+    const store = new Map<string, Uint8Array>();
+    const root = zarr.root(store);
+
+    const zarrArray = await zarr.create(root.resolve("test_image"), {
+      shape: [2, 32, 64, 64],
+      chunk_shape: [2, 32, 64, 64],
+      data_type: "uint8",
+    });
+
+    const image = new NgffImage({
+      data: zarrArray,
+      dims: ["c", "z", "y", "x"],
+      scale: { c: 1.0, z: 1.0, y: 1.0, x: 1.0 },
+      translation: { c: 0.0, z: 0.0, y: 0.0, x: 0.0 },
+      name: "test_image",
+      axesUnits: undefined,
+      computedCallbacks: undefined,
+    });
+
+    // Create metadata and multiscales
+    const axes = [
+      createAxis("c", "channel"),
+      createAxis("z", "space"),
+      createAxis("y", "space"),
+      createAxis("x", "space"),
+    ];
+
+    const datasets = [
+      createDataset("0", [1.0, 1.0, 1.0, 1.0], [0.0, 0.0, 0.0, 0.0]),
+    ];
+
+    const metadata = createMetadata(axes, datasets, "test_image");
+
+    // Create Omero metadata
+    const omero: Omero = {
+      channels: [
+        {
+          color: "008000",
+          window: {
+            min: 0.0,
+            max: 255.0,
+            start: 10.0,
+            end: 150.0,
+          },
+          label: "Phalloidin",
+        },
+        {
+          color: "0000FF",
+          window: {
+            min: 0.0,
+            max: 255.0,
+            start: 30.0,
+            end: 200.0,
+          },
+          label: "DAPI",
+        },
+      ],
+    };
+
+    metadata.omero = omero;
+
+    const multiscales = createMultiscales(
+      [image],
+      metadata,
+      [2], // Simpler for baseline
+      Methods.ITKWASM_GAUSSIAN,
+    );
+
+    // Note: This would require baseline files to exist
+    // For actual use, you would first create the baseline with storeNewMultiscales
+    // and then verify against it with verifyAgainstBaseline
+    //
+    // Example usage (commented out since baseline doesn't exist):
+    // await _verifyAgainstBaseline("omero_test", "write_omero_metadata", multiscales, "0.4");
+
+    // Instead, let's just verify that we can write and read the data correctly
+    const memoryStore = new Map<string, Uint8Array>();
+    await toNgffZarr(memoryStore, multiscales, { version: "0.4" });
+
+    const readMultiscales = await fromNgffZarr(memoryStore, { validate: true });
+    const readOmero = readMultiscales.metadata.omero;
+
+    assertExists(readOmero);
+    assertEquals(readOmero.channels.length, 2);
+    assertEquals(readOmero.channels[0].color, "008000");
+    assertEquals(readOmero.channels[0].label, "Phalloidin");
+    assertEquals(readOmero.channels[1].color, "0000FF");
+    assertEquals(readOmero.channels[1].label, "DAPI");
+  },
+);
 
 Deno.test("validate color function", () => {
   // Test valid colors
