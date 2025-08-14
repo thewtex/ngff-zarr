@@ -39,6 +39,7 @@
     "npm:@playwright/test@^1.54.1": "1.54.1",
     "npm:@types/node@*": "22.15.15",
     "npm:itk-wasm@^1.0.0-b.195": "1.0.0-b.195",
+    "npm:microdiff@^1.4.0": "1.5.0",
     "npm:numcodecs@~0.3.2": "0.3.2",
     "npm:p-queue@^8.1.0": "8.1.0",
     "npm:reference-spec-reader@0.2": "0.2.0",
@@ -907,6 +908,9 @@
     "math-intrinsics@1.1.0": {
       "integrity": "sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g=="
     },
+    "microdiff@1.5.0": {
+      "integrity": "sha512-Drq+/THMvDdzRYrK0oxJmOKiC24ayUV8ahrt8l3oRK51PWt6gdtrIGrlIH3pT/lFh1z93FbAcidtsHcWbnRz8Q=="
+    },
     "mime-db@1.52.0": {
       "integrity": "sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg=="
     },
@@ -1288,6 +1292,7 @@
       "jsr:@zarrita/zarrita@~0.5.2",
       "npm:@playwright/test@^1.54.1",
       "npm:itk-wasm@^1.0.0-b.195",
+      "npm:microdiff@^1.4.0",
       "npm:p-queue@^8.1.0",
       "npm:zod@^4.0.2"
     ]

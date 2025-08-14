@@ -4,6 +4,7 @@ import { toNgffZarr } from "../src/io/to_ngff_zarr.ts";
 import type { Multiscales } from "../src/types/multiscales.ts";
 import { assert } from "@std/assert";
 import { fromFileUrl } from "@std/path";
+import diff from "microdiff";
 
 /**
  * Get the test data directory path
@@ -177,9 +178,11 @@ export async function storeEquals(
         const baselineJson = JSON.parse(new TextDecoder().decode(baselineData));
         const testJson = JSON.parse(new TextDecoder().decode(testData));
 
-        // Deep compare JSON objects (simplified - could use a proper deep diff library)
-        if (!deepEquals(baselineJson, testJson)) {
+        // Use microdiff to compare JSON objects with detailed diff output
+        const differences = diff(baselineJson, testJson);
+        if (differences.length > 0) {
           console.error(`Metadata in ${key} files do not match`);
+          console.error(`Differences:`, differences);
           console.error(`Baseline:`, baselineJson);
           console.error(`Test:`, testJson);
           return false;
@@ -230,42 +233,6 @@ function arraysEqual(a?: Uint8Array, b?: Uint8Array): boolean {
   for (let i = 0; i < a.length; i++) {
     if (a[i] !== b[i]) return false;
   }
-  return true;
-}
-
-/**
- * Deep equality check for objects (simplified implementation)
- */
-function deepEquals(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-
-  if (a === null || b === null) return a === b;
-  if (typeof a !== typeof b) return false;
-  if (typeof a !== "object") return a === b;
-
-  if (Array.isArray(a) !== Array.isArray(b)) return false;
-
-  if (Array.isArray(a)) {
-    const arrayB = b as unknown[];
-    if (a.length !== arrayB.length) return false;
-    for (let i = 0; i < a.length; i++) {
-      if (!deepEquals(a[i], arrayB[i])) return false;
-    }
-    return true;
-  }
-
-  const objA = a as Record<string, unknown>;
-  const objB = b as Record<string, unknown>;
-  const keysA = Object.keys(objA);
-  const keysB = Object.keys(objB);
-
-  if (keysA.length !== keysB.length) return false;
-
-  for (const key of keysA) {
-    if (!keysB.includes(key)) return false;
-    if (!deepEquals(objA[key], objB[key])) return false;
-  }
-
   return true;
 }
 
