@@ -3,12 +3,6 @@ import * as zarr from "zarrita";
 import { toNgffZarr } from "../src/io/to_ngff_zarr.ts";
 import type { Multiscales } from "../src/types/multiscales.ts";
 import { assert } from "@std/assert";
-
-/**
- * Get the test data directory path
- */
-export function getTestDataDir(): string {
-  const testDir = new URL("../../py/test/data", import.meta.url);
 import { fromFileUrl } from "@std/path";
 
 /**
