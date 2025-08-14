@@ -7,6 +7,7 @@ import type { Units } from "../types/units.ts";
 
 export interface FromNgffZarrOptions {
   validate?: boolean;
+  version?: "0.4" | "0.5";
 }
 
 export type MemoryStore = Map<string, Uint8Array>;
@@ -17,6 +18,7 @@ export async function fromNgffZarr(
   options: FromNgffZarrOptions = {},
 ): Promise<Multiscales> {
   const validate = options.validate ?? false;
+  const version = options.version;
 
   try {
     // Determine the appropriate store type based on the path
@@ -85,6 +87,18 @@ export async function fromNgffZarr(
       const result = MetadataSchema.safeParse(multiscalesMetadata);
       if (!result.success) {
         throw new Error(`Invalid OME-Zarr metadata: ${result.error.message}`);
+      }
+
+      // Check version compatibility if specified
+      if (version) {
+        const metadataWithVersion = multiscalesMetadata as { version?: string };
+        if (metadataWithVersion.version !== version) {
+          throw new Error(
+            `Expected OME-Zarr version ${version}, but found ${
+              metadataWithVersion.version || "unknown"
+            }`,
+          );
+        }
       }
     }
 
