@@ -35,3 +35,12 @@
 - Use Deno's standard style (80 char line width, 2 space indent, semicolons)
 - Strict TypeScript compiler options enabled
 - Use JSR imports (@std/assert) and npm: prefix for npm packages
+
+## Important Notes from Copilot Instructions
+
+- For debugging Python issues, use `pixi run -e test python debug_script.py` (not `pixi run python ...`)
+- Core workflow: Input → NgffImage → Multiscales → OME-Zarr via `to_multiscales()` and `to_ngff_zarr()`
+- Multi-language project: py/ (core), mcp/ (MCP server), ts/ (TypeScript/Deno)
+- Memory management via `config.memory_target` (default: 50% available memory)
+- Import patterns: `from .__about__ import __version__` and function-based exports
+- Test with pooch fixtures and parametrized tests for shape/chunk combinations
