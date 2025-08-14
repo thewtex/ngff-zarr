@@ -16,7 +16,6 @@ import {
   createMultiscales,
 } from "../src/utils/factory.ts";
 import { Methods } from "../src/types/methods.ts";
-import { verifyAgainstBaseline as _verifyAgainstBaseline } from "./verify_against_baseline.ts";
 
 Deno.test("read omero metadata from test dataset", async () => {
   const storePath = new URL(
@@ -254,14 +253,7 @@ Deno.test(
       Methods.ITKWASM_GAUSSIAN,
     );
 
-    // Note: This would require baseline files to exist
-    // For actual use, you would first create the baseline with storeNewMultiscales
-    // and then verify against it with verifyAgainstBaseline
-    //
-    // Example usage (commented out since baseline doesn't exist):
-    // await _verifyAgainstBaseline("omero_test", "write_omero_metadata", multiscales, "0.4");
-
-    // Instead, let's just verify that we can write and read the data correctly
+    // Verify that we can write and read the data correctly
     const memoryStore = new Map<string, Uint8Array>();
     await toNgffZarr(memoryStore, multiscales, { version: "0.4" });
 
