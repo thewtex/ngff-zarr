@@ -21,6 +21,9 @@ export const AxesTypeSchema: z.ZodTypeAny = z.enum([
   "time",
   "space",
   "channel",
+  "array",
+  "coordinate", 
+  "displacement",
 ]);
 
 export const SpaceUnitsSchema: z.ZodTypeAny = z.enum([
