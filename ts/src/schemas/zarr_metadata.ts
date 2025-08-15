@@ -1,16 +1,18 @@
 import { z } from "zod";
 import { AxesTypeSchema, SupportedDimsSchema, UnitsSchema } from "./units.ts";
+import { AnatomicalOrientationSchema } from "./rfc4.ts";
+import { CoordinateTransformationSchema } from "./coordinate_systems.ts";
 
-export const AxisSchema: z.ZodObject<{
-  name: typeof SupportedDimsSchema;
-  type: typeof AxesTypeSchema;
-  unit: z.ZodOptional<typeof UnitsSchema>;
-}> = z.object({
+// Enhanced Axis schema that supports RFC4 orientation
+export const AxisSchema = z.object({
   name: SupportedDimsSchema,
   type: AxesTypeSchema,
   unit: UnitsSchema.optional(),
+  // RFC4: Optional orientation for space axes
+  orientation: AnatomicalOrientationSchema.optional(),
 });
 
+// Legacy schemas for backward compatibility
 export const IdentitySchema: z.ZodObject<{
   type: z.ZodLiteral<"identity">;
 }> = z.object({
@@ -33,9 +35,13 @@ export const TranslationSchema: z.ZodObject<{
   type: z.literal("translation"),
 });
 
-export const TransformSchema: z.ZodUnion<
-  [typeof ScaleSchema, typeof TranslationSchema]
-> = z.union([ScaleSchema, TranslationSchema]);
+// Enhanced transform schema that includes all RFC5 transformations
+export const TransformSchema = z.union([
+  ScaleSchema,
+  TranslationSchema,
+  IdentitySchema,
+  CoordinateTransformationSchema,
+]);
 
 export const DatasetSchema: z.ZodObject<{
   path: z.ZodString;
