@@ -25,7 +25,7 @@ export const AnatomicalOrientationValuesSchema = z.enum([
 // AnatomicalOrientation object schema
 export const AnatomicalOrientationSchema = z.object({
   type: z.literal("anatomical"),
-  value: z.string(),
+  value: AnatomicalOrientationValuesSchema,
 });
 
 // Base Orientation schema (extensible for future orientation types)
