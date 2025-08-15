@@ -106,7 +106,44 @@ export async function fromNgffZarr(
 
     // Extract omero metadata from root attributes if present
     if ((attrs as Record<string, unknown>).omero) {
-      metadata.omero = (attrs as Record<string, unknown>).omero as Omero;
+      const omeroData = (attrs as Record<string, unknown>).omero as Record<
+        string,
+        unknown
+      >;
+
+      // Handle backward compatibility for OMERO window metadata
+      if (omeroData.channels && Array.isArray(omeroData.channels)) {
+        for (
+          const channel of omeroData.channels as Array<
+            Record<string, unknown>
+          >
+        ) {
+          if (channel.window && typeof channel.window === "object") {
+            const window = channel.window as Record<string, number | undefined>;
+
+            // Ensure both min/max and start/end are present for compatibility
+            if (window.min !== undefined && window.max !== undefined) {
+              // If only min/max present, use them for start/end
+              if (window.start === undefined) {
+                window.start = window.min;
+              }
+              if (window.end === undefined) {
+                window.end = window.max;
+              }
+            } else if (window.start !== undefined && window.end !== undefined) {
+              // If only start/end present, use them for min/max
+              if (window.min === undefined) {
+                window.min = window.start;
+              }
+              if (window.max === undefined) {
+                window.max = window.end;
+              }
+            }
+          }
+        }
+      }
+
+      metadata.omero = omeroData as unknown as Omero;
     }
 
     const images: NgffImage[] = [];
