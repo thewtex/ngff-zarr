@@ -5,6 +5,7 @@ export * from "./types/zarr_metadata.ts";
 export * from "./types/ngff_image.ts";
 export * from "./types/multiscales.ts";
 export * from "./types/rfc4.ts";
+export * from "./types/hcs.ts";
 
 export * from "./schemas/units.ts";
 export * from "./schemas/methods.ts";
@@ -30,3 +31,4 @@ export * from "./io/to_ngff_zarr.ts";
 export type { MemoryStore } from "./io/from_ngff_zarr.ts";
 export * from "./io/itk_image_to_ngff_image.ts";
 export * from "./io/ngff_image_to_itk_image.ts";
+export * from "./io/hcs.ts";
