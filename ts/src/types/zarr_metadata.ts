@@ -28,20 +28,22 @@ export interface Dataset {
 }
 
 export interface OmeroWindow {
-  min: number;
-  max: number;
-  start: number;
-  end: number;
+  min?: number;
+  max?: number;
+  start?: number;
+  end?: number;
 }
 
 export interface OmeroChannel {
   color: string;
   window: OmeroWindow;
-  label: string | undefined;
+  label?: string;
+  active?: boolean;
 }
 
 export interface Omero {
   channels: OmeroChannel[];
+  version?: string;
 }
 
 export interface Metadata {
@@ -55,9 +57,7 @@ export interface Metadata {
 
 export function validateColor(color: string): void {
   if (!/^[0-9A-Fa-f]{6}$/.test(color)) {
-    throw new Error(
-      `Invalid color '${color}'. Must be 6 hex digits.`,
-    );
+    throw new Error(`Invalid color '${color}'. Must be 6 hex digits.`);
   }
 }
 
