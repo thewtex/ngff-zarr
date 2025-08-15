@@ -22,7 +22,7 @@ export const AxesTypeSchema: z.ZodTypeAny = z.enum([
   "space",
   "channel",
   "array",
-  "coordinate", 
+  "coordinate",
   "displacement",
 ]);
 

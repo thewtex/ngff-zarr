@@ -1,13 +1,13 @@
 import { assertEquals, assertExists } from "@std/assert";
 import {
-  OmeZarrVersionSchema,
   ImageSchemaV01,
   ImageSchemaV05,
-  PlateSchemaV05,
-  WellSchemaV05,
   LabelSchemaV04,
   OmeMetadataSchema,
   OmeZarrMetadataSchema,
+  OmeZarrVersionSchema,
+  PlateSchemaV05,
+  WellSchemaV05,
 } from "../../src/schemas/ome_zarr.ts";
 
 Deno.test("OME-Zarr Version Schema", () => {
@@ -443,10 +443,10 @@ Deno.test(
         true,
         `${testCase.name} should be valid: ${
           result.success ? "" : result.error?.message
-        }`
+        }`,
       );
     }
-  }
+  },
 );
 
 Deno.test("Error Handling - provides meaningful error messages", () => {

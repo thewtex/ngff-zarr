@@ -1,23 +1,21 @@
 import { assertEquals, assertThrows } from "@std/assert";
 import {
+  AffineTransformationSchema,
+  AnatomicalOrientationSchema,
   // RFC4 schemas
   AnatomicalOrientationValuesSchema,
-  AnatomicalOrientationSchema,
-  SpaceAxisSchema,
-  TimeAxisSchema,
-  ChannelAxisSchema,
-
-  // RFC5 coordinate systems
-  CoordinateSystemSchema,
-  ScaleTransformationSchema,
-  TranslationTransformationSchema,
-  AffineTransformationSchema,
-  CoordinateTransformationSchema,
-  SequenceTransformationSchema,
-
   // Enhanced zarr metadata with RFC4 support
   AxisSchema,
+  ChannelAxisSchema,
+  // RFC5 coordinate systems
+  CoordinateSystemSchema,
+  CoordinateTransformationSchema,
   MetadataSchema,
+  ScaleTransformationSchema,
+  SequenceTransformationSchema,
+  SpaceAxisSchema,
+  TimeAxisSchema,
+  TranslationTransformationSchema,
 } from "../src/schemas/index.ts";
 
 // RFC4 Tests

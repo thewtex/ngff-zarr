@@ -2,7 +2,13 @@ export type SupportedDims = "c" | "x" | "y" | "z" | "t";
 
 export type SpatialDims = "x" | "y" | "z";
 
-export type AxesType = "time" | "space" | "channel" | "array" | "coordinate" | "displacement";
+export type AxesType =
+  | "time"
+  | "space"
+  | "channel"
+  | "array"
+  | "coordinate"
+  | "displacement";
 
 export type SpaceUnits =
   | "angstrom"

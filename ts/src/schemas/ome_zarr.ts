@@ -104,13 +104,13 @@ export const MultiscalesSchemaV05 = z.object({
     .refine(
       (axes) => {
         const spaceAxes = axes.filter(
-          (axis) => typeof axis.type === "string" && axis.type === "space"
+          (axis) => typeof axis.type === "string" && axis.type === "space",
         );
         return spaceAxes.length >= 2 && spaceAxes.length <= 3;
       },
       {
         message: "Must contain 2-3 space axes",
-      }
+      },
     ),
   coordinateTransformations: z
     .array(OmeZarrCoordinateTransformationSchema)

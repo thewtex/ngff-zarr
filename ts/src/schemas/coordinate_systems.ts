@@ -150,7 +150,7 @@ export const ArrayCoordinateSystemSchema = z.object({
     z.object({
       name: z.string(),
       type: z.literal("array"),
-    })
+    }),
   ),
 });
 

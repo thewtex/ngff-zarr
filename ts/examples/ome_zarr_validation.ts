@@ -3,11 +3,11 @@
  */
 
 import {
-  OmeZarrVersionSchema,
   ImageSchemaV01,
   ImageSchemaV05,
-  PlateSchemaV05,
   OmeZarrMetadataSchema,
+  OmeZarrVersionSchema,
+  PlateSchemaV05,
 } from "../src/schemas/ome_zarr.ts";
 
 // Example 1: Version validation

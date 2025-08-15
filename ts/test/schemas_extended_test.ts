@@ -1,19 +1,17 @@
 import {
+  AffineTransformationSchema,
   // RFC4 schemas
   AnatomicalOrientationSchema,
-  SpaceAxisSchema,
-  TimeAxisSchema,
   ChannelAxisSchema,
-
   // Coordinate systems (RFC5)
   CoordinateSystemSchema,
   CoordinateTransformationSchema,
-  ScaleTransformationSchema,
-  TranslationTransformationSchema,
-  AffineTransformationSchema,
-
   // Zarr metadata
   MetadataSchema,
+  ScaleTransformationSchema,
+  SpaceAxisSchema,
+  TimeAxisSchema,
+  TranslationTransformationSchema,
 } from "../src/schemas/index.ts";
 
 // Test data examples based on NGFF specifications
