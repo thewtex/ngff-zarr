@@ -44,19 +44,23 @@ zarr_version_major = zarr_version.major
 
 
 def _pop_metadata_optionals(metadata_dict, enabled_rfcs: Optional[List[int]] = None):
-    for ax in metadata_dict["axes"]:
-        if ax["unit"] is None:
-            ax.pop("unit")
 
-        # Handle RFC 4: Remove orientation if RFC 4 is not enabled
-        if not is_rfc4_enabled(enabled_rfcs) and "orientation" in ax:
-            ax.pop("orientation")
+    if "axes" in metadata_dict:
+        for ax in metadata_dict["axes"]:
+            if ax["unit"] is None:
+                ax.pop("unit")
 
-    if metadata_dict["coordinateTransformations"] is None:
-        metadata_dict.pop("coordinateTransformations")
+            # Handle RFC 4: Remove orientation if RFC 4 is not enabled
+            if not is_rfc4_enabled(enabled_rfcs) and "orientation" in ax:
+                ax.pop("orientation")
 
-    if metadata_dict["omero"] is None:
-        metadata_dict.pop("omero")
+    if "coordinateTransformations" in metadata_dict:
+        if metadata_dict["coordinateTransformations"] is None:
+            metadata_dict.pop("coordinateTransformations")
+
+    if "omero" in metadata_dict:
+        if metadata_dict["omero"] is None:
+            metadata_dict.pop("omero")
 
     return metadata_dict
 
