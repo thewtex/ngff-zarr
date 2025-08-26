@@ -60,7 +60,7 @@ class Dataset:
 
 @dataclass
 class Metadata:
-    coordinateSystems: Union[NgffCoordinateSystem, List[NgffCoordinateSystem]]
+    coordinate_systems: Union[CoordinateSystem, List[CoordinateSystem]]
     datasets: List[Dataset]
     omero: Optional[Omero] = None
     name: str = "image"
@@ -69,9 +69,9 @@ class Metadata:
 
     @property
     def axes(self) -> List:
-        cs = self.coordinateSystems
-        if isinstance(cs, list):
-            if len(cs) == 1:
-                return [cs[0].get_axis(d) for d in cs[0].axes_names]
-            return {_cs.name: [cs.get_axis(d) for d in _cs.axes_names] for _cs in cs}
-        return [cs.get_axis(d) for d in cs.axes_names]
+
+        if isinstance(self.coordinate_systems, list):
+            if len(self.coordinate_systems) == 1:
+                return self.coordinate_systems[0].axes
+            return {cs.name: cs.axes for cs in self.coordinate_systems}
+        return self.coordinate_systems.axes
