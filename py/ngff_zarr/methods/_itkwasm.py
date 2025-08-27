@@ -18,6 +18,8 @@ from ._support import (
     _next_block_shape,
 )
 
+from ..v06.zarr_metadata import TransformSequence, Scale, Translation
+
 _image_dims: Tuple[str, str, str, str] = ("x", "y", "z", "t")
 
 
@@ -270,7 +272,25 @@ def _downsample_itkwasm(
         if transposed_dims:
             downscaled_array = downscaled_array.transpose(reorder)
 
-        previous_image = NgffImage(downscaled_array, dims, scale, translation)
+        transformations = TransformSequence(
+            sequence=[
+                Scale(
+                    scale=list(scale.values()),
+                    name="scale",
+                ),
+                Translation(
+                    translation=list(translation.values()),
+                    name="translation",
+                ),
+            ],
+            input=previous_image.transformations.input,
+            output=previous_image.transformations.output,
+            name="transforms",
+        )
+        previous_image = NgffImage(
+            downscaled_array,
+            transformations=transformations,
+        )
         multiscales.append(previous_image)
 
     return multiscales
