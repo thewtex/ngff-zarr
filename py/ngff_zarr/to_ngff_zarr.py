@@ -337,7 +337,7 @@ def _validate_ngff_parameters(
     store: StoreLike,
 ) -> None:
     """Validate the parameters for the NGFF Zarr generation."""
-    if version not in ["0.4", "0.5", "0.6"]:
+    if version not in ["0.4", "0.5", "0.6.dev1"]:
         raise ValueError(f"Unsupported version: {version}")
 
     if chunks_per_shard is not None:
