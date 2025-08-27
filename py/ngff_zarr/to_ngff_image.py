@@ -94,15 +94,12 @@ def to_ngff_image(
 
     if scale is None:
         scale = [1.0 for dim in dims if dim in _spatial_dims]
-        scale = Scale(scale, name="scale")
-    else:
-        scale = Scale(scale, name="scale")
-
     if translation is None:
         translation = [0.0 for dim in dims if dim in _spatial_dims]
-        translation = Translation(translation, name="translation")
-    else:
-        translation = Translation(translation, name="translation")
+
+    # assert correct scale factor ordering
+    scale = Scale([float(scale[d]) for d in _spatial_dims if d in scale], name="scale")
+    translation = Translation([float(translation[d]) for d in _spatial_dims if d in translation], name="translation")
 
     # passed transformation supersedes scale and translation from old spec
     if transformation is None:
