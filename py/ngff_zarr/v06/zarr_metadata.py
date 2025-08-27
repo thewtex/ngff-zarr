@@ -60,7 +60,7 @@ class Dataset:
 
 @dataclass
 class Metadata:
-    coordinate_systems: Union[CoordinateSystem, List[CoordinateSystem]]
+    coordinateSystems: Union[CoordinateSystem, List[CoordinateSystem]]
     datasets: List[Dataset]
     omero: Optional[Omero] = None
     name: str = "image"
@@ -70,8 +70,8 @@ class Metadata:
     @property
     def axes(self) -> List:
 
-        if isinstance(self.coordinate_systems, list):
-            if len(self.coordinate_systems) == 1:
-                return self.coordinate_systems[0].axes
-            return {cs.name: cs.axes for cs in self.coordinate_systems}
-        return self.coordinate_systems.axes
+        if isinstance(self.coordinateSystems, list):
+            if len(self.coordinateSystems) == 1:
+                return self.coordinateSystems[0].axes
+            return {cs.name: cs.axes for cs in self.coordinateSystems}
+        return self.coordinateSystems.axes

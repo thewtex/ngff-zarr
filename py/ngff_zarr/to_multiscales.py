@@ -383,7 +383,7 @@ def to_multiscales(
         method_metadata = get_method_metadata(method)
     
     metadata = Metadata(
-        coordinate_systems=unique_coordinate_systems,
+        coordinateSystems=unique_coordinate_systems,
         datasets=datasets,
         name=ngff_image.name,
         type=method_type,
