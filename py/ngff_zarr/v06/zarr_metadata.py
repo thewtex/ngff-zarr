@@ -61,6 +61,7 @@ class Dataset:
 @dataclass
 class Metadata:
     coordinateSystems: Union[CoordinateSystem, List[CoordinateSystem]]
+    coordinateTransformations: Transform
     datasets: List[Dataset]
     omero: Optional[Omero] = None
     name: str = "image"
