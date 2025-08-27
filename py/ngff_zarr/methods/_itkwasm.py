@@ -283,13 +283,13 @@ def _downsample_itkwasm(
                     name="translation",
                 ),
             ],
-            input=previous_image.transformations.input,
-            output=previous_image.transformations.output,
+            input=previous_image.coordinate_transformations.input,
+            output=previous_image.coordinate_transformations.output,
             name="transforms",
         )
         previous_image = NgffImage(
             downscaled_array,
-            transformations=transformations,
+            coordinate_transformations=transformations,
         )
         multiscales.append(previous_image)
 

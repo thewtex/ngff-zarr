@@ -116,6 +116,6 @@ def to_ngff_image(
 
     return NgffImage(
         data=data,
-        transformations=transformation,
+        coordinate_transformations=transformation,
         name=name,
     )

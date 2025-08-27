@@ -13,15 +13,15 @@ ComputedCallback = Callable[[], None]
 @dataclass
 class NgffImage:
     data: DaskArray
-    transformations: Optional[Transform] = None
+    coordinate_transformations: Optional[Transform] = None
     name: str = "image"
     axes_orientations: Optional[Mapping[str, AnatomicalOrientation]] = None
     computed_callbacks: List[ComputedCallback] = field(default_factory=list)
 
     @property
     def coordinate_systems(self) -> Union[List[CoordinateSystem], CoordinateSystem]:
-        if self.transformations is not None:
-            return [c for c in [self.transformations.input, self.transformations.output] if c is not None]
+        if self.coordinate_transformations is not None:
+            return [c for c in [self.coordinate_transformations.input, self.coordinate_transformations.output] if c is not None]
         return None
 
     @property
@@ -34,12 +34,12 @@ class NgffImage:
 
     @property
     def scale(self) -> Mapping[str, float]:
-        spatial_axes = [ax.name for ax in self.transformations.output.axes if ax.type == "space"]
-        if isinstance(self.transformations, Scale):
-            t = self.transformations
+        spatial_axes = [ax.name for ax in self.coordinate_transformations.output.axes if ax.type == "space"]
+        if isinstance(self.coordinate_transformations, Scale):
+            t = self.coordinate_transformations
 
-        elif isinstance(self.transformations, TransformSequence):
-            for t in self.transformations.sequence:
+        elif isinstance(self.coordinate_transformations, TransformSequence):
+            for t in self.coordinate_transformations.sequence:
                 if isinstance(t, Scale):
                     break
 
@@ -47,12 +47,12 @@ class NgffImage:
     
     @property
     def translation(self) -> Mapping[str, float]:
-        spatial_axes = [ax.name for ax in self.transformations.output.axes if ax.type == "space"]
-        if isinstance(self.transformations, Translation):
-            t = self.transformations
+        spatial_axes = [ax.name for ax in self.coordinate_transformations.output.axes if ax.type == "space"]
+        if isinstance(self.coordinate_transformations, Translation):
+            t = self.coordinate_transformations
 
-        elif isinstance(self.transformations, TransformSequence):
-            for t in self.transformations.sequence:
+        elif isinstance(self.coordinate_transformations, TransformSequence):
+            for t in self.coordinate_transformations.sequence:
                 if isinstance(t, Translation):
                     break
 
