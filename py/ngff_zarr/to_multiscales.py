@@ -357,7 +357,7 @@ def to_multiscales(
         )
 
     # Collect unique coordinate systems by name
-    all_coordinate_systems = [cs for img in images for cs in ([img.coordinate_systems] if not isinstance(img.coordinate_systems, list) else img.coordinate_systems) if cs is not None]
+    all_coordinate_systems = [cs for img in images for cs in ([img.coordinateSystems] if not isinstance(img.coordinateSystems, list) else img.coordinateSystems) if cs is not None]
     unique_coordinate_systems = list({cs.name: cs for cs in all_coordinate_systems}.values())
 
     datasets = []
@@ -366,9 +366,9 @@ def to_multiscales(
 
         # get transformations and replace input/output with string references to coordinate systems
         transformations = TransformSequence(
-            image.coordinate_transformations.sequence,
-            input=image.coordinate_transformations.input.name if image.coordinate_transformations.input is not None else "",
-            output=image.coordinate_transformations.output.name if image.coordinate_transformations.output is not None else ""
+            image.coordinateTransformations.sequence,
+            input=image.coordinateTransformations.input.name if image.coordinateTransformations.input is not None else "",
+            output=image.coordinateTransformations.output.name if image.coordinateTransformations.output is not None else ""
         )
 
         dataset = Dataset(
@@ -381,7 +381,7 @@ def to_multiscales(
     if method is not None:
         method_type = method.value
         method_metadata = get_method_metadata(method)
-    
+
     metadata = Metadata(
         coordinateSystems=unique_coordinate_systems,
         coordinateTransformations=
