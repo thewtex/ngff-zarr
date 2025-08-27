@@ -384,6 +384,7 @@ def to_multiscales(
     
     metadata = Metadata(
         coordinateSystems=unique_coordinate_systems,
+        coordinateTransformations=
         datasets=datasets,
         name=ngff_image.name,
         type=method_type,
