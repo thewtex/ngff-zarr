@@ -19,9 +19,10 @@ class NgffImage:
     computed_callbacks: List[ComputedCallback] = field(default_factory=list)
 
     @property
-    def coordinateSystems(self) -> Union[List[CoordinateSystem], CoordinateSystem]:
+    def coordinateSystems(self) -> Union[List[CoordinateSystem], None]:
         if self.coordinateTransformations is not None:
-            return [c for c in [self.coordinateTransformations.input, self.coordinateTransformations.output] if c is not None]
+            coordinate_systems = [self.coordinateTransformations.input, self.coordinateTransformations.output]
+            return [cs for cs in coordinate_systems if isinstance(cs, CoordinateSystem)]
         return None
 
     @property
@@ -35,25 +36,37 @@ class NgffImage:
     @property
     def scale(self) -> Mapping[str, float]:
         spatial_axes = [ax.name for ax in self.coordinateTransformations.output.axes if ax.type == "space"]
+
+        t = None
         if isinstance(self.coordinateTransformations, Scale):
             t = self.coordinateTransformations
 
         elif isinstance(self.coordinateTransformations, TransformSequence):
-            for t in self.coordinateTransformations.sequence:
-                if isinstance(t, Scale):
+            for transform in self.coordinateTransformations.sequence:
+                if isinstance(transform, Scale):
+                    t = transform
                     break
 
-        return {spatial_axes[i]: s for i, s in enumerate(t.scale)}
+        if t is None:
+            return {spatial_axes[i]: 1.0 for i in range(len(spatial_axes))}
+        else:
+            return {spatial_axes[i]: s for i, s in enumerate(t.scale)}
     
     @property
     def translation(self) -> Mapping[str, float]:
         spatial_axes = [ax.name for ax in self.coordinateTransformations.output.axes if ax.type == "space"]
+
+        t = None
         if isinstance(self.coordinateTransformations, Translation):
             t = self.coordinateTransformations
 
         elif isinstance(self.coordinateTransformations, TransformSequence):
-            for t in self.coordinateTransformations.sequence:
-                if isinstance(t, Translation):
+            for transform in self.coordinateTransformations.sequence:
+                if isinstance(transform, Translation):
+                    t = transform
                     break
 
-        return {spatial_axes[i]: t.translation[i] for i in range(len(spatial_axes))}
+        if t is None:
+            return {spatial_axes[i]: 0.0 for i in range(len(spatial_axes))}
+        else: 
+            return {d: 1.0 for d in self.dims if d in spatial_axes}

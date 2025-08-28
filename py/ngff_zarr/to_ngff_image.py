@@ -21,7 +21,7 @@ def to_ngff_image(
     dims: Optional[Sequence[SupportedDims]] = None,
     scale: Optional[Union[Mapping[Hashable, float]]] = None,
     translation: Optional[Union[Mapping[Hashable, float]]] = None,
-    transformation: Optional[Union[List[Transform], Transform]] = None,
+    coordinateTransformation: Optional[Union[List[Transform], Transform]] = None,
     name: str = "image",
     coordinate_system_name: str = "physical",
     axes_units: Optional[Mapping[str, Units]] = None,
@@ -102,8 +102,8 @@ def to_ngff_image(
     translation = Translation([float(translation[d]) for d in _spatial_dims if d in translation], name="translation")
 
     # passed transformation supersedes scale and translation from old spec
-    if transformation is None:
-        transformation = TransformSequence([scale, translation], name="transforms", output=output_coordinate_system)
+    if coordinateTransformation is None:
+        coordinateTransformation = TransformSequence([scale, translation], name="transforms", output=output_coordinate_system)
 
     if not isinstance(data, DaskArray):
         if isinstance(data, (ZarrArray, str, MutableMapping)):
@@ -113,6 +113,6 @@ def to_ngff_image(
 
     return NgffImage(
         data=data,
-        coordinateTransformations=transformation,
+        coordinateTransformations=coordinateTransformation,
         name=name,
     )
