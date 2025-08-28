@@ -93,9 +93,9 @@ def to_ngff_image(
         axes=axes)
 
     if scale is None:
-        scale = [1.0 for dim in dims if dim in _spatial_dims]
+        scale ={dim: 1.0 for dim in dims if dim in _spatial_dims}
     if translation is None:
-        translation = [0.0 for dim in dims if dim in _spatial_dims]
+        translation = {d: 0.0 for dim in dims if dim in _spatial_dims}
 
     # assert correct scale factor ordering
     scale = Scale([float(scale[d]) for d in _spatial_dims if d in scale], name="scale")
