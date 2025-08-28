@@ -366,9 +366,13 @@ def to_multiscales(
 
         # get transformations and replace input/output with string references to coordinate systems
         transformations = TransformSequence(
-            image.coordinateTransformations.sequence,
-            input=image.coordinateTransformations.input.name if image.coordinateTransformations.input is not None else "",
-            output=image.coordinateTransformations.output.name if image.coordinateTransformations.output is not None else ""
+            sequence=[
+                Scale(list(image.scale.values())),
+                Translation(list(image.translation.values()))
+            ],
+            name=f"scale{index}",
+            input='',
+            output=image.coordinateTransformations.output.name if image.coordinateTransformations.output else ""
         )
 
         dataset = Dataset(
