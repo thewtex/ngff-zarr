@@ -23,6 +23,8 @@ class CoordinateSystem:
 class Identity:
     type: str = "identity"
     name: str = ''
+    input: Union[str, CoordinateSystem] = ''
+    output: Union[str, CoordinateSystem] = ''
 
 
 @dataclass
@@ -30,8 +32,8 @@ class Scale:
     scale: List[float]
     type: str = "scale"
     name: str = ''
-    input: Union[str, CoordinateSystem] = None
-    output: Union[str, CoordinateSystem] = None
+    input: Union[str, CoordinateSystem] = ''
+    output: Union[str, CoordinateSystem] = ''
 
 
 @dataclass
@@ -39,23 +41,23 @@ class Translation:
     translation: List[float]
     type: str = "translation"
     name: str = ''
-    input: Union[str, CoordinateSystem] = None
-    output: Union[str, CoordinateSystem] = None
+    input: Union[str, CoordinateSystem] = ''
+    output: Union[str, CoordinateSystem] = ''
 
 @dataclass
 class TransformSequence:
     sequence: List[Union[Scale, Translation]]
     name: str = ''
     type: str = "sequence"
-    input: Union[str, CoordinateSystem] = None
-    output: Union[str, CoordinateSystem] = None
+    input: Union[str, CoordinateSystem] = ''
+    output: Union[str, CoordinateSystem] = ''
 
 Transform = Union[Scale, Translation, TransformSequence, Identity]
 
 @dataclass
 class Dataset:
     path: str
-    coordinateTransformations: List[Transform]
+    coordinateTransformations: Transform
 
 
 @dataclass
