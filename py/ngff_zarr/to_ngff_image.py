@@ -1,5 +1,5 @@
 from collections.abc import MutableMapping
-from typing import Hashable, Mapping, Optional, Sequence, Union
+from typing import Hashable, Mapping, Optional, Sequence, Union, List
 
 import dask
 from dask.array.core import Array as DaskArray
@@ -13,6 +13,7 @@ except ImportError:
 from .methods._support import _spatial_dims
 from .ngff_image import NgffImage
 from .v04.zarr_metadata import SupportedDims, Units
+from .v06.zarr_metadata import CoordinateSystem, Transform, TransformSequence, Axis, Scale, Translation
 
 
 def to_ngff_image(
@@ -20,7 +21,9 @@ def to_ngff_image(
     dims: Optional[Sequence[SupportedDims]] = None,
     scale: Optional[Union[Mapping[Hashable, float]]] = None,
     translation: Optional[Union[Mapping[Hashable, float]]] = None,
+    coordinateTransformation: Optional[Union[List[Transform], Transform]] = None,
     name: str = "image",
+    coordinate_system_name: str = "physical",
     axes_units: Optional[Mapping[str, Units]] = None,
 ) -> NgffImage:
     """
@@ -71,11 +74,36 @@ def to_ngff_image(
             msg = "dims not valid"
             raise ValueError(msg)
 
-    if scale is None:
-        scale = {dim: 1.0 for dim in dims if dim in _spatial_dims}
+    axes = []
+    for d in dims:
+        if d in _spatial_dims:
+            axes.append(Axis(name=d, type='space'))
+        elif d == 'c':
+            axes.append(Axis(name=d, type='channel'))
+        elif d == 't':
+            axes.append(Axis(name=d, type='time'))
 
+    if axes_units is not None:
+        for ax in axes:
+            if ax.name in axes_units:
+                ax.unit = axes_units[ax.name]
+
+    output_coordinate_system = CoordinateSystem(
+        name=coordinate_system_name,
+        axes=axes)
+
+    if scale is None:
+        scale ={dim: 1.0 for dim in dims if dim in _spatial_dims}
     if translation is None:
-        translation = {dim: 0.0 for dim in dims if dim in _spatial_dims}
+        translation = {d: 0.0 for dim in dims if dim in _spatial_dims}
+
+    # assert correct scale factor ordering
+    scale = Scale([float(scale[d]) for d in _spatial_dims if d in scale], name="scale")
+    translation = Translation([float(translation[d]) for d in _spatial_dims if d in translation], name="translation")
+
+    # passed transformation supersedes scale and translation from old spec
+    if coordinateTransformation is None:
+        coordinateTransformation = TransformSequence([scale, translation], name="transforms", output=output_coordinate_system)
 
     if not isinstance(data, DaskArray):
         if isinstance(data, (ZarrArray, str, MutableMapping)):
@@ -85,9 +113,6 @@ def to_ngff_image(
 
     return NgffImage(
         data=data,
-        dims=dims,
-        scale=scale,
-        translation=translation,
+        coordinateTransformations=coordinateTransformation,
         name=name,
-        axes_units=axes_units,
     )
