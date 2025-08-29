@@ -688,6 +688,7 @@ def write_hcs_well_image(
     if version == '0.4':
         well_group.attrs["well"] = well_dict
     elif version == '0.5':
+        well_dict.pop("version", None)  # version goes at top level in 0.5
         well_group.attrs["ome"] = {
             'well': well_dict,
             'version': version}
