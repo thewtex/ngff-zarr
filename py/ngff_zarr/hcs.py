@@ -520,3 +520,197 @@ def to_hcs_zarr(plate: HCSPlate, store) -> None:
     )
     if plate.metadata.acquisitions:
         logging.info(f"Acquisitions: {len(plate.metadata.acquisitions)}")
+
+
+def write_hcs_well_image(
+    store,
+    multiscales: Multiscales,
+    plate_metadata: Plate,
+    row_name: str,
+    column_name: str,
+    field_index: int = 0,
+    acquisition_id: int = 0,
+    well_metadata: Optional[Well] = None,
+    version: str = "0.4",
+    **kwargs,
+) -> None:
+    """
+    Write a single field of view (image) to a well in an HCS plate structure.
+
+    This function writes individual well images as they are acquired in HCS workflows.
+    The plate structure should be created first using to_hcs_zarr(), then individual
+    field images can be written using this function.
+
+    Parameters
+    ----------
+    store : StoreLike
+        Store or path to directory in file system where the HCS plate will be written.
+    multiscales : Multiscales
+        Multiscales OME-NGFF image pixel data and metadata for the field of view.
+    plate_metadata : Plate
+        Plate-level metadata containing rows, columns, wells, and other plate information.
+    row_name : str
+        Name of the row (e.g., "A", "B", "C").
+    column_name : str
+        Name of the column (e.g., "1", "2", "3").
+    field_index : int, optional
+        Index of the field of view within the well (default: 0).
+    acquisition_id : int, optional
+        Acquisition ID for time series or multi-condition experiments (default: 0).
+    well_metadata : Well, optional
+        Well-level metadata. If None, will be created automatically.
+    version : str, optional
+        OME-Zarr specification version (default: "0.4").
+    **kwargs
+        Additional arguments passed to to_ngff_zarr.
+
+    Examples
+    --------
+    >>> import ngff_zarr as nz
+    >>> from ngff_zarr.v04.zarr_metadata import Plate, PlateColumn, PlateRow, PlateWell
+    >>>
+    >>> # Create plate metadata
+    >>> columns = [nz.PlateColumn(name="1"), nz.PlateColumn(name="2")]
+    >>> rows = [nz.PlateRow(name="A"), nz.PlateRow(name="B")]
+    >>> wells = [
+    ...     nz.PlateWell(path="A/1", rowIndex=0, columnIndex=0),
+    ...     nz.PlateWell(path="A/2", rowIndex=0, columnIndex=1),
+    ...     nz.PlateWell(path="B/1", rowIndex=1, columnIndex=0),
+    ...     nz.PlateWell(path="B/2", rowIndex=1, columnIndex=1),
+    ... ]
+    >>> plate_metadata = nz.Plate(
+    ...     columns=columns,
+    ...     rows=rows,
+    ...     wells=wells,
+    ...     name="My Screening Plate",
+    ...     field_count=2
+    ... )
+    >>>
+    >>> # First, create the plate structure
+    >>> hcs_plate = nz.HCSPlate(metadata=plate_metadata)
+    >>> nz.to_hcs_zarr(hcs_plate, "my_plate.ome.zarr")
+    >>>
+    >>> # Then write individual field images as they are acquired
+    >>> nz.write_hcs_well_image(
+    ...     store="my_plate.ome.zarr",
+    ...     multiscales=field_image,  # Your Multiscales image
+    ...     plate_metadata=plate_metadata,
+    ...     row_name="A",
+    ...     column_name="1",
+    ...     field_index=0
+    ... )
+    """
+
+    # Validate row and column exist in plate metadata
+    row_index = None
+    for i, row in enumerate(plate_metadata.rows):
+        if row.name == row_name:
+            row_index = i
+            break
+    if row_index is None:
+        raise ValueError(f"Row '{row_name}' not found in plate metadata")
+
+    column_index = None
+    for i, column in enumerate(plate_metadata.columns):
+        if column.name == column_name:
+            column_index = i
+            break
+    if column_index is None:
+        raise ValueError(f"Column '{column_name}' not found in plate metadata")
+
+    # Find the well metadata
+    well_path = f"{row_name}/{column_name}"
+    plate_well = None
+    for well in plate_metadata.wells:
+        if well.path == well_path:
+            plate_well = well
+            break
+    if plate_well is None:
+        raise ValueError(f"Well '{well_path}' not found in plate metadata")
+
+    # Open or create the store
+    root = zarr.open_group(store, mode="a")
+
+    # Create or update well group
+    well_group_path = well_path
+    if well_group_path in root:
+        well_group = root[well_group_path]
+        # Read existing well metadata if not provided
+        if well_metadata is None and "well" in well_group.attrs:
+            existing_well_attrs = well_group.attrs["well"]
+            existing_images = []
+            if "images" in existing_well_attrs:
+                for img_dict in existing_well_attrs["images"]:
+                    existing_images.append(
+                        WellImage(
+                            path=img_dict["path"],
+                            acquisition=img_dict.get("acquisition", 0),
+                        )
+                    )
+            well_metadata = Well(
+                images=existing_images,
+                version=existing_well_attrs.get("version", version),
+            )
+    else:
+        well_group = root.create_group(well_group_path)
+
+    # Create or update well metadata
+    if well_metadata is None:
+        # Create default well metadata with single image
+        well_images = [WellImage(path=str(field_index), acquisition=acquisition_id)]
+        well_metadata = Well(images=well_images, version=version)
+    else:
+        # Check if the field already exists in well metadata
+        field_exists = False
+        for img in well_metadata.images:
+            if img.path == str(field_index) and img.acquisition == acquisition_id:
+                field_exists = True
+                break
+
+        # Add the field if it doesn't exist
+        if not field_exists:
+            well_metadata.images.append(
+                WellImage(path=str(field_index), acquisition=acquisition_id)
+            )
+
+    # Set well metadata
+    well_dict = {
+        "images": [
+            {
+                "path": img.path,
+                "acquisition": img.acquisition,
+            }
+            for img in well_metadata.images
+        ],
+        "version": well_metadata.version or version,
+    }
+    well_group.attrs["well"] = well_dict
+
+    # Write the actual image data to the field path
+    field_path = f"{well_path}/{field_index}"
+
+    # Create the field directory path
+    if isinstance(store, (str, Path)):
+        field_store_path = Path(store) / field_path
+        field_store_path.mkdir(parents=True, exist_ok=True)
+
+        # Write multiscales data directly to the field path
+        to_ngff_zarr(
+            store=str(field_store_path),
+            multiscales=multiscales,
+            version=version,
+            overwrite=True,
+            **kwargs,
+        )
+    else:
+        # For non-file stores, create or access the group at the field path
+        field_group = zarr.group(store).require_group(field_path)
+        to_ngff_zarr(
+            store=field_group.store,
+            multiscales=multiscales,
+            version=version,
+            overwrite=True,
+            **kwargs,
+        )
+
+    logging.info(f"Written field {field_index} to well {well_path} in HCS plate")
