@@ -13,7 +13,7 @@ export interface ToNgffZarrOptions {
 export async function toNgffZarr(
   store: string | MemoryStore | zarr.FetchStore,
   multiscales: Multiscales,
-  options: ToNgffZarrOptions = {},
+  options: ToNgffZarrOptions = {}
 ): Promise<void> {
   const _overwrite = options.overwrite ?? true;
   const _version = options.version ?? "0.4";
@@ -25,17 +25,17 @@ export async function toNgffZarr(
       _resolvedStore = store;
     } else if (store instanceof zarr.FetchStore) {
       throw new Error(
-        "FetchStore is read-only and cannot be used for writing. Use a local file path or MemoryStore instead.",
+        "FetchStore is read-only and cannot be used for writing. Use a local file path or MemoryStore instead."
       );
     } else if (store.startsWith("http://") || store.startsWith("https://")) {
       throw new Error(
-        "HTTP/HTTPS URLs are read-only and cannot be used for writing. Use a local file path instead.",
+        "HTTP/HTTPS URLs are read-only and cannot be used for writing. Use a local file path instead."
       );
     } else {
       // For local paths, check if we're in a browser environment
       if (typeof window !== "undefined") {
         throw new Error(
-          "Local file paths are not supported in browser environments. Use a MemoryStore instead.",
+          "Local file paths are not supported in browser environments. Use a MemoryStore instead."
         );
       }
 
@@ -47,7 +47,7 @@ export async function toNgffZarr(
         _resolvedStore = new FileSystemStore(normalizedPath);
       } catch (error) {
         throw new Error(
-          `Failed to load FileSystemStore: ${error}. Use MemoryStore for browser compatibility.`,
+          `Failed to load FileSystemStore: ${error}. Use MemoryStore for browser compatibility.`
         );
       }
     }
@@ -67,6 +67,12 @@ export async function toNgffZarr(
             ...(multiscales.metadata.coordinateTransformations && {
               coordinateTransformations:
                 multiscales.metadata.coordinateTransformations,
+            }),
+            ...(multiscales.metadata.type && {
+              type: multiscales.metadata.type,
+            }),
+            ...(multiscales.metadata.metadata && {
+              metadata: multiscales.metadata.metadata,
             }),
           },
         ],
@@ -88,14 +94,14 @@ export async function toNgffZarr(
       await _writeImage(
         rootGroup as zarr.Group<MemoryStore>,
         image,
-        dataset.path,
+        dataset.path
       );
     }
   } catch (error) {
     throw new Error(
       `Failed to write OME-Zarr: ${
         error instanceof Error ? error.message : String(error)
-      }`,
+      }`
     );
   }
 }
@@ -175,7 +181,7 @@ function getTypedArrayConstructor(dtype: zarr.DataType): TypedArrayConstructor {
 async function _writeImage(
   group: zarr.Group<MemoryStore>,
   image: NgffImage,
-  arrayPath: string,
+  arrayPath: string
 ): Promise<void> {
   try {
     const chunks = getChunksFromImage(image);
@@ -196,13 +202,13 @@ async function _writeImage(
 
     await _writeArrayData(
       zarrArray as zarr.Array<zarr.DataType, MemoryStore>,
-      image,
+      image
     );
   } catch (error) {
     throw new Error(
       `Failed to write image array: ${
         error instanceof Error ? error.message : String(error)
-      }`,
+      }`
     );
   }
 }
@@ -218,7 +224,7 @@ function getChunksFromImage(image: NgffImage): number[] {
 
 async function _writeArrayData(
   zarrArray: zarr.Array<zarr.DataType, MemoryStore>,
-  image: NgffImage,
+  image: NgffImage
 ): Promise<void> {
   try {
     // Get array shape for chunk calculation - we don't need the full data here
@@ -243,7 +249,7 @@ async function _writeArrayData(
     throw new Error(
       `Failed to write array data: ${
         error instanceof Error ? error.message : String(error)
-      }`,
+      }`
     );
   }
 }
@@ -251,7 +257,7 @@ async function _writeArrayData(
 async function writeChunkWithGet(
   zarrArray: zarr.Array<zarr.DataType, MemoryStore>,
   image: NgffImage,
-  chunkIndex: number[],
+  chunkIndex: number[]
 ): Promise<void> {
   // Calculate the chunk bounds
   const shape = image.data.shape;
@@ -276,7 +282,7 @@ async function writeChunkWithGet(
   const chunkTargetData = convertChunkToTargetType(
     chunkSourceData as ArrayBufferView,
     zarrArray.dtype,
-    targetTypedArrayConstructor,
+    targetTypedArrayConstructor
   );
 
   // Create the selection for writing to the target zarr array
@@ -295,7 +301,7 @@ async function writeChunkWithGet(
 function convertChunkToTargetType(
   chunkData: ArrayBufferView,
   targetDtype: zarr.DataType,
-  targetTypedArrayConstructor: TypedArrayConstructor,
+  targetTypedArrayConstructor: TypedArrayConstructor
 ): ArrayBufferView {
   // Handle different source data types
   if (
@@ -348,7 +354,7 @@ function convertChunkToTargetType(
       if (targetDtype === "int64" || targetDtype === "uint64") {
         // Regular number to BigInt conversion
         const bigIntArray = new targetTypedArrayConstructor(
-          chunkData.length,
+          chunkData.length
         ) as BigInt64Array | BigUint64Array;
         for (let i = 0; i < chunkData.length; i++) {
           bigIntArray[i] = BigInt(chunkData[i]);
@@ -375,7 +381,7 @@ function convertChunkToTargetType(
           return createTypedArray(chunkData);
         } else {
           throw new Error(
-            `Unsupported target constructor: ${targetTypedArrayConstructor.name}`,
+            `Unsupported target constructor: ${targetTypedArrayConstructor.name}`
           );
         }
       }
@@ -383,7 +389,7 @@ function convertChunkToTargetType(
   } else {
     // Handle other types (fallback)
     throw new Error(
-      `Unsupported source data type: ${chunkData.constructor.name}`,
+      `Unsupported source data type: ${chunkData.constructor.name}`
     );
   }
 }
