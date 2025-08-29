@@ -1,4 +1,3 @@
-from logging import root
 import sys
 from collections.abc import MutableMapping
 from dataclasses import asdict
@@ -23,7 +22,6 @@ import zarr.storage
 from ._zarr_open_array import open_array
 from .v04.zarr_metadata import Metadata as Metadata_v04
 from .v05.zarr_metadata import Metadata as Metadata_v05
-from .v06.zarr_metadata import Transform, CoordinateSystem
 from .rfc4 import is_rfc4_enabled
 
 # Zarr Python 3
@@ -587,11 +585,12 @@ def _write_array_direct(
 
     if zarr_fmt == 3 and zarr_array is None:
         # Zarr v3, use zarr.create_array and assign (whole array or region)
-        array = store.create_array(
+        array = zarr.create_array(
+            store=store,
             name=path,
             shape=arr.shape,
             dtype=arr.dtype,
-#            **to_zarr_kwargs,
+            **to_zarr_kwargs,
         )
         if region is not None:
             array[region] = arr.compute()
@@ -930,7 +929,6 @@ def _prepare_next_scale(
     progress: Optional[Union[NgffProgress, NgffProgressCallback]],
 ) -> Optional[object]:
     """Prepare the next scale for processing if needed."""
-    import zarr
     # Minimize task graph depth
     if (
         index > 1
@@ -944,7 +942,7 @@ def _prepare_next_scale(
             callback()
         image.computed_callbacks = []
 
-        image.data = dask.array.from_zarr(store.store_path, component=path)
+        image.data = dask.array.from_zarr(store, component=path)
         next_multiscales_factor = multiscales.scale_factors[index]
         if isinstance(next_multiscales_factor, int):
             next_multiscales_factor = (
@@ -975,8 +973,7 @@ def _prepare_next_scale(
 
 def to_ngff_zarr(
     store: StoreLike,
-    multiscales: Union[List[Multiscales], Multiscales],
-    coordinateTransformation: Union[List[Transform], Transform] = None,
+    multiscales: Multiscales,
     version: str = "0.4",
     overwrite: bool = True,
     use_tensorstore: bool = False,
@@ -1028,10 +1025,29 @@ def to_ngff_zarr(
     # Setup and validation
     store_path = str(store) if isinstance(store, (str, Path)) else None
 
-    if isinstance(store, zarr.Group):
-        group = store
+    # Create Zarr root
+    root = _create_zarr_root(store, chunk_store, version, overwrite)
+
+
+    # inject recursion here
+
+    _validate_ngff_parameters(version, chunks_per_shard, use_tensorstore, store)
+    metadata, dimension_names, dimension_names_kwargs = _prepare_metadata(
+        multiscales, version, enabled_rfcs
+    )
+    metadata_dict = asdict(metadata)
+    metadata_dict = _pop_metadata_optionals(metadata_dict, enabled_rfcs)
+    metadata_dict["@type"] = "ngff:Image"
+
+
+    if "omero" in metadata_dict:
+        root.attrs["omero"] = metadata_dict.pop("omero")
+
+    if version != "0.4":
+        # RFC 2, Zarr 3
+        root.attrs["ome"] = {"version": version, "multiscales": [metadata_dict]}
     else:
-        group = zarr.open_group(store, mode="w" if overwrite else "a", chunk_store=chunk_store)
+        root.attrs["multiscales"] = [metadata_dict]
 
     # Format parameters
     zarr_format = 2 if version == "0.4" else 3
@@ -1045,71 +1061,6 @@ def to_ngff_zarr(
 
     if zarr_format == 2 and zarr_version_major >= 3:
         _zarr_kwargs["dimension_separator"] = "/"
-
-    if isinstance(multiscales, list):
-
-        if coordinateTransformation is None:
-            raise ValueError("coordinateTransformation must be provided for multiple multiscales")
-
-        for index, ms in enumerate(multiscales):
-
-            store = group.create_group(
-                name=ms.metadata.name
-            )
-            to_ngff_zarr(
-                store,
-                ms,
-                version=version,
-                overwrite=overwrite,
-                use_tensorstore=use_tensorstore,
-                chunk_store=chunk_store,
-                progress=progress,
-                chunks_per_shard=chunks_per_shard,
-                enabled_rfcs=enabled_rfcs,
-                **kwargs,
-            )
-
-        if not isinstance(coordinateTransformation, list):
-            coordinateTransformations = [coordinateTransformation]
-
-        transformations = []
-        coordinate_systems = []
-
-        for transform in coordinateTransformations:
-
-            coordinate_systems_dict = [asdict(cs) for cs in [transform.input, transform.output]]
-            transformations_dict = asdict(transform)
-            transformations_dict["input"] = transform.input.name
-            transformations_dict["output"] = transform.output.name
-
-            transformations.append(transformations_dict)
-            coordinate_systems.append(coordinate_systems_dict)
-
-        group.attrs["ome"] = {
-            "version": version,
-            "coordinateTransformations": transformations,
-            "coordinateSystems": coordinate_systems,
-        }
-
-        return
-
-    _validate_ngff_parameters(version, chunks_per_shard, use_tensorstore, store)
-    metadata, dimension_names, dimension_names_kwargs = _prepare_metadata(
-        multiscales, version, enabled_rfcs
-    )
-    metadata_dict = asdict(metadata)
-    metadata_dict = _pop_metadata_optionals(metadata_dict, enabled_rfcs)
-    metadata_dict["@type"] = "ngff:Image"
-
-
-    if "omero" in metadata_dict:
-        group.attrs["omero"] = metadata_dict.pop("omero")
-
-    if version != "0.4":
-        # RFC 2, Zarr 3
-        group.attrs["ome"] = {"version": version, "multiscales": [metadata_dict]}
-    else:
-        group.attrs["multiscales"] = [metadata_dict]
 
     # Process each scale level
     nscales = len(multiscales.images)
@@ -1131,7 +1082,7 @@ def to_ngff_zarr(
 
         # Create parent groups if needed
         if parent not in (".", "/"):
-            array_dims_group = group.create_group(parent)
+            array_dims_group = root.create_group(parent)
             array_dims_group.attrs["_ARRAY_DIMENSIONS"] = image.dims
 
         # Calculate dimension factors
@@ -1232,6 +1183,6 @@ def to_ngff_zarr(
         with warnings.catch_warnings():
             # Ignore consolidated metadata warning
             warnings.filterwarnings("ignore", category=UserWarning)
-            zarr.consolidate_metadata(store.store_path, **format_kwargs)
+            zarr.consolidate_metadata(store, **format_kwargs)
     else:
-        zarr.consolidate_metadata(store.store_path, **format_kwargs)
+        zarr.consolidate_metadata(store, **format_kwargs)
