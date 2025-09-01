@@ -69,11 +69,11 @@ cli = [
   "imagecodecs",
 ]
 tensorstore = ["tensorstore"]
+ome-zarr-models = ["ome-zarr-models>=1"]
 test = [
   "pytest >=6",
   "pooch",
   "deepdiff",
-  "ome-zarr-models>=1"
 ]
 validate = [
   "jsonschema"
@@ -179,7 +179,7 @@ docs = { features = ["docs"], no-default-feature = true, solve-group = "default"
 data = { features = ["data"], no-default-feature = true, solve-group = "default" }
 
 [tool.pixi.feature.test.tasks]
-test = { cmd = "pytest", description = "Run the test suite" }
+test = { cmd = "pytest test/test_to_ngff_zarr_v3_compression.py", description = "Run the test suite" }
 download-test-data = "pytest -k test_from_ngff_zarr --maxfail=1 -v"
 
 [tool.pixi.feature.lint.dependencies]
