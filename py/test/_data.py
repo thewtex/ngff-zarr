@@ -173,3 +173,24 @@ def store_new_multiscales(dataset_name, baseline_name, multiscales, version="0.4
             / f"baseline/zarr{zarr_version_major}/v{version}/{dataset_name}/{baseline_name}"
         )
     to_ngff_zarr(store, multiscales, version=version)
+
+
+def validate_with_ome_zarr_models(dir, *, version):
+    """
+    Fully validate a OME-Zarr Image group with ome-zarr-models.
+
+    Parameters
+    ----------
+    dir :
+        Path to OME-Zarr Image group.
+    version : 0.4, 0.5
+        Version of the OME-Zarr specification to validate against.
+    """
+    ome_zarr_models = pytest.importorskip("ome_zarr_modles", minversion="1.0.0")
+
+    if version == "0.5":
+        ome_zarr_models.v05.Image.from_zarr(zarr.open_group(dir))
+    elif version == "0.4":
+        ome_zarr_models.v04.Image.from_zarr(zarr.open_group(dir))
+    else:
+        raise ValueError(f"{version=} not a recognised version")

@@ -10,7 +10,7 @@ import zarr
 
 from ngff_zarr import Methods, to_multiscales, to_ngff_zarr
 
-from ._data import verify_against_baseline
+from ._data import verify_against_baseline, validate_with_ome_zarr_models
 
 zarr_version = version.parse(zarr.__version__)
 
@@ -67,6 +67,8 @@ def test_zarr_v3_compression(input_images):
         verify_against_baseline(
             dataset_name, baseline_name, multiscales, version=version
         )
+
+        validate_with_ome_zarr_models(tmpdir, version=0.5)
 
 
 def test_zarr_v3_compression_with_sharding(input_images):

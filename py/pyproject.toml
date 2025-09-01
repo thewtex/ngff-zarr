@@ -72,7 +72,8 @@ tensorstore = ["tensorstore"]
 test = [
   "pytest >=6",
   "pooch",
-  "deepdiff"
+  "deepdiff",
+  "ome-zarr-models>=1"
 ]
 validate = [
   "jsonschema"
