@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Optional, List
 import logging
 from collections import OrderedDict
+from packaging import version as pkg_version
 
 import zarr
 
@@ -466,7 +467,16 @@ def to_hcs_zarr(plate: HCSPlate, store) -> None:
         Store or path to directory in file system.
     """
 
-    root = zarr.open_group(store, mode="w")
+    # For NGFF version 0.4, use Zarr format 2; for 0.5+, use Zarr format 3
+    zarr_format = 2 if plate.metadata.version == "0.4" else 3
+    
+    # Check zarr-python version to determine if zarr_format parameter is supported
+    zarr_version = pkg_version.parse(zarr.__version__)
+    
+    if zarr_version.major >= 3:
+        root = zarr.open_group(store, mode="w", zarr_format=zarr_format)
+    else:
+        root = zarr.open_group(store, mode="w")
 
     # Build plate metadata dictionary
     plate_dict = {
@@ -630,7 +640,16 @@ def write_hcs_well_image(
         raise ValueError(f"Well '{well_path}' not found in plate metadata")
 
     # Open or create the store
-    root = zarr.open_group(store, mode="a")
+    # For NGFF version 0.4, use Zarr format 2; for 0.5+, use Zarr format 3
+    zarr_format = 2 if version == "0.4" else 3
+    
+    # Check zarr-python version to determine if zarr_format parameter is supported
+    zarr_version = pkg_version.parse(zarr.__version__)
+    
+    if zarr_version.major >= 3:
+        root = zarr.open_group(store, mode="a", zarr_format=zarr_format)
+    else:
+        root = zarr.open_group(store, mode="a")
 
     # Create or update well group
     well_group_path = well_path
@@ -705,7 +724,10 @@ def write_hcs_well_image(
         )
     else:
         # For non-file stores, create or access the group at the field path
-        field_group = zarr.group(store).require_group(field_path)
+        if zarr_version.major >= 3:
+            field_group = zarr.group(store, zarr_format=zarr_format).require_group(field_path)
+        else:
+            field_group = zarr.group(store).require_group(field_path)
         to_ngff_zarr(
             store=field_group.store,
             multiscales=multiscales,
