@@ -32,6 +32,7 @@ from .v04.zarr_metadata import (
 )
 from .multiscales import Multiscales
 from .from_ngff_zarr import from_ngff_zarr
+from .to_ngff_zarr import to_ngff_zarr
 
 
 class LRUCache:
