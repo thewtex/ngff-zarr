@@ -113,9 +113,10 @@ def _reference_to_dict(reference: Reference) -> dict[str, Any]:
 
 def plate(node: Node) -> PlateAttribute | None:
     """The parsed ``plate`` attribute of ``node``, or ``None``."""
-    raw = (node.attributes or {}).get(PLATE_KEY)
-    if raw is None:
+    attributes = node.attributes or {}
+    if PLATE_KEY not in attributes:
         return None
+    raw = attributes[PLATE_KEY]
     if not isinstance(raw, Mapping):
         raise ValueError(f"A 'plate' attribute must be an object; got {raw!r}.")
     for field in ("columns", "rows", "acquisitions"):
@@ -151,9 +152,10 @@ def set_plate(node: Node, value: PlateAttribute | None) -> None:
 
 def well(node: Node) -> WellAttribute | None:
     """The parsed ``well`` attribute of ``node``, or ``None``."""
-    raw = (node.attributes or {}).get(WELL_KEY)
-    if raw is None:
+    attributes = node.attributes or {}
+    if WELL_KEY not in attributes:
         return None
+    raw = attributes[WELL_KEY]
     if not isinstance(raw, Mapping):
         raise ValueError(f"A 'well' attribute must be an object; got {raw!r}.")
     return WellAttribute(

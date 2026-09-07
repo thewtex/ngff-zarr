@@ -208,3 +208,16 @@ def test_malformed_plate_metadata_is_rejected_before_typing():
     }
     with pytest.raises(ValueError, match="'type' and"):
         well(well_node)
+
+
+def test_present_null_plate_and_well_are_rejected():
+    """A present null is a malformed value, not an absent attribute."""
+    node = Node(type="collection", name="plate", nodes=[])
+    node.attributes = {"plate": None}
+    with pytest.raises(ValueError, match="must be an object"):
+        plate(node)
+
+    well_node = Node(type="collection", name="well", nodes=[])
+    well_node.attributes = {"well": None}
+    with pytest.raises(ValueError, match="must be an object"):
+        well(well_node)

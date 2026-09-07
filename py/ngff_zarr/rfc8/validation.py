@@ -735,11 +735,10 @@ def validate_plate_columns_rows_required(
                     f"Plate must declare a non-empty {field!r} array.",
                     site,
                 )
-        acquisitions = plate.get("acquisitions")
-        if acquisitions is not None and not isinstance(acquisitions, list):
+        if "acquisitions" in plate and not isinstance(plate["acquisitions"], list):
             raise ValidationError(
                 SpecRule.PLATE_COLUMNS_ROWS_REQUIRED,
-                f"Plate 'acquisitions' must be an array; got {acquisitions!r}.",
+                f"Plate 'acquisitions' must be an array; got {plate['acquisitions']!r}.",
                 site,
             )
 

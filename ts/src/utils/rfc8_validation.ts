@@ -785,10 +785,7 @@ export function validatePlateColumnsRowsRequired(
       }
     }
     const acquisitions = plate.acquisitions;
-    if (
-      acquisitions !== undefined && acquisitions !== null &&
-      !Array.isArray(acquisitions)
-    ) {
+    if (acquisitions !== undefined && !Array.isArray(acquisitions)) {
       throw new ValidationError(
         SpecRule.PlateColumnsRowsRequired,
         `Plate 'acquisitions' must be an array; got ` +

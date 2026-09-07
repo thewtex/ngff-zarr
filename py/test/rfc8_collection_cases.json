@@ -1850,6 +1850,22 @@
       "location": "ome.attributes.plate"
     },
     {
+      "name": "a null plate attribute",
+      "ome": {
+        "version": "0.9.dev3",
+        "type": "collection",
+        "name": "plate",
+        "nodes": [],
+        "attributes": {
+          "plate": null
+        }
+      },
+      "version": "0.9.dev3",
+      "rule": "plate-columns-rows-required",
+      "message": "Spec rule [plate-columns-rows-required] violated: A 'plate' attribute must be an object; got None.",
+      "location": "ome.attributes.plate"
+    },
+    {
       "name": "plate acquisitions that are not an array",
       "ome": {
         "version": "0.9.dev3",
@@ -1875,6 +1891,34 @@
       "version": "0.9.dev3",
       "rule": "plate-columns-rows-required",
       "message": "Spec rule [plate-columns-rows-required] violated: Plate 'acquisitions' must be an array; got 'none'.",
+      "location": "ome.attributes.plate"
+    },
+    {
+      "name": "plate acquisitions that are null",
+      "ome": {
+        "version": "0.9.dev3",
+        "type": "collection",
+        "name": "plate",
+        "nodes": [],
+        "attributes": {
+          "plate": {
+            "columns": [
+              {
+                "id": "1"
+              }
+            ],
+            "rows": [
+              {
+                "id": "A"
+              }
+            ],
+            "acquisitions": null
+          }
+        }
+      },
+      "version": "0.9.dev3",
+      "rule": "plate-columns-rows-required",
+      "message": "Spec rule [plate-columns-rows-required] violated: Plate 'acquisitions' must be an array; got None.",
       "location": "ome.attributes.plate"
     },
     {
@@ -1936,6 +1980,42 @@
       "version": "0.9.dev3",
       "rule": "well-reference-resolves",
       "message": "Spec rule [well-reference-resolves] violated: A 'well' attribute must be an object; got 'invalid'.",
+      "location": "ome.nodes[0].attributes.well"
+    },
+    {
+      "name": "a null well attribute",
+      "ome": {
+        "version": "0.9.dev3",
+        "type": "collection",
+        "name": "plate",
+        "attributes": {
+          "plate": {
+            "columns": [
+              {
+                "id": "1"
+              }
+            ],
+            "rows": [
+              {
+                "id": "A"
+              }
+            ]
+          }
+        },
+        "nodes": [
+          {
+            "type": "collection",
+            "name": "A1",
+            "nodes": [],
+            "attributes": {
+              "well": null
+            }
+          }
+        ]
+      },
+      "version": "0.9.dev3",
+      "rule": "well-reference-resolves",
+      "message": "Spec rule [well-reference-resolves] violated: A 'well' attribute must be an object; got None.",
       "location": "ome.nodes[0].attributes.well"
     }
   ]

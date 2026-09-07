@@ -150,3 +150,21 @@ Deno.test("malformed plate metadata is rejected before typing", () => {
   };
   assertThrows(() => well(wellNode), Error, "'type' and 'path'");
 });
+
+Deno.test("a present null plate or well is rejected", () => {
+  const plateNode: OmeNode = {
+    type: "collection",
+    name: "plate",
+    nodes: [],
+    attributes: { plate: null },
+  };
+  assertThrows(() => plate(plateNode), Error, "must be an object");
+
+  const wellNode: OmeNode = {
+    type: "collection",
+    name: "well",
+    nodes: [],
+    attributes: { well: null },
+  };
+  assertThrows(() => well(wellNode), Error, "must be an object");
+});

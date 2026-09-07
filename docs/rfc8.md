@@ -257,10 +257,12 @@ root = plate_collection_from_hcs(hcs_plate)
 ngff_zarr.to_collection_zarr("plate.ome.zarr", root)
 ```
 
-Well and acquisition references resolve against the nearest enclosing
-plate (`well-reference-resolves`, `acquisition-reference-resolves`), a
-plate must declare its columns and rows (`plate-columns-rows-required`),
-and the plate entry ids join the document-wide id rules.
+Well and acquisition references resolve against the nearest strictly
+enclosing plate collection, so a node's own `plate` attribute does not
+resolve that node's own references (`well-reference-resolves`,
+`acquisition-reference-resolves`); a plate must declare its columns and
+rows (`plate-columns-rows-required`), and the plate entry ids join the
+document-wide id rules.
 
 ### Validation
 

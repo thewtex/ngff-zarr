@@ -128,10 +128,11 @@ function referenceToDict(reference: Reference): Record<string, unknown> {
 
 /** The parsed `plate` attribute of `node`, or `undefined`. */
 export function plate(node: OmeNode): PlateAttribute | undefined {
-  const raw = node.attributes?.[PLATE_KEY];
-  if (raw === undefined || raw === null) {
+  const attributes = node.attributes ?? {};
+  if (!(PLATE_KEY in attributes)) {
     return undefined;
   }
+  const raw = attributes[PLATE_KEY];
   if (!isRecord(raw)) {
     throw new Error(
       `A 'plate' attribute must be an object; got ${JSON.stringify(raw)}.`,
@@ -176,10 +177,11 @@ export function setPlate(
 
 /** The parsed `well` attribute of `node`, or `undefined`. */
 export function well(node: OmeNode): WellAttribute | undefined {
-  const raw = node.attributes?.[WELL_KEY];
-  if (raw === undefined || raw === null) {
+  const attributes = node.attributes ?? {};
+  if (!(WELL_KEY in attributes)) {
     return undefined;
   }
+  const raw = attributes[WELL_KEY];
   if (!isRecord(raw)) {
     throw new Error(
       `A 'well' attribute must be an object; got ${JSON.stringify(raw)}.`,
