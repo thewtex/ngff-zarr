@@ -130,6 +130,12 @@ def test_preserve_survives_the_writer_regenerating_a_level(tmp_path):
     read = from_ome_zarr(str(store))
     assert tuple(read.images[1].dims) == ("z", "y", "x", "c")
     assert read.images[1].data.shape == (4, 8, 8, 2)
+    # The pixels, not only the labels: level 0 is the source, level 1 is the
+    # level the writer re-derived and must equal the one computed in memory.
+    assert np.array_equal(np.asarray(read.images[0].data), source)
+    assert np.array_equal(
+        np.asarray(read.images[1].data), np.asarray(multiscales.images[1].data)
+    )
 
 
 def test_canonical_stays_the_default():
