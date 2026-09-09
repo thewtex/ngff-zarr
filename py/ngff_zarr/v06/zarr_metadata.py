@@ -35,7 +35,7 @@ from .._supported_versions import (
     V06_SUPERSEDED_TAGS,
     NgffVersion,
 )
-from ..rfc4 import AnatomicalOrientation
+from ..rfc4 import AnatomicalOrientation, axes_orientations_from_axes
 from ..v04.zarr_metadata import (
     AxesType as AxesTypeV04,
 )
@@ -983,6 +983,7 @@ class Metadata:
                 translation=dict(zip(dims, translation.translation)),
                 name=root_attrs.get("name", "image"),
                 axes_units=dict(zip(dims, [ax.unit for ax in cs_intrinsic.axes])),
+                axes_orientations=axes_orientations_from_axes(cs_intrinsic.axes),
                 axes_types=non_default_axes_types(cs_intrinsic.axes),
             )
             images.append(ngff_image)

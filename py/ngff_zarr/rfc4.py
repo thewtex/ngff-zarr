@@ -8,6 +8,7 @@ to OME-NGFF axes, based on the LinkML schema.
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Literal
@@ -330,6 +331,39 @@ def anatomical_orientation_to_itk_direction(
             col[axis_index] = -1.0
             return col
     return None
+
+
+def axes_orientations_from_axes(
+    axes: Sequence[object],
+) -> dict[str, AnatomicalOrientation] | None:
+    """Anatomical orientations declared on axes (dataclasses or raw dicts), by name.
+
+    Only an anatomical orientation with a value from the RFC 4 vocabulary is
+    returned; ``None`` when no axis declares one.
+    """
+    orientations: dict[str, AnatomicalOrientation] = {}
+    for axis in axes:
+        if isinstance(axis, dict):
+            name = axis.get("name")
+            orientation = axis.get("orientation")
+        else:
+            name = getattr(axis, "name", None)
+            orientation = getattr(axis, "orientation", None)
+        if not isinstance(name, str) or orientation is None:
+            continue
+        if isinstance(orientation, AnatomicalOrientation):
+            orientations[name] = orientation
+            continue
+        if not isinstance(orientation, dict):
+            continue
+        if orientation.get("type") != "anatomical":
+            continue
+        try:
+            value = AnatomicalOrientationValues(orientation.get("value"))
+        except (TypeError, ValueError):
+            continue
+        orientations[name] = AnatomicalOrientation(value=value)
+    return orientations or None
 
 
 def add_anatomical_orientation_to_axis(

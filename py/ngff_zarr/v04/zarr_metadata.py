@@ -10,7 +10,7 @@ from .._store_types import StoreLike
 from .._supported_versions import NgffVersion
 
 # Import RFC 4 support
-from ..rfc4 import AnatomicalOrientation
+from ..rfc4 import AnatomicalOrientation, axes_orientations_from_axes
 
 if TYPE_CHECKING:
     from ..ngff_image import NgffImage
@@ -533,6 +533,8 @@ class Metadata:
                     if name is not None and unit is not None:
                         units[name] = unit
 
+        axes_orientations = axes_orientations_from_axes(axes)
+
         images = []
         datasets = []
         for dataset in root_attrs["datasets"]:
@@ -578,6 +580,7 @@ class Metadata:
                 translation=translation,
                 name=root_attrs.get("name", "image"),
                 axes_units=units,
+                axes_orientations=axes_orientations,
                 axes_types=non_default_axes_types(axes),
             )
             images.append(ngff_image)

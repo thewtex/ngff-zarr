@@ -2,13 +2,21 @@
 # SPDX-License-Identifier: MIT
 """Integration test for RFC 4 anatomical orientation."""
 
+import json
 import tempfile
 from pathlib import Path
 
 import numpy as np
 import pytest
 import zarr
-from ngff_zarr import LPS, RAS, NgffImage, to_multiscales, to_ngff_zarr
+from ngff_zarr import (
+    LPS,
+    RAS,
+    NgffImage,
+    from_ngff_zarr,
+    to_multiscales,
+    to_ngff_zarr,
+)
 from ngff_zarr.rfc4 import AnatomicalOrientation, AnatomicalOrientationValues
 from packaging import version
 
@@ -316,3 +324,77 @@ def test_rfc4_legacy_enabled_rfcs_kwarg_rejected():
             to_ngff_zarr(
                 store=str(store_path), multiscales=multiscales, enabled_rfcs=[4]
             )
+
+
+def _write_oriented_store(store_path, orientations, version):
+    data = np.random.rand(4, 8, 12).astype(np.float32)
+    ngff_image = NgffImage(
+        data=data,
+        dims=("z", "y", "x"),
+        scale={"x": 1.0, "y": 1.0, "z": 1.0},
+        translation={"x": 0.0, "y": 0.0, "z": 0.0},
+        axes_orientations=orientations,
+    )
+    multiscales = to_multiscales(ngff_image, scale_factors=[2])
+    to_ngff_zarr(store=str(store_path), multiscales=multiscales, version=version)
+
+
+@pytest.mark.parametrize("version", ["0.4", "0.5"])
+@pytest.mark.parametrize("orientations", [LPS, RAS], ids=["LPS", "RAS"])
+def test_from_ngff_zarr_reads_orientation_into_image(orientations, version):
+    """The orientation written to a store comes back on every ``NgffImage``."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        store_path = Path(temp_dir) / "test.zarr"
+        _write_oriented_store(store_path, orientations, version)
+
+        multiscales_back = from_ngff_zarr(str(store_path), validate=True)
+
+    assert len(multiscales_back.images) == 2
+    for image in multiscales_back.images:
+        assert image.axes_orientations is not None
+        assert set(image.axes_orientations) == {"x", "y", "z"}
+        for dim, expected in orientations.items():
+            orientation = image.axes_orientations[dim]
+            assert isinstance(orientation, AnatomicalOrientation)
+            assert orientation.type == "anatomical"
+            assert orientation.value == expected.value
+
+
+def test_from_ngff_zarr_leaves_orientation_unset_when_absent():
+    """No orientation on disk means ``axes_orientations`` stays ``None``."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        store_path = Path(temp_dir) / "test.zarr"
+        _write_oriented_store(store_path, None, "0.4")
+
+        multiscales_back = from_ngff_zarr(str(store_path))
+
+    for image in multiscales_back.images:
+        assert image.axes_orientations is None
+
+
+def test_from_ngff_zarr_skips_malformed_orientation_without_validation():
+    """Only well-formed anatomical orientations reach the image; the raw entry stays on ``metadata.axes``."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        store_path = Path(temp_dir) / "test.zarr"
+        _write_oriented_store(store_path, LPS, "0.4")
+
+        zattrs_path = store_path / ".zattrs"
+        attrs = json.loads(zattrs_path.read_text())
+        axes = attrs["multiscales"][0]["axes"]
+        for axis in axes:
+            if axis["name"] == "x":
+                axis["orientation"]["value"] = "not-an-orientation"
+            elif axis["name"] == "y":
+                axis["orientation"]["type"] = "cardinal"
+        zattrs_path.write_text(json.dumps(attrs))
+
+        multiscales_back = from_ngff_zarr(str(store_path), validate=False)
+
+    image = multiscales_back.images[0]
+    assert image.axes_orientations == {
+        "z": AnatomicalOrientation(
+            value=AnatomicalOrientationValues.inferior_to_superior
+        )
+    }
+    raw_x = next(a for a in multiscales_back.metadata.axes if a.name == "x")
+    assert raw_x.orientation == {"type": "anatomical", "value": "not-an-orientation"}
