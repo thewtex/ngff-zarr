@@ -1,3 +1,9 @@
+## ts-v0.32.1 (2026-09-11)
+
+### 🐛 Bug Fixes
+
+- **py,ts**: let the caller keep the axis order the input already has ([5b0e50b](https://github.com/fideus-labs/ngff-zarr/commit/5b0e50b067142a5dde92d2b1c9859eed71a22858))
+
 ## ts-v0.32.0 (2026-09-04)
 
 ### ♻️ Refactoring
