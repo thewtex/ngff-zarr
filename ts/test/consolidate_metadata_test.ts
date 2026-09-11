@@ -22,6 +22,10 @@ import {
 } from "../src/mod.ts";
 import { readOzxJsonFirst } from "../src/io/rfc9_zip.ts";
 import {
+  consolidateMetadata,
+  datasetNodePaths,
+} from "../src/utils/consolidate_metadata.ts";
+import {
   createAxis,
   createDataset,
   createMetadata,
@@ -197,6 +201,38 @@ Deno.test("in-place upgradeOmeZarr refreshes consolidated metadata", async () =>
   ]);
 });
 
+// A store holds nodes the multiscales metadata never names -- an OME-Zarr
+// `labels` group is the everyday case. A consolidated block is authoritative
+// for what a reader finds, so a refresh that listed only the dataset paths
+// would hide such a node even though its document is untouched. Python
+// re-globs the whole store and so never loses it.
+Deno.test("in-place upgradeOmeZarr keeps a non-dataset child node", async () => {
+  const multiscales = await fixture("0.5");
+  const store: MemoryStore = new Map();
+  await toOmeZarr(store, multiscales, { version: "0.5" });
+
+  // Add a sibling group and consolidate it in, as a Python-written store
+  // carrying labels would arrive.
+  await zarr.create(zarr.root(store).resolve("labels"), {
+    attributes: { labels: ["cells"] },
+  });
+  await consolidateMetadata(store, ["labels", "scale0", "scale1"]);
+
+  await upgradeOmeZarr(store, { version: "0.6" });
+
+  const block = consolidatedBlock(store);
+  assert(block !== undefined, "the re-tag de-consolidated the store");
+  const inlined = block.metadata as Record<string, Record<string, unknown>>;
+  assertEquals(Object.keys(inlined).sort(), ["labels", "scale0", "scale1"]);
+  assertEquals(inlined.labels.node_type, "group");
+  // A group entry is marked (vacuously) consolidated, as zarr-python does.
+  assertEquals(inlined.labels.consolidated_metadata, {
+    kind: "inline",
+    must_understand: false,
+    metadata: {},
+  });
+});
+
 Deno.test("in-place upgradeOmeZarr leaves an unconsolidated store alone", async () => {
   const multiscales = await fixture("0.5");
   const store: MemoryStore = new Map();
@@ -269,4 +305,69 @@ Deno.test("toOmeZarr consolidates a filesystem store", async () => {
     await Deno.readTextFile(join(plainPath, "zarr.json")),
   );
   assertFalse("consolidated_metadata" in plainRoot);
+});
+
+Deno.test("datasetNodePaths walks each dataset path's ancestors", () => {
+  // A flat pyramid is its own node list.
+  assertEquals(datasetNodePaths(["scale0", "scale1"]), ["scale0", "scale1"]);
+
+  // A nested path makes every ancestor a node in its own right, deduplicated
+  // across the datasets that share it, and sorted.
+  assertEquals(datasetNodePaths(["images/scale1", "images/scale0"]), [
+    "images",
+    "images/scale0",
+    "images/scale1",
+  ]);
+  assertEquals(datasetNodePaths(["a/b/c"]), ["a", "a/b", "a/b/c"]);
+
+  // Empty segments (a trailing or doubled slash) are not nodes.
+  assertEquals(datasetNodePaths(["scale0/"]), ["scale0"]);
+  assertEquals(datasetNodePaths(["images//scale0"]), [
+    "images",
+    "images/scale0",
+  ]);
+  assertEquals(datasetNodePaths([]), []);
+});
+
+// The writer creates the array document for a nested dataset path but no
+// document for the group above it, so that ancestor is not a node in the store
+// and consolidation does not invent an entry pointing at nothing. (A Zarr v3
+// hierarchy is supposed to carry that group document; the writer not making
+// one is a separate, pre-existing gap.)
+Deno.test("consolidation skips an ancestor the writer never materialized", async () => {
+  const seed: MemoryStore = new Map();
+  const array = await zarr.create(zarr.root(seed).resolve("seed"), {
+    shape: SHAPE,
+    chunk_shape: SHAPE,
+    data_type: "uint16" as zarr.DataType,
+    fill_value: 0,
+  });
+  const image = new NgffImage({
+    data: array,
+    dims: ["y", "x"],
+    scale: { y: 1, x: 1 },
+    translation: { y: 0, x: 0 },
+    name: "nested-fixture",
+    axesUnits: undefined,
+    computedCallbacks: undefined,
+  });
+  const axes = [
+    createAxis("y", "space", "micrometer"),
+    createAxis("x", "space", "micrometer"),
+  ];
+  const metadata = createMetadata(
+    axes,
+    [createDataset("images/scale0", [1, 1], [0, 0])],
+    "nested-fixture",
+    "0.5",
+  );
+  const store: MemoryStore = new Map();
+  await toOmeZarr(store, createNgffMultiscales([image], metadata), {
+    version: "0.5",
+  });
+
+  assertFalse(store.has("/images/zarr.json"));
+  const block = consolidatedBlock(store);
+  assert(block !== undefined, "nested write left the store unconsolidated");
+  assertEquals(Object.keys(block.metadata as object), ["images/scale0"]);
 });

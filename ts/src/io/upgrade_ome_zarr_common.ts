@@ -24,9 +24,9 @@ import {
 } from "../types/supported_versions.ts";
 import { buildRootAttributes } from "./to_ngff_zarr_ozx_common.ts";
 import {
+  consolidatedNodePaths,
   consolidateMetadata,
   datasetNodePaths,
-  hasConsolidatedMetadata,
 } from "../utils/consolidate_metadata.ts";
 
 /** Stores/paths `upgradeOmeZarr` can read from. */
@@ -251,16 +251,25 @@ export async function upgradeOmeZarrImpl(
   // refresh Python's `upgrade_ome_zarr` does. Only Zarr v3 reaches here -- the
   // v2/v3 boundary was rejected above -- so there is no `.zmetadata` sidecar
   // to worry about, and stale consolidation is impossible either way.
-  const wasConsolidated = await hasConsolidatedMetadata(store);
+  const consolidatedBefore = await consolidatedNodePaths(store);
   const multiscales = await deps.fromOmeZarr(store, { validate });
   const attributes = buildRootAttributes(multiscales.metadata, version);
   await zarr.create(location, { attributes });
-  if (wasConsolidated) {
-    await consolidateMetadata(
-      store,
-      datasetNodePaths(
+  if (consolidatedBefore !== undefined) {
+    // Union, not replace. A store holds nodes the multiscales metadata never
+    // names -- an OME-Zarr `labels` group is the everyday case -- and a
+    // consolidated block is authoritative for what a reader finds, so
+    // narrowing it to the dataset paths would hide those nodes even though
+    // their documents are still there. Python re-globs the store; the block
+    // this store already had is the same census on this side. A key whose
+    // document has since gone is skipped by `consolidateMetadata`, so
+    // carrying a stale one over costs nothing.
+    const nodePaths = new Set([
+      ...consolidatedBefore,
+      ...datasetNodePaths(
         multiscales.metadata.datasets.map((dataset) => dataset.path),
       ),
-    );
+    ]);
+    await consolidateMetadata(store, [...nodePaths].sort());
   }
 }

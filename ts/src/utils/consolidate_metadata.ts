@@ -146,14 +146,31 @@ export async function consolidateMetadata(
 }
 
 /**
- * Whether the store's root `zarr.json` carries a consolidated metadata block.
+ * The node paths listed in the store's existing consolidated block, or
+ * `undefined` when the store carries no block at all.
  *
- * The Zarr v3 counterpart of the Python `has_consolidated_metadata`, used to
- * decide whether an in-place metadata rewrite has consolidation to refresh.
+ * Answers the question Python's `has_consolidated_metadata` answers -- is there
+ * consolidation here to refresh? -- and one more besides: *which* nodes it
+ * covered. Python re-consolidates by globbing every `zarr.json` beneath the
+ * store, which no zarrita store can be asked to do (`FileSystemStore` exposes
+ * no listing API). The previous block is the next best census of the hierarchy:
+ * whoever consolidated the store last enumerated it, so a refresh can reuse
+ * their keys instead of narrowing the store to the nodes one caller happens to
+ * know about.
+ *
+ * An empty array means a consolidated block covering no nodes, which is a
+ * different thing from `undefined`.
  */
-export async function hasConsolidatedMetadata(
+export async function consolidatedNodePaths(
   store: ConsolidatableStore,
-): Promise<boolean> {
+): Promise<string[] | undefined> {
   const root = await readDocument(store, ROOT_DOCUMENT);
-  return root !== undefined && root.consolidated_metadata !== undefined;
+  const block = root?.consolidated_metadata as JsonObject | undefined;
+  if (block === undefined || block === null) {
+    return undefined;
+  }
+  const metadata = block.metadata;
+  return typeof metadata === "object" && metadata !== null
+    ? Object.keys(metadata)
+    : [];
 }
