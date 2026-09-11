@@ -1,3 +1,12 @@
+## py-v0.46.1 (2026-09-11)
+
+### 🐛 Bug Fixes
+
+- **py**: carry RFC-4 orientation onto the image on read ([1fbdbf6](https://github.com/fideus-labs/ngff-zarr/commit/1fbdbf6ac3e07fd377f9a137ab4f5d75c0ef40a5))
+- **py**: keep the axis order when the writer re-derives a level ([5f3189c](https://github.com/fideus-labs/ngff-zarr/commit/5f3189c21baa623fcd417f7c4bc4df1a3af7ffb3))
+- **py,ts**: let the caller keep the axis order the input already has ([5b0e50b](https://github.com/fideus-labs/ngff-zarr/commit/5b0e50b067142a5dde92d2b1c9859eed71a22858))
+- **py**: store a shard as asked instead of shortening it to the axis ([290afd0](https://github.com/fideus-labs/ngff-zarr/commit/290afd04ebf1e2ea28b9aec2f081c3488bd4d7d9))
+
 ## py-v0.46.0 (2026-09-04)
 
 ### ♻️ Refactoring
