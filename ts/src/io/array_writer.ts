@@ -222,9 +222,7 @@ async function writeChunkWithGet(
 
   // Validate chunk data size
   const expectedSize = chunkShape.reduce((a, b) => a * b, 1);
-  const actualSize = chunkTargetData.byteLength /
-    ((chunkTargetData as Uint8Array | Uint16Array | Int16Array | Float32Array)
-      .BYTES_PER_ELEMENT || 1);
+  const actualSize = (chunkTargetData as unknown as ArrayLike<unknown>).length;
   if (actualSize !== expectedSize) {
     console.error(`[writeChunkWithGet] Chunk data size mismatch!`);
     console.error(`  Image shape:`, shape);
@@ -257,6 +255,10 @@ function convertChunkToTargetType(
   targetDtype: zarr.DataType,
   targetTypedArrayConstructor: TypedArrayConstructor,
 ): ArrayBufferView {
+  // zarrita reads bool data as a BoolArray, which is not a TypedArray.
+  if (chunkData instanceof zarr.BoolArray && targetDtype === "bool") {
+    return chunkData as unknown as ArrayBufferView;
+  }
   // Handle different source data types
   if (
     chunkData instanceof BigInt64Array ||

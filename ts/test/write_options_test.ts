@@ -72,3 +72,41 @@ Deno.test("overwrite: false refuses an existing .ozx file", async () => {
   );
   await Deno.remove(dir, { recursive: true });
 });
+
+Deno.test("boolean images are written and read back", async () => {
+  const source = new Map<string, Uint8Array>();
+  const data = await zarr.create(zarr.root(source).resolve("mask"), {
+    shape: [2, 2],
+    chunkShape: [2, 2],
+    dtype: "bool",
+    fillValue: false,
+  });
+  await zarr.set(data, [0, 1], true);
+  const image = new NgffImage({
+    data,
+    dims: ["y", "x"],
+    scale: { y: 1, x: 1 },
+    translation: { y: 0, x: 0 },
+    name: "mask",
+    axesUnits: undefined,
+    computedCallbacks: undefined,
+  });
+  const metadata = createMetadata(
+    [createAxis("y", "space"), createAxis("x", "space")],
+    [createDataset("s0", [1, 1], [0, 0])],
+    "mask",
+  );
+  const store = new Map<string, Uint8Array>();
+  await toOmeZarr(store, createMultiscales([image], metadata));
+
+  const written = await zarr.open(zarr.root(store).resolve("s0"), {
+    kind: "array",
+  });
+  const read = await zarr.get(written);
+  assertEquals(Array.from(read.data as Iterable<boolean>), [
+    false,
+    true,
+    false,
+    false,
+  ]);
+});
