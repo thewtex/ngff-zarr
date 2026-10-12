@@ -706,3 +706,32 @@ Deno.test("byDimension items are externalized", async () => {
   }
   assertEquals(rotation.rotation, [[0.0, -1.0], [1.0, 0.0]]);
 });
+
+Deno.test("a reserved matrix group is refused instead of searched forever", () => {
+  const transforms = [{
+    type: "affine",
+    affine: [[1, 0, 0], [0, 1, 0], [0, 0, 1]],
+    input: { name: "a" },
+    output: { name: "b" },
+  }];
+  assertThrows(
+    () =>
+      externalizeMatrixTransforms(transforms, ["coordinateTransformations"]),
+    Error,
+    "already holds",
+  );
+});
+
+Deno.test("a matrix path naming a large array is refused before reading", async () => {
+  const location = zarr.root(new Map());
+  await zarr.create(location.resolve("s0"), {
+    shape: [256, 256],
+    dtype: "float64",
+    chunkShape: [256, 256],
+  });
+  await assertRejects(
+    () => resolveMatrixTransforms([{ type: "affine", path: "s0" }], location),
+    Error,
+    "at most 64x64",
+  );
+});
