@@ -43,15 +43,7 @@ jobs:
         # step whose log names the test.
         timeout-minutes: 40
         run: |
-          cd py && pytest -v --junitxml=junit/test-results.xml
-
-      - name: Publish Test Report
-        if:
-          ${{ matrix.os != 'ubuntu-22.04' && (matrix.os != 'macos-14' ||
-          matrix.python-version != '3.8') }}
-        uses: mikepenz/action-junit-report@v2
-        with:
-          report_paths: "junit/test-results*.xml"
+          cd py && pytest -v
 
   test-zarr2-reader:
     # zarrista-written stores must stay readable by both zarr-python
@@ -74,9 +66,4 @@ jobs:
 
       - name: Test with pytest
         run: |
-          cd py && pytest --junitxml=junit/test-results.xml
-
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v2
-        with:
-          report_paths: "junit/test-results*.xml"
+          cd py && pytest
