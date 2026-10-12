@@ -529,7 +529,9 @@ export async function itkImageToZarr(
   // For vector images, the components are stored in the data but not in the size
   // The actual data length includes components
   const components = itkImage.imageType.components || 1;
-  const isVector = components > 1;
+  // A single-component image still has its channel axis when the target
+  // dims name one; dropping it would leave the dims and the array out of step.
+  const isVector = components > 1 || (targetDims?.includes("c") ?? false);
 
   // Validate data length matches expected shape (including components for vector images)
   const spatialElements = shape.reduce((a, b) => a * b, 1);
