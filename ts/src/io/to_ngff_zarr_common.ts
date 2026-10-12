@@ -75,6 +75,16 @@ export async function writeToStore(
 
   const version = options.version ?? "0.5";
   gateShardingVersion(version, options.chunksPerShard);
+  if (options.overwrite === false) {
+    for (const { path } of data.metadata.datasets) {
+      if (await store.get(`/${path}/zarr.json`) !== undefined) {
+        throw new Error(
+          `The store already holds scale level '${path}'; pass ` +
+            "overwrite: true to replace it.",
+        );
+      }
+    }
+  }
   try {
     // A sharded array needs range reads, which an in-memory `Map` lacks.
     const root = zarr.root(
