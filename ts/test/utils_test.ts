@@ -4,7 +4,6 @@ import { assertEquals, assertThrows } from "@std/assert";
 import {
   isValidDimension,
   isValidUnit,
-  validateColor,
   validateMetadata,
 } from "../src/utils/validation.ts";
 import {
@@ -53,18 +52,6 @@ Deno.test("validateMetadata - invalid metadata", () => {
     Error,
     "Invalid metadata",
   );
-});
-
-Deno.test("validateColor - valid colors", () => {
-  validateColor("FF0000");
-  validateColor("00ff00");
-  validateColor("123ABC");
-});
-
-Deno.test("validateColor - invalid colors", () => {
-  assertThrows(() => validateColor("GG0000"), Error, "Invalid color");
-  assertThrows(() => validateColor("FF00"), Error, "Invalid color");
-  assertThrows(() => validateColor("#FF0000"), Error, "Invalid color");
 });
 
 Deno.test("isValidDimension", () => {

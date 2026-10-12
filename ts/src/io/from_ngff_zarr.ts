@@ -281,6 +281,11 @@ export async function fromOmeZarr(
 /** @deprecated Use {@link fromOmeZarr} instead. */
 export const fromNgffZarr = fromOmeZarr;
 
+/**
+ * @deprecated Unused by this package and always reads over HTTP with a
+ * `FetchStore`, even for local paths. Use {@link fromOmeZarr} and index the
+ * returned image's `data` instead.
+ */
 export async function readArrayData(
   storePath: string,
   arrayPath: string,

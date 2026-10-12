@@ -629,21 +629,3 @@ export function buildOmeroFromAccumulators(
 
   return { channels };
 }
-
-/**
- * Input parameters for worker-based OMERO computation.
- */
-export interface ComputeOmeroWorkerInput {
-  shape: readonly number[];
-  dims: string[];
-  quantiles: [number, number];
-  colors?: string[] | undefined;
-  labels?: string[] | undefined;
-}
-
-/**
- * Chunk input for streaming data to worker.
- */
-export interface ComputeOmeroChunkInput {
-  chunkData: ArrayLike<number>;
-}
