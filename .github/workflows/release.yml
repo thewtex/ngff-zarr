@@ -52,8 +52,9 @@ jobs:
             echo "project=$PROJECT" >> $GITHUB_OUTPUT
             echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-            # Determine if this is a pre-release
-            if [[ "$VERSION" =~ (alpha|beta|rc|dev|pre) ]]; then
+            # Determine if this is a pre-release: PEP 440 (0.5.0a1, 0.5.0.dev2)
+            # or semver (0.5.0-a0, 0.5.0-beta.1) forms; 0.5.0.post1 is final.
+            if [[ "$VERSION" =~ [0-9.-](a|b|rc|alpha|beta|pre|dev) ]]; then
               echo "prerelease=true" >> $GITHUB_OUTPUT
             else
               echo "prerelease=false" >> $GITHUB_OUTPUT
