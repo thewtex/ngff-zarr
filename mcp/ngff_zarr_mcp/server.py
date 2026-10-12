@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MIT
 """MCP server for ngff-zarr image conversion."""
 
+import asyncio
+import threading
 from typing import Literal
 
 from mcp.server.fastmcp import FastMCP
@@ -28,6 +30,20 @@ from .utils import (
 
 # Create the MCP server
 mcp = FastMCP("ngff-zarr")
+
+# The tools change process-wide state (sys.stdout, warning filters, ngff-zarr's
+# config), so they run one at a time, each in a worker thread with its own event
+# loop: their blocking reads and writes leave the server's loop free.
+_tool_lock = threading.Lock()
+
+
+def _run_tool(tool, args):
+    with _tool_lock:
+        return asyncio.run(tool(*args))
+
+
+async def _off_loop(tool, *args):
+    return await asyncio.to_thread(_run_tool, tool, args)
 
 
 @mcp.tool()
@@ -132,7 +148,7 @@ async def convert_images_to_ome_zarr(
         overwrite=overwrite,
     )
 
-    return await convert_to_ome_zarr(input_paths, options)
+    return await _off_loop(convert_to_ome_zarr, input_paths, options)
 
 
 @mcp.tool()
@@ -146,7 +162,7 @@ async def get_ome_zarr_info(store_path: str) -> StoreInfo:
     Returns:
         StoreInfo with detailed store information
     """
-    return await inspect_ome_zarr(store_path)
+    return await _off_loop(inspect_ome_zarr, store_path)
 
 
 @mcp.tool()
@@ -166,7 +182,7 @@ async def read_ome_zarr_store(
     Returns:
         ConversionResult with store information and any detected features
     """
-    return await read_ngff_zarr(store_path, storage_options, validate)
+    return await _off_loop(read_ngff_zarr, store_path, storage_options, validate)
 
 
 @mcp.tool()
@@ -180,7 +196,7 @@ async def validate_ome_zarr_store(store_path: str) -> ValidationResult:
     Returns:
         ValidationResult with validation status and any errors/warnings
     """
-    return await validate_ome_zarr(store_path)
+    return await _off_loop(validate_ome_zarr, store_path)
 
 
 @mcp.tool()
@@ -225,7 +241,7 @@ async def optimize_ome_zarr_store(
         overwrite=overwrite,
     )
 
-    return await optimize_zarr_store(options)
+    return await _off_loop(optimize_zarr_store, options)
 
 
 @mcp.resource("ngff-zarr://supported-formats")
