@@ -527,6 +527,22 @@ def _write_group_doc(path: Path, doc: dict) -> None:
     )
 
 
+def remove_zarr_store(path: Path) -> None:
+    """Delete the Zarr store at *path*; refuse any other non-empty directory.
+
+    The writers overwrite by default, so a mistyped output path must not wipe
+    an unrelated directory.
+    """
+    if any(path.iterdir()) and not any(
+        (path / doc).exists() for doc in ("zarr.json", ".zgroup", ".zarray")
+    ):
+        raise ValueError(
+            f"Refusing to overwrite '{path}': it is a non-empty directory that "
+            "is not a Zarr store. Remove it or choose another output path."
+        )
+    shutil.rmtree(path)
+
+
 def create_zarrista_group(
     path, attributes: dict | None, zarr_format: int, *, overwrite: bool = False
 ):
@@ -546,7 +562,7 @@ def create_zarrista_group(
 
     path = normalize_store(path)
     if overwrite and path.exists():
-        shutil.rmtree(path)
+        remove_zarr_store(path)
     path.mkdir(parents=True, exist_ok=True)
     attributes = {
         **_existing_group_attributes(path, zarr_format),

@@ -257,9 +257,9 @@ def write_store_to_zip(
                     f"Destination path '{zip_path}' is the same as the source "
                     "store. Choose a different destination for the .ozx archive."
                 )
-        import shutil
+        from ._zarrista_utils import remove_zarr_store
 
-        shutil.rmtree(zip_path)
+        remove_zarr_store(zip_path)
 
     # Create ZIP archive with ZIP64 support
     with zipfile.ZipFile(
