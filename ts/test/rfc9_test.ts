@@ -6,7 +6,12 @@
  * @see https://ngff.openmicroscopy.org/rfc/9/index.html
  */
 
-import { assertEquals, assertExists, assertRejects } from "@std/assert";
+import {
+  assertEquals,
+  assertExists,
+  assertRejects,
+  assertThrows,
+} from "@std/assert";
 import { join } from "@std/path";
 import { readImageNode } from "@itk-wasm/image-io";
 
@@ -935,4 +940,14 @@ Deno.test("RFC-9 with MR-head.nrrd (3D data)", async () => {
 
   console.log("  Created MR-head .ozx file:", ozxPath);
   console.log("  File count:", files.length);
+});
+
+Deno.test("memoryStoreToZip refuses stores too large for a ZIP without ZIP64", () => {
+  // Past 65,535 entries the archive's 16-bit entry count would wrap and
+  // readers would miss chunks; refuse rather than write it.
+  const store = new Map<string, Uint8Array>();
+  for (let i = 0; i < 70_001; i++) {
+    store.set(`c/${i}`, new Uint8Array(1));
+  }
+  assertThrows(() => memoryStoreToZip(store), Error, "65,535");
 });
