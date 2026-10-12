@@ -85,7 +85,11 @@ function extractOrientationsFromAxes(
         typeof orientation === "object" &&
         orientation.type === "anatomical"
       ) {
-        const enumValue = ORIENTATION_VALUE_MAP[orientation.value];
+        // Own keys only: "constructor" and the like are not orientations.
+        const enumValue =
+          Object.hasOwn(ORIENTATION_VALUE_MAP, orientation.value)
+            ? ORIENTATION_VALUE_MAP[orientation.value]
+            : undefined;
         if (enumValue) {
           orientations[name] = {
             type: "anatomical" as const,
@@ -236,6 +240,9 @@ export async function fromZarrAttrsV04(
     const axesData = multiscalesMetadata.axes as Array<
       Record<string, unknown> | string
     >;
+    if (axesData.length === 0) {
+      throw new Error("The multiscales metadata declares no axes.");
+    }
     dims = axesData.map((a) =>
       typeof a === "object" && "name" in a ? String(a.name) : String(a)
     );
