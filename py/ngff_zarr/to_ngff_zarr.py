@@ -1707,8 +1707,12 @@ def to_ome_zarr(
             chunks_per_shard = 2
 
         # Write to a temporary directory store first, then zip it into the
-        # requested .ozx archive (zarrista can only read zip archives).
-        temp_dir = tempfile.mkdtemp()
+        # requested .ozx archive (zarrista can only read zip archives). Stage
+        # beside the archive: the system temp dir is often a small tmpfs.
+        destination = Path(store)
+        temp_dir = tempfile.mkdtemp(
+            dir=destination.parent, prefix=f".{destination.name}."
+        )
         try:
             _to_ngff_zarr_impl(
                 temp_dir,
