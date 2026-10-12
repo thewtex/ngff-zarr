@@ -112,7 +112,7 @@ filterwarnings = [
   "ignore:(ast.Str|Attribute s|ast.NameConstant|ast.Num) is deprecated:DeprecationWarning:_pytest",
 ]
 log_cli_level = "INFO"
-testpaths = ["tests"]
+testpaths = ["test"]
 
 [tool.ruff]
 src = ["ngff_zarr"]
