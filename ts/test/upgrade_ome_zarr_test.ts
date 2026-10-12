@@ -33,10 +33,67 @@ function fixtureData(): Uint16Array {
   return data;
 }
 
+/**
+ * The fixture image as a genuine OME-Zarr 0.4 store: Zarr v2 documents and
+ * raw little-endian chunks. This package writes 0.5 and later only.
+ */
+function makeV04Store(): MemoryStore {
+  const encode = (value: unknown) =>
+    new TextEncoder().encode(JSON.stringify(value));
+  const axes = [
+    { name: "c", type: "channel" },
+    { name: "z", type: "space", unit: "micrometer" },
+    { name: "y", type: "space", unit: "micrometer" },
+    { name: "x", type: "space", unit: "micrometer" },
+  ];
+  const store: MemoryStore = new Map([
+    ["/.zgroup", encode({ zarr_format: 2 })],
+    [
+      "/.zattrs",
+      encode({
+        multiscales: [{
+          version: "0.4",
+          name: "upgrade-fixture",
+          axes,
+          datasets: [{
+            path: "0",
+            coordinateTransformations: [
+              { type: "scale", scale: [1, 1, 1, 1] },
+              { type: "translation", translation: [0, 0, 0, 0] },
+            ],
+          }],
+        }],
+      }),
+    ],
+    [
+      "/0/.zarray",
+      encode({
+        zarr_format: 2,
+        shape: SHAPE,
+        chunks: CHUNKS,
+        dtype: "<u2",
+        compressor: null,
+        fill_value: 0,
+        order: "C",
+        filters: null,
+        dimension_separator: "/",
+      }),
+    ],
+  ]);
+  const data = fixtureData();
+  const plane = CHUNKS[2] * CHUNKS[3];
+  for (let z = 0; z < SHAPE[1]; z++) {
+    const bytes = data.buffer.slice(z * plane * 2, (z + 1) * plane * 2);
+    store.set(`/0/0/${z}/0/0`, new Uint8Array(bytes));
+  }
+  return store;
+}
+
 /** Write a fresh synthetic single-scale image to a MemoryStore at `version`. */
 async function makeSourceStore(
   version: "0.4" | "0.5" | "0.6",
 ): Promise<MemoryStore> {
+  if (version === "0.4") return makeV04Store();
   const seed: MemoryStore = new Map();
   const seedArray = await zarr.create(zarr.root(seed).resolve("seed"), {
     shape: SHAPE,

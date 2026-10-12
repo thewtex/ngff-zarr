@@ -75,6 +75,13 @@ export async function writeToStore(
 
   const version = options.version ?? "0.5";
   gateShardingVersion(version, options.chunksPerShard);
+  if (version === "0.4") {
+    // OME-Zarr 0.4 is stored as Zarr v2, and this writer only writes Zarr v3.
+    throw new Error(
+      "Writing OME-Zarr 0.4 is not supported: it requires Zarr v2, and this " +
+        'writer writes Zarr v3. Write version "0.5" or later.',
+    );
+  }
   if (options.overwrite === false) {
     for (const { path } of data.metadata.datasets) {
       if (await store.get(`/${path}/zarr.json`) !== undefined) {

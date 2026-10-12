@@ -9,7 +9,7 @@ NGFF-Zarr provides a TypeScript implementation for working with OME-Zarr data st
 - 🦕 **Deno-first**: Built for Deno with first-class TypeScript support
 - 📦 **Universal compatibility**: Works in Deno, Node.js, and browsers
 - 🔍 **Type-safe**: Full TypeScript support with Zod schema validation
-- 🗂️ **OME-Zarr support**: Read and write OME-Zarr v0.4, v0.5, and v0.6 (v0.6 adds RFC-5 coordinate systems and transformations), plus the opt-in development version `0.9.dev1` which adopts RFC-3 (extended axis count, names, types and order)
+- 🗂️ **OME-Zarr support**: Read OME-Zarr v0.4, v0.5, and v0.6, and write v0.5 and v0.6 (v0.6 adds RFC-5 coordinate systems and transformations), plus the opt-in development version `0.9.dev1` which adopts RFC-3 (extended axis count, names, types and order)
 - 🧪 **Well-tested**: Comprehensive test suite with browser validation
 - 🏗️ **Mirrors Python API**: Familiar interfaces for Python users
 - 📖 **Lazy loading**: Efficient handling of large datasets
@@ -891,11 +891,10 @@ import { fromOmeZarr, toOmeZarr } from "@fideus-labs/ngff-zarr";
 // Convert from v0.4 to v0.5
 const multiscales = await fromOmeZarr("data_v04.ome.zarr");
 await toOmeZarr("data_v05.ome.zarr", multiscales, { version: "0.5" });
-
-// Convert from v0.5 to v0.4
-const multiscalesV5 = await fromOmeZarr("data_v05.ome.zarr");
-await toOmeZarr("data_v04.ome.zarr", multiscalesV5, { version: "0.4" });
 ```
+
+OME-Zarr 0.4 is stored as Zarr v2, which the TypeScript writer does not write:
+`toOmeZarr` with `version: "0.4"` throws. Use the Python package to write 0.4.
 
 ### Upgrading OME-Zarr Store Versions
 
@@ -963,9 +962,9 @@ await upgradeOmeZarr(store, { version: "0.6" });
 
 **Write-to-new-store.** When `output` is a store distinct from `input`, the
 source is read lazily and re-written to `output` at the requested version
-through the standard write pipeline. Every transition among 0.4, 0.5, 0.6 and
-0.9.dev1 works in this mode whenever the target version can express the axis
-model, and the source store is never mutated. An RFC-3 axis model is refused
+through the standard write pipeline. Every transition to 0.5, 0.6 or 0.9.dev1
+works in this mode whenever the target version can express the axis model (the
+TypeScript writer does not write 0.4), and the source store is never mutated. An RFC-3 axis model is refused
 below 0.9.dev1, so a store using one only converts upward.
 
 ```typescript

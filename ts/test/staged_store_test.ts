@@ -189,10 +189,15 @@ for (const [module, write, read, pack] of WRITERS) {
 
   Deno.test(`${module}: storeToZip refuses a store RFC-9 cannot hold`, async () => {
     assertThrows(() => pack(new Map()), Error, "no root zarr.json");
-    // RFC-9 holds OME-Zarr 0.5 and later; this writer stores a 0.4 image in
-    // a Zarr v3 container, but its metadata still declares 0.4.
+    // RFC-9 holds OME-Zarr 0.5 and later: a Zarr v3 store whose metadata
+    // declares 0.4 is refused.
     const v04: MemoryStore = new Map();
-    await write(v04, await image(), { version: "0.4" });
+    await write(v04, await image(), { version: "0.5" });
+    const document = JSON.parse(
+      new TextDecoder().decode(v04.get("/zarr.json")),
+    );
+    document.attributes.ome.version = "0.4";
+    v04.set("/zarr.json", new TextEncoder().encode(JSON.stringify(document)));
     assertThrows(() => pack(v04), Error, "requires OME-Zarr version 0.5");
     const v2: MemoryStore = new Map([[
       "/zarr.json",

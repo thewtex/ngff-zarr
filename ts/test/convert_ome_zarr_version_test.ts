@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright (c) Fideus Labs LLC
 // SPDX-License-Identifier: MIT
-import { assertEquals, assertExists } from "@std/assert";
+import { assertEquals, assertExists, assertRejects } from "@std/assert";
 import { fromNgffZarr, type MemoryStore, toNgffZarr } from "../src/mod.ts";
 
 Deno.test("convert v0.4 to v0.5", async () => {
@@ -49,61 +49,25 @@ Deno.test("convert v0.4 to v0.5", async () => {
   );
 });
 
-Deno.test("convert v0.4 to v0.5 to v0.4", async () => {
-  // Use cross-platform path handling to access the Python test data
+Deno.test("writing back to v0.4 is refused", async () => {
+  // OME-Zarr 0.4 is Zarr v2, which this package does not write.
   const testStorePath = new URL(
     "../../py/test/data/input/v04/6001240.zarr",
     import.meta.url,
   );
   const resolvedPath = testStorePath.pathname.replace(/^\/([A-Za-z]:)/, "$1");
-
-  // Load the original v0.4 zarr file
-  const originalMultiscales = await fromNgffZarr(resolvedPath, {
+  const original = await fromNgffZarr(resolvedPath, {
     validate: true,
     version: "0.4",
   });
 
-  // Convert to v0.5 format in memory store
   const v05Store: MemoryStore = new Map<string, Uint8Array>();
-  const v05Version = "0.5";
-  await toNgffZarr(v05Store, originalMultiscales, { version: v05Version });
+  await toNgffZarr(v05Store, original, { version: "0.5" });
+  const v05 = await fromNgffZarr(v05Store, { validate: true, version: "0.5" });
 
-  // Read the v0.5 data
-  const v05Multiscales = await fromNgffZarr(v05Store, {
-    validate: true,
-    version: v05Version,
-  });
-
-  // Convert back to v0.4 format in a new memory store
-  const v04Store: MemoryStore = new Map<string, Uint8Array>();
-  const v04Version = "0.4";
-  await toNgffZarr(v04Store, v05Multiscales, { version: v04Version });
-
-  // Verify we can read the final v0.4 data and it validates correctly
-  const finalMultiscales = await fromNgffZarr(v04Store, {
-    validate: true,
-    version: v04Version,
-  });
-
-  // Verify the final data has the same structure as the original
-  assertExists(finalMultiscales);
-  assertExists(finalMultiscales.images);
-  assertEquals(
-    finalMultiscales.images.length,
-    originalMultiscales.images.length,
-  );
-
-  // Verify basic metadata structure is preserved
-  assertEquals(
-    finalMultiscales.metadata.axes.length,
-    originalMultiscales.metadata.axes.length,
-  );
-  assertEquals(
-    finalMultiscales.metadata.datasets.length,
-    originalMultiscales.metadata.datasets.length,
-  );
-
-  console.log(
-    `Successfully round-trip converted v0.4 → v0.5 → v0.4 with ${finalMultiscales.images.length} images`,
+  await assertRejects(
+    () => toNgffZarr(new Map<string, Uint8Array>(), v05, { version: "0.4" }),
+    Error,
+    "Writing OME-Zarr 0.4 is not supported",
   );
 });

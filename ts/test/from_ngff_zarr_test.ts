@@ -88,7 +88,7 @@ Deno.test("from_ngff_zarr basic round trip", async () => {
   const multiscales = createMultiscalesFromImage(image);
 
   const testStore: MemoryStore = new Map<string, Uint8Array>();
-  const version = "0.4";
+  const version = "0.5";
 
   // Write to memory store
   await toNgffZarr(testStore, multiscales, { version });
@@ -129,7 +129,7 @@ Deno.test("omero zarr from_ngff_zarr to_ngff_zarr", async () => {
     import.meta.url,
   );
   const resolvedPath = storePath.pathname.replace(/^\/([A-Za-z]:)/, "$1"); // Fix Windows paths
-  const version = "0.4";
+  const version = "0.5";
 
   const multiscales = await fromNgffZarr(resolvedPath, { validate: true });
 
@@ -182,7 +182,7 @@ Deno.test("from_ngff_zarr with storage_options", async () => {
   const multiscales = createMultiscalesFromImage(image);
 
   const testStore: MemoryStore = new Map<string, Uint8Array>();
-  const version = "0.4";
+  const version = "0.5";
 
   await toNgffZarr(testStore, multiscales, { version });
 
@@ -497,7 +497,7 @@ Deno.test("fromNgffZarr accepts cache option", async () => {
   const multiscales = createMultiscalesFromImage(image);
 
   const testStore: MemoryStore = new Map<string, Uint8Array>();
-  const version = "0.4";
+  const version = "0.5";
   await toNgffZarr(testStore, multiscales, { version });
 
   // A plain Map satisfies the ChunkCache interface (get/set)

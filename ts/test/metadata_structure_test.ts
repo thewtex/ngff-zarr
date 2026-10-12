@@ -7,7 +7,7 @@
  * has the correct format with metadata under the "ome" property
  */
 
-import { assertEquals, assertExists } from "@std/assert";
+import { assertEquals, assertExists, assertRejects } from "@std/assert";
 import { fromNgffZarr } from "../src/io/from_ngff_zarr.ts";
 import { toNgffZarr } from "../src/io/to_ngff_zarr.ts";
 import type { MemoryStore } from "../src/io/from_ngff_zarr.ts";
@@ -78,8 +78,8 @@ Deno.test("Verify 0.5 metadata structure", async () => {
   console.log("✓ 0.5 format can be read back successfully");
 });
 
-Deno.test("Verify 0.4 metadata structure", async () => {
-  // Create a simple test image
+Deno.test("writing 0.4 metadata is refused", async () => {
+  // OME-Zarr 0.4 is Zarr v2, which this package does not write.
   const storePath = new URL(
     "../../py/test/data/input/cthead1.png",
     import.meta.url,
@@ -90,50 +90,11 @@ Deno.test("Verify 0.4 metadata structure", async () => {
   const ngffImage = await itkImageToNgffImage(itkImage);
   const multiscales = await toMultiscales(ngffImage);
 
-  // Write as 0.4 format
   const memoryStore: MemoryStore = new Map<string, Uint8Array>();
-  await toNgffZarr(memoryStore, multiscales, { version: "0.4" });
-
-  // Inspect the raw metadata structure
-  const root = zarr.root(memoryStore);
-  const rootGroup = await zarr.open(root, { kind: "group" });
-  const attrs = rootGroup.attrs as Record<string, unknown>;
-
-  console.log("Root attributes keys:", Object.keys(attrs));
-
-  // Verify 0.4 structure: metadata should be directly at root
-  assertExists(
-    attrs.multiscales,
-    "Should have 'multiscales' property in root attributes",
+  await assertRejects(
+    () => toNgffZarr(memoryStore, multiscales, { version: "0.4" }),
+    Error,
+    "Writing OME-Zarr 0.4 is not supported",
   );
-  assertEquals(
-    "ome" in attrs,
-    false,
-    "Should NOT have 'ome' property in 0.4 format",
-  );
-
-  // Verify multiscales structure
-  const multiscalesArray = attrs.multiscales as unknown[];
-  assertExists(multiscalesArray, "Multiscales array should exist");
-  assertEquals(Array.isArray(multiscalesArray), true, "Should be an array");
-  assertEquals(
-    multiscalesArray.length > 0,
-    true,
-    "Should have at least one element",
-  );
-
-  const firstMultiscale = multiscalesArray[0] as Record<string, unknown>;
-  assertEquals(firstMultiscale.version, "0.4", "Version should be 0.4");
-
-  console.log("✓ 0.4 metadata structure is correct");
-
-  // Now verify we can read it back
-  const multiscalesRead = await fromNgffZarr(memoryStore, {
-    version: "0.4",
-    validate: true,
-  });
-  assertExists(multiscalesRead, "Should be able to read back 0.4 format");
-  assertEquals(multiscalesRead.images.length > 0, true, "Should have images");
-
-  console.log("✓ 0.4 format can be read back successfully");
+  assertEquals(memoryStore.size, 0);
 });
