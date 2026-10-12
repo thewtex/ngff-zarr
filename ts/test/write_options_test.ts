@@ -5,7 +5,9 @@ import { assertEquals, assertRejects } from "@std/assert";
 import { unzipSync } from "fflate";
 import * as zarr from "zarrita";
 
+import { fromOmeZarr } from "../src/io/from_ngff_zarr.ts";
 import { toOmeZarr, toOmeZarrOzxData } from "../src/io/to_ngff_zarr.ts";
+import type { NgffMultiscales } from "../src/types/multiscales.ts";
 import { NgffImage } from "../src/types/ngff_image.ts";
 import { bytesOnlyCodecs } from "../src/utils/codecs.ts";
 import {
@@ -109,4 +111,13 @@ Deno.test("boolean images are written and read back", async () => {
     false,
     false,
   ]);
+});
+
+Deno.test("an .ozx path written by toOmeZarr reads back by path", async () => {
+  const dir = await Deno.makeTempDir();
+  const path = `${dir}/image.ozx`;
+  await toOmeZarr(path, await multiscales());
+  const read = await fromOmeZarr(path) as NgffMultiscales;
+  assertEquals(read.images[0].data.shape, [8, 8]);
+  await Deno.remove(dir, { recursive: true });
 });

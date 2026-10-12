@@ -23,6 +23,7 @@ import {
 } from "../utils/parse_metadata.ts";
 import { zarrGet } from "../utils/worker_pool.ts";
 import { ensureRangeReads } from "../utils/sharding.ts";
+import { isOzxPath } from "./rfc9_zip.ts";
 
 export type { ChunkCache } from "../utils/worker_pool.ts";
 
@@ -131,6 +132,12 @@ export async function fromOmeZarr(
         );
         if (store instanceof FileSystemStore || store instanceof ZipFileStore) {
           resolvedStore = store as unknown as zarr.Readable;
+        } else if (isOzxPath(storePath)) {
+          // A file-backed Blob: the archive is range-read, not loaded whole.
+          const { openAsBlob } = await import("node:fs");
+          resolvedStore = ZipFileStore.fromBlob(
+            await openAsBlob(storePath),
+          ) as unknown as zarr.Readable;
         } else {
           // Normalize the path for cross-platform compatibility
           const normalizedPath = storePath.replace(/^\/([A-Za-z]:)/, "$1");
