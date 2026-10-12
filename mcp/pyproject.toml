@@ -38,8 +38,6 @@ dependencies = [
     "pydantic >= 2.0",
     "httpx",
     "aiofiles",
-    "pathvalidate",
-    "requests",
     "aiohttp",
 ]
 dynamic = ["version"]
