@@ -51,9 +51,8 @@ class ConversionOptions(BaseModel):
     anatomical_orientation: str | None = Field(
         None,
         description=(
-            "Anatomical orientation preset (LPS, RAS). Applies to file/array "
-            "inputs only; existing zarr-store inputs keep their source "
-            "orientation metadata."
+            "Anatomical orientation preset (LPS, RAS). Applies to image file "
+            "inputs; an OME-Zarr store input keeps its own metadata."
         ),
     )
 
@@ -174,9 +173,6 @@ class OptimizationOptions(BaseModel):
     )
     chunks_per_shard: int | list[int] | tuple[int, ...] | None = Field(
         None, description="New sharding configuration"
-    )
-    storage_options: dict[str, str | int | bool] | None = Field(
-        None, description="Storage options for remote stores"
     )
     consolidate_metadata: bool = Field(
         True,

@@ -58,6 +58,10 @@ async def convert_images_to_ome_zarr(
     """
     Convert images to OME-Zarr format.
 
+    dims, scale, translation, units, name and anatomical_orientation set the
+    metadata of image file inputs. An OME-Zarr store input keeps its own
+    metadata, so setting any of them for one is an error.
+
     Args:
         input_paths: List of input image paths (local files, URLs, or S3 URLs)
         output_path: Output path for OME-Zarr store
@@ -78,9 +82,7 @@ async def convert_images_to_ome_zarr(
             zarrista)
         use_local_cluster: Use Dask LocalCluster for large datasets
         cache_dir: Directory for caching
-        anatomical_orientation: Anatomical orientation preset (LPS, RAS).
-            Applies to file/array inputs only; for existing zarr-store inputs
-            the orientation already in the source metadata is preserved.
+        anatomical_orientation: Anatomical orientation preset (LPS, RAS)
         storage_options: Storage options for remote stores (S3, GCS, etc.)
         consolidate_metadata: Write consolidated metadata (default True). Set
             False for stores destined for a backend that rejects it, such as
@@ -219,7 +221,6 @@ async def optimize_ome_zarr_store(
         compression_level=compression_level,
         chunks=chunks,
         chunks_per_shard=chunks_per_shard,
-        storage_options=None,  # Add the required parameter
         consolidate_metadata=consolidate_metadata,
         overwrite=overwrite,
     )
