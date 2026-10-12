@@ -229,11 +229,7 @@ def _write_with_zarrista(
     *store_path* addresses the array node itself (``<store>/<path>``); see
     :func:`_create_dataset` for ``compression_chain``.
     """
-    from ._zarrista_utils import (
-        _native_contiguous,
-        open_zarrista_array,
-        write_dask_array,
-    )
+    from ._zarrista_utils import open_zarrista_array, write_dask_array
 
     # Use full array shape if provided, otherwise use the region array shape
     dataset_shape = tuple(
@@ -255,47 +251,7 @@ def _write_with_zarrista(
         scale_path = Path(store_path)
         dataset = open_zarrista_array(scale_path.parent, scale_path.name)
 
-    # Try to write the dask array directly first
-    try:
-        write_dask_array(array, dataset, region=region)
-    except Exception as e:
-        # If we encounter dimension mismatch or shape-related errors,
-        # compute the array and try again with corrective action
-        error_msg = str(e).lower()
-        if any(
-            keyword in error_msg
-            for keyword in [
-                "dimension",
-                "shape",
-                "mismatch",
-                "size",
-                "extent",
-                "rank",
-                "invalid",
-            ]
-        ):
-            # Compute the array to get the actual shape
-            computed_array = _native_contiguous(array)
-
-            # Adjust region to match the actual computed array shape if needed
-            if len(region) == len(computed_array.shape):
-                adjusted_region = tuple(
-                    slice(
-                        region[i].start or 0,
-                        (region[i].start or 0) + computed_array.shape[i],
-                    )
-                    if isinstance(region[i], slice)
-                    else region[i]
-                    for i in range(len(region))
-                )
-            else:
-                adjusted_region = region
-
-            # Try writing the computed array with adjusted region
-            dataset[adjusted_region] = computed_array
-        else:
-            # Re-raise the exception if it's not related to dimension/shape issues
-            raise
+    write_dask_array(array, dataset, region=region)
 
 
 def _validate_ngff_parameters(

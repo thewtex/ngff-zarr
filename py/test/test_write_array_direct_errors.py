@@ -47,3 +47,22 @@ def test_write_wraps_compute_oserror(tmp_path):
     assert "Failed to write data to the zarr array" in msg
     # The original error is preserved in the chain.
     assert isinstance(exc_info.value.__cause__, OSError)
+
+
+def test_failed_write_reads_the_source_once(tmp_path):
+    """A failing source is not re-read into memory for a second attempt."""
+    calls = []
+
+    def boom(_block):
+        calls.append(1)
+        raise OSError(22, "Invalid argument")
+
+    data = da.zeros((4, 4), chunks=(4, 4), dtype="uint8").map_blocks(
+        boom, dtype="uint8"
+    )
+    multiscales = to_multiscales(data, scale_factors=[])
+    calls.clear()  # map_blocks probes the function once to infer its output
+
+    with pytest.raises(OSError):
+        to_ngff_zarr(str(tmp_path / "out.ome.zarr"), multiscales)
+    assert len(calls) == 1
