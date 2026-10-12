@@ -138,7 +138,6 @@ class StoreInfo(BaseModel):
     shape: list[int] = Field(..., description="Image shape")
     dtype: str = Field(..., description="Data type")
     chunks: list[int] | tuple[int, ...] = Field(..., description="Chunk sizes")
-    compression: str | None = Field(None, description="Compression codec")
     scale_info: dict = Field(..., description="Scale/spacing information")
     translation_info: dict = Field(..., description="Translation/origin information")
     method_type: str | None = Field(None, description="Multiscale method type")

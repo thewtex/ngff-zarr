@@ -326,24 +326,11 @@ async def read_ngff_zarr(
         Result containing store information and any errors
     """
     try:
-        # Read the multiscales
-        multiscales = from_ome_zarr(store_path, validate=validate)
-
-        # Analyze the store
-        store_info = analyze_zarr_store(store_path)
-
-        # Add additional information from multiscales
-        store_info_dict = store_info.model_dump()
-        if hasattr(multiscales, "method") and multiscales.method:
-            store_info_dict["method_type"] = str(multiscales.method)
-
-        # Note: Method metadata and RFC 4 features may not be available in current version
-        # These will be added once the features are fully integrated
-
+        store_info = analyze_zarr_store(store_path, storage_options, validate)
         return ConversionResult(
             success=True,
             output_path=store_path,
-            store_info=store_info_dict,
+            store_info=store_info.model_dump(),
             error=None,
         )
 

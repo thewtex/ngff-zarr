@@ -4,6 +4,7 @@
 
 import json
 import tempfile
+import zipfile
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 from typing import Any
@@ -69,6 +70,8 @@ def is_zarr_store(path: str) -> bool:
         return path.endswith(".zarr") or path.endswith(".ome.zarr")
 
     path_obj = Path(path)
+    if path_obj.suffix == ".ozx":
+        return path_obj.is_file()
     return (
         (path_obj / "zarr.json").exists()
         or (path_obj / ".zgroup").exists()
@@ -97,28 +100,24 @@ def check_output_path(output_path: str, overwrite: bool) -> None:
         )
 
 
-def url_store_mapping(store_path: str) -> MutableMapping:
-    """Key-to-bytes mapping over a remote store URL."""
-    if is_s3_url(store_path):
-        try:
-            import s3fs  # type: ignore[import-not-found,import-untyped]
-        except ImportError:
-            raise ImportError("s3fs required for S3 URLs")
-        fs = s3fs.S3FileSystem()
-        return s3fs.S3Map(store_path, s3=fs)
-
-    # HTTP/HTTPS URLs
+def url_store_mapping(
+    store_path: str, storage_options: dict | None = None
+) -> MutableMapping:
+    """Key-to-bytes mapping over a remote store URL (S3 needs s3fs)."""
     import fsspec  # type: ignore[import-untyped]
 
-    return fsspec.get_mapper(store_path)
+    return fsspec.get_mapper(store_path, **(storage_options or {}))
 
 
 def _store_doc(store: str | Path | Mapping, name: str) -> str | None:
     """Raw metadata document *name* at the store root, or None if unreadable."""
     if isinstance(store, (str, Path)):
         try:
+            if Path(store).is_file():  # an .ozx archive (RFC-9)
+                with zipfile.ZipFile(store) as archive:
+                    return archive.read(name).decode()
             return (Path(store) / name).read_text()
-        except OSError:
+        except (OSError, KeyError, zipfile.BadZipFile):
             return None
     try:
         data = store[name]
@@ -127,16 +126,18 @@ def _store_doc(store: str | Path | Mapping, name: str) -> str | None:
     return data.decode() if isinstance(data, (bytes, bytearray)) else str(data)
 
 
-def read_root_attrs(store: str | Path | Mapping) -> dict:
+def read_root_attrs(
+    store: str | Path | Mapping, storage_options: dict | None = None
+) -> dict:
     """Root group attributes read directly from the store's metadata documents.
 
-    Accepts a local directory path, a remote store URL, or a key-to-bytes
+    Accepts a local directory or .ozx path, a remote store URL, or a key-to-bytes
     mapping. Prefers the zarr v3 ``zarr.json`` document, falling back to the
     zarr v2 ``.zattrs``; returns ``{}`` when neither is readable. No
     zarr-python involved.
     """
     if isinstance(store, str) and is_url(store):
-        store = url_store_mapping(store)
+        store = url_store_mapping(store, storage_options)
     text = _store_doc(store, "zarr.json")
     if text is not None:
         try:
@@ -190,6 +191,8 @@ def get_store_size_and_files(store_path: str) -> tuple[int, int]:
     path = Path(store_path)
     if not path.exists():
         return 0, 0
+    if path.is_file():  # an .ozx archive
+        return path.stat().st_size, 1
 
     total_size = 0
     file_count = 0
@@ -202,21 +205,15 @@ def get_store_size_and_files(store_path: str) -> tuple[int, int]:
     return total_size, file_count
 
 
-def analyze_zarr_store(store_path: str) -> StoreInfo:
+def analyze_zarr_store(
+    store_path: str, storage_options: dict | None = None, validate: bool = False
+) -> StoreInfo:
     """Analyze a Zarr store and return information."""
     try:
-        store: str | MutableMapping
-        if is_url(store_path):
-            # Remote stores read through a key-to-bytes mapping, which the
-            # ngff-zarr store reader consumes directly (no zarr-python).
-            store = url_store_mapping(store_path)
-        else:
-            # For local files, just use the path directly
-            store = store_path
-
-        # Load multiscales
         try:
-            multiscales = from_ome_zarr(store)
+            multiscales = from_ome_zarr(
+                store_path, validate=validate, storage_options=storage_options
+            )
         except KeyError as e:
             if str(e) == "'start'" and store_path.startswith(("http://", "https://")):
                 # Handle OMERO metadata compatibility issue for remote stores
@@ -231,21 +228,12 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
         # Get store size and file count
         size_bytes, num_files = get_store_size_and_files(store_path)
 
-        # Extract compression info if available
-        compression = None
-        if hasattr(first_image.data, "chunks"):
-            # Get compression from first chunk
-            try:
-                chunk_info = first_image.data._meta
-                if hasattr(chunk_info, "compressor") and chunk_info.compressor:
-                    compression = str(chunk_info.compressor)
-            except Exception:
-                pass
-
         # Determine OME-Zarr version from the root metadata documents
         version = "0.4"  # Default
         try:
-            detected = detect_ome_zarr_version(read_root_attrs(store))
+            detected = detect_ome_zarr_version(
+                read_root_attrs(store_path, storage_options)
+            )
             if detected is not None:
                 version = detected
         except Exception:
@@ -260,12 +248,7 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
             dimensions=list(first_image.dims),
             shape=list(first_image.data.shape),
             dtype=str(first_image.data.dtype),
-            chunks=(
-                list(first_image.data.chunks[0])
-                if hasattr(first_image.data, "chunks")
-                else []
-            ),
-            compression=compression,
+            chunks=[int(size) for size in first_image.data.chunksize],
             scale_info=dict(first_image.scale) if first_image.scale else {},
             translation_info=(
                 dict(first_image.translation) if first_image.translation else {}
