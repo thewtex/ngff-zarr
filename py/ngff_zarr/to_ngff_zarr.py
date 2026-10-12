@@ -1164,7 +1164,6 @@ def _handle_large_array_writing(
     arr: dask.array.Array,
     path: str,
     dims: tuple[str, ...],
-    dim_factors: dict[str, int],
     chunks: tuple[int, ...],
     sharding_kwargs: dict,
     store_path: str,
@@ -1178,13 +1177,6 @@ def _handle_large_array_writing(
     **kwargs,
 ) -> None:
     """Handle writing large arrays by splitting them into manageable pieces."""
-    shrink_factors = []
-    for dim in dims:
-        if dim in dim_factors:
-            shrink_factors.append(dim_factors[dim])
-        else:
-            shrink_factors.append(1)
-
     zarr_chunk_shape, chunks, shards, internal_chunk_shape = _resolve_scale_chunks(
         arr, chunks, sharding_kwargs, internal_chunk_shape, shards
     )
@@ -1194,7 +1186,7 @@ def _handle_large_array_writing(
     y_index = dims.index("y")
 
     regions = _compute_write_regions(
-        image, dims, arr, shape, x_index, y_index, zarr_chunk_shape, shrink_factors
+        image, dims, arr, shape, x_index, y_index, zarr_chunk_shape
     )
 
     for region_index, region in enumerate(regions):
@@ -1238,7 +1230,6 @@ def _compute_write_regions(
     x_index: int,
     y_index: int,
     chunks: tuple[int, ...],
-    shrink_factors: list[int],
 ) -> list[tuple[slice, ...]]:
     """Compute the regions for writing a large array in chunks."""
     regions = []
@@ -1260,8 +1251,6 @@ def _compute_write_regions(
             slab_slices = arr.shape[z_index]
         slab_slices = int(slab_slices / z_chunks) * z_chunks
         num_z_splits = int(np.ceil(shape[z_index] / slab_slices))
-        while num_z_splits % shrink_factors[z_index] > 1:
-            num_z_splits += 1
 
         # num_y_splits = 1
         # num_x_splits = 1
@@ -1279,7 +1268,6 @@ def _compute_write_regions(
                         y_index,
                         z_index,
                         chunks,
-                        shrink_factors,
                         slab_index,
                     )
                 )
@@ -1306,7 +1294,6 @@ def _compute_plane_regions(
     y_index: int,
     z_index: int,
     chunks: tuple[int, ...],
-    shrink_factors: list[int],
     slab_index: int,
 ) -> list[tuple[slice, ...]]:
     """Compute regions for a single z-slab, dividing into planes and strips if needed."""
@@ -1329,8 +1316,6 @@ def _compute_plane_regions(
         plane_slices = arr.shape[y_index]
     plane_slices = int(plane_slices / y_chunks) * y_chunks
     num_y_splits = int(np.ceil(shape[y_index] / plane_slices))
-    while num_y_splits % shrink_factors[y_index] > 1:
-        num_y_splits += 1
 
     if slice_strips:
         # Need to subdivide further into strips
@@ -1346,8 +1331,6 @@ def _compute_plane_regions(
             strip_slices = arr.shape[x_index]
         strip_slices = int(strip_slices / x_chunks) * x_chunks
         num_x_splits = int(np.ceil(shape[x_index] / strip_slices))
-        while num_x_splits % shrink_factors[x_index] > 1:
-            num_x_splits += 1
 
         for plane_index in range(num_y_splits):
             for strip_index in range(num_x_splits):
@@ -1888,7 +1871,6 @@ def _to_ngff_zarr_impl(
 
     next_image = multiscales.images[0]
     dims = next_image.dims
-    previous_dim_factors = dict.fromkeys(dims, 1)
 
     for index in range(nscales):
         if progress and not metadata_only:
@@ -1898,15 +1880,6 @@ def _to_ngff_zarr_impl(
         arr = image.data
         path = metadata.datasets[index].path
         parent = str(PurePosixPath(path).parent)
-
-        # Calculate dimension factors
-        if index > 0 and index < nscales - 1 and multiscales.scale_factors:
-            dim_factors = _dim_scale_factors(
-                dims, multiscales.scale_factors[index], previous_dim_factors
-            )
-        else:
-            dim_factors = dict.fromkeys(dims, 1)
-        previous_dim_factors = dim_factors
 
         if index < start_level:
             _bind_existing_level(image, store_path, path, index)
@@ -1997,7 +1970,6 @@ def _to_ngff_zarr_impl(
                 arr,
                 path,
                 dims,
-                dim_factors,
                 chunks,
                 sharding_kwargs,
                 store_path,

@@ -25,7 +25,7 @@ def test_regions_fill_memory_target(monkeypatch, memory_target, expected_regions
     monkeypatch.setattr(config, "memory_target", memory_target)
 
     regions = _compute_write_regions(
-        image, ("z", "y", "x"), arr, arr.shape, 2, 1, (128, 128, 128), [1, 1, 1]
+        image, ("z", "y", "x"), arr, arr.shape, 2, 1, (128, 128, 128)
     )
 
     assert len(regions) == expected_regions
