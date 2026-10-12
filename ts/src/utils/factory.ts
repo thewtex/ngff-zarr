@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) Fideus Labs LLC
 // SPDX-License-Identifier: MIT
 import * as zarr from "zarrita";
+import { getTypedArrayConstructor } from "../io/array_writer.ts";
 import { defaultCodecs } from "../utils/codecs.ts";
 import { NgffImage } from "../types/ngff_image.ts";
 import { NgffMultiscales } from "../types/multiscales.ts";
@@ -22,7 +23,7 @@ async function createTestZarrArray(
   dtype: string,
   chunks: number[],
   name: string,
-): Promise<zarr.Array<zarr.DataType, zarr.Readable>> {
+): Promise<zarr.Array<zarr.DataType, Map<string, Uint8Array>>> {
   const store = new Map<string, Uint8Array>();
   const root = zarr.root(store);
 
@@ -38,7 +39,7 @@ async function createTestZarrArray(
 }
 
 export async function createNgffImage(
-  _data: ArrayBuffer | number[],
+  data: ArrayBuffer | number[],
   shape: number[],
   dtype: string,
   dims: string[],
@@ -48,6 +49,20 @@ export async function createNgffImage(
   axesTypes?: Record<string, string>,
 ): Promise<NgffImage> {
   const zarrArray = await createTestZarrArray(shape, dtype, shape, name);
+  // An ArrayBuffer holds the pixels' bytes; a number[] holds their values.
+  const TypedArray = getTypedArrayConstructor(
+    dtype as zarr.DataType,
+  ) as unknown as new (data: ArrayBuffer | number[]) => zarr.TypedArray<
+    zarr.DataType
+  >;
+  const stride = shape.map((_, i) =>
+    shape.slice(i + 1).reduce((size, extent) => size * extent, 1)
+  );
+  await zarr.set(zarrArray, null, {
+    data: new TypedArray(data),
+    shape,
+    stride,
+  });
 
   return new NgffImage({
     data: zarrArray,

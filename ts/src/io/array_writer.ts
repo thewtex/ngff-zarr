@@ -65,7 +65,9 @@ type TypedArrayConstructor =
   | BigInt64ArrayConstructor
   | BigUint64ArrayConstructor;
 
-function getTypedArrayConstructor(dtype: zarr.DataType): TypedArrayConstructor {
+export function getTypedArrayConstructor(
+  dtype: zarr.DataType,
+): TypedArrayConstructor {
   // Map zarrita data types to TypedArray constructors
   const constructorMap: Partial<Record<zarr.DataType, TypedArrayConstructor>> =
     {

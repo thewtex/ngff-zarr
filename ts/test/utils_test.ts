@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: Copyright (c) Fideus Labs LLC
 // SPDX-License-Identifier: MIT
 import { assertEquals, assertThrows } from "@std/assert";
+import * as zarr from "zarrita";
 import {
   isValidDimension,
   isValidUnit,
@@ -123,6 +124,31 @@ Deno.test("createNgffImage", async () => {
   assertEquals(image.dims, ["y", "x"]);
   assertEquals(image.data.shape, [256, 256]);
   assertEquals(image.data.dtype, "uint8");
+});
+
+Deno.test("createNgffImage keeps the pixel data it is given", async () => {
+  const pixels = new Uint16Array([1, 2, 3, 4, 5, 6]);
+  const image = await createNgffImage(
+    pixels.buffer,
+    [2, 3],
+    "uint16",
+    ["y", "x"],
+    { y: 1.0, x: 1.0 },
+    { y: 0.0, x: 0.0 },
+  );
+  const read = await zarr.get(image.data);
+  assertEquals(Array.from(read.data as Uint16Array), [1, 2, 3, 4, 5, 6]);
+
+  const fromNumbers = await createNgffImage(
+    [0.5, 1.5],
+    [2],
+    "float32",
+    ["x"],
+    { x: 1.0 },
+    { x: 0.0 },
+  );
+  const readNumbers = await zarr.get(fromNumbers.data);
+  assertEquals(Array.from(readNumbers.data as Float32Array), [0.5, 1.5]);
 });
 
 Deno.test("createMultiscales", async () => {
