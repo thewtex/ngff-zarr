@@ -1742,6 +1742,10 @@ def to_ome_zarr(
                 "RFC-9 zipped OME-Zarr (.ozx) requires OME-Zarr version 0.5 or "
                 f"later (Zarr v3). Got version '{version}'."
             )
+        if not overwrite and Path(store).exists():
+            raise FileExistsError(
+                f"'{store}' already exists; pass overwrite=True to replace it."
+            )
 
         # Default chunks_per_shard to 2 for .ozx files if not specified
         if chunks_per_shard is None:
@@ -1891,26 +1895,24 @@ def _to_ngff_zarr_impl(
         )
 
     # Create Zarr root
-    # Appending names only the levels it keeps until the new arrays are in
-    # place, so an interrupted call leaves a store that reads as those levels.
-    if start_level:
-        # Read before the rewrite: at zarr format 3 _create_zarr_root writes a
-        # fresh zarr.json without consolidated_metadata.
-        was_consolidated = has_consolidated_metadata(store, zarr_format)
-        kept = copy.deepcopy(metadata_dict)
-        kept["datasets"] = kept["datasets"][:start_level]
-        _create_zarr_root(store, version, overwrite, kept, root_attributes)
-        # The kept root names the matrix arrays; write them before it is
-        # consolidated, so an interrupted append still lists them.
-        write_matrix_arrays(store_path, matrix_arrays)
-        # Restore consolidation for the kept levels only when the final write
-        # will re-consolidate; otherwise this partial block would go stale.
-        if was_consolidated and consolidate_metadata:
-            _zarrista_consolidate_metadata(store, zarr_format)
-    else:
-        _create_zarr_root(store, version, overwrite, metadata_dict, root_attributes)
-        # After the root: an overwrite clears the store when it creates it.
-        write_matrix_arrays(store_path, matrix_arrays)
+    # The root names only the levels already in place until the new arrays
+    # are written, so an interrupted call never leaves a store that reads as
+    # complete with zero-filled levels.
+    # Read before the rewrite: at zarr format 3 _create_zarr_root writes a
+    # fresh zarr.json without consolidated_metadata.
+    was_consolidated = bool(start_level) and has_consolidated_metadata(
+        store, zarr_format
+    )
+    kept = copy.deepcopy(metadata_dict)
+    kept["datasets"] = kept["datasets"][:start_level]
+    _create_zarr_root(store, version, overwrite, kept, root_attributes)
+    # After the root, which an overwrite clears the store to create; before
+    # consolidation, so an interrupted append still lists them.
+    write_matrix_arrays(store_path, matrix_arrays)
+    # Restore consolidation for the kept levels only when the final write
+    # will re-consolidate; otherwise this partial block would go stale.
+    if was_consolidated and consolidate_metadata:
+        _zarrista_consolidate_metadata(store, zarr_format)
 
     if version == "0.4" and kwargs.get("compressors") is not None:
         raise ValueError(
@@ -2099,8 +2101,7 @@ def _to_ngff_zarr_impl(
             scale_strategy=scale_strategy,
         )
 
-    if start_level:
-        _create_zarr_root(store, version, False, metadata_dict, root_attributes)
+    _create_zarr_root(store, version, False, metadata_dict, root_attributes)
 
     # Clean up callbacks
     for image in multiscales.images:
