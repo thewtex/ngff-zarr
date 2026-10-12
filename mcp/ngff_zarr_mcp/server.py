@@ -368,6 +368,10 @@ def main():
 
     mcp.settings.host = args.host
     mcp.settings.port = args.port
+    if args.host not in ("127.0.0.1", "localhost", "::1"):
+        # FastMCP allowed only localhost Host headers for its default host; a
+        # public bind is reached by other names, as FastMCP(host=...) allows.
+        mcp.settings.transport_security = None
 
     if args.transport == "streamable-http":
         mcp.settings.stateless_http = args.stateless_http
