@@ -39,6 +39,7 @@ from .models import (
 )
 from .utils import (
     analyze_zarr_store,
+    check_output_path,
     detect_ome_zarr_version,
     is_url,
     is_zarr_store,
@@ -64,6 +65,8 @@ async def convert_to_ome_zarr(
                 store_info={},
                 error=f"Validation errors: {'; '.join(validation_errors)}",
             )
+
+        check_output_path(options.output_path, options.overwrite)
 
         # Setup Dask if needed
         client = setup_dask_config(
@@ -415,6 +418,8 @@ async def optimize_zarr_store(options: OptimizationOptions) -> ConversionResult:
                 store_info={},
                 error=f"Input store does not exist: {options.input_path}",
             )
+
+        check_output_path(options.output_path, options.overwrite)
 
         # Load multiscales
         multiscales = from_ome_zarr(str(input_path))

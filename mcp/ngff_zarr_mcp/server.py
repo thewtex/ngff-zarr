@@ -53,6 +53,7 @@ async def convert_images_to_ome_zarr(
     anatomical_orientation: str | None = None,
     storage_options: dict[str, str] | None = None,
     consolidate_metadata: bool = True,
+    overwrite: bool = False,
 ) -> ConversionResult:
     """
     Convert images to OME-Zarr format.
@@ -84,6 +85,8 @@ async def convert_images_to_ome_zarr(
         consolidate_metadata: Write consolidated metadata (default True). Set
             False for stores destined for a backend that rejects it, such as
             Icechunk.
+        overwrite: Replace an existing Zarr store at output_path (default
+            False: an existing output path is an error)
 
     Returns:
         ConversionResult with success status and store information
@@ -124,6 +127,7 @@ async def convert_images_to_ome_zarr(
         anatomical_orientation=anatomical_orientation,
         storage_options=storage_options,  # type: ignore[arg-type]
         consolidate_metadata=consolidate_metadata,
+        overwrite=overwrite,
     )
 
     return await convert_to_ome_zarr(input_paths, options)
@@ -186,6 +190,7 @@ async def optimize_ome_zarr_store(
     chunks: list[int] | None = None,
     chunks_per_shard: list[int] | None = None,
     consolidate_metadata: bool = True,
+    overwrite: bool = False,
 ) -> ConversionResult:
     """
     Optimize an existing OME-Zarr store with new compression/chunking.
@@ -200,6 +205,8 @@ async def optimize_ome_zarr_store(
         consolidate_metadata: Write consolidated metadata (default True). Set
             False for stores destined for a backend that rejects it, such as
             Icechunk.
+        overwrite: Replace an existing Zarr store at output_path (default
+            False: an existing output path is an error)
 
     Returns:
         ConversionResult with optimization results
@@ -214,6 +221,7 @@ async def optimize_ome_zarr_store(
         chunks_per_shard=chunks_per_shard,
         storage_options=None,  # Add the required parameter
         consolidate_metadata=consolidate_metadata,
+        overwrite=overwrite,
     )
 
     return await optimize_zarr_store(options)

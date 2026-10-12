@@ -90,6 +90,14 @@ class ConversionOptions(BaseModel):
         ),
     )
 
+    overwrite: bool = Field(
+        False,
+        description=(
+            "Replace an existing Zarr store at output_path. Without it an "
+            "existing output path is an error"
+        ),
+    )
+
     # Performance options
     use_local_cluster: bool = Field(
         False, description="Use Dask LocalCluster for large datasets"
@@ -175,6 +183,13 @@ class OptimizationOptions(BaseModel):
         description=(
             "Write consolidated metadata. Set False for stores destined for a "
             "backend that rejects it, such as Icechunk"
+        ),
+    )
+    overwrite: bool = Field(
+        False,
+        description=(
+            "Replace an existing Zarr store at output_path. Without it an "
+            "existing output path is an error"
         ),
     )
 

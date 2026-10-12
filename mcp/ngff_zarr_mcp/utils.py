@@ -76,6 +76,27 @@ def is_zarr_store(path: str) -> bool:
     )
 
 
+def check_output_path(output_path: str, overwrite: bool) -> None:
+    """Refuse an output path whose contents the write would delete.
+
+    ``to_ome_zarr`` removes what is at the path before writing, and the path
+    comes from an agent, so only a Zarr store, and only with ``overwrite``, may go.
+    """
+    path = Path(output_path)
+    if not path.exists():
+        return
+    if not overwrite:
+        raise FileExistsError(
+            f"Output path already exists: {output_path}. "
+            "Pass overwrite=True to replace the store there."
+        )
+    if path.is_dir() and any(path.iterdir()) and not is_zarr_store(output_path):
+        raise FileExistsError(
+            f"Refusing to overwrite {output_path}: it is a non-empty directory "
+            "but not a Zarr store."
+        )
+
+
 def url_store_mapping(store_path: str) -> MutableMapping:
     """Key-to-bytes mapping over a remote store URL."""
     if is_s3_url(store_path):

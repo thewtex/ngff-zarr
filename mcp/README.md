@@ -710,6 +710,9 @@ print(f"Dimensions: {info.dimensions}")
 ### Output Formats
 
 - OME-Zarr (.ome.zarr, .zarr)
+- An existing `output_path` is an error unless the tool is called with
+  `overwrite=True`, and even then only a Zarr store is replaced, never another
+  directory
 
 ## Performance Options
 
