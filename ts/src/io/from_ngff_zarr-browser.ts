@@ -4,7 +4,6 @@
 // (which contains Node.js-specific modules like node:fs, node:buffer, node:path)
 import * as zarr from "zarrita";
 
-import { MetadataSchema } from "../schemas/zarr_metadata.ts";
 import { NgffMultiscales } from "../types/multiscales.ts";
 import type { NgffScene } from "../types/scene.ts";
 import { childStore, hasSceneMetadata, readScene } from "./scene_common.ts";
@@ -14,11 +13,15 @@ import {
   readTransformation,
 } from "./transformation_common.ts";
 import type { V06Transform } from "../types/zarr_metadata.ts";
-import { NgffImage } from "../types/ngff_image.ts";
-import type { AxisUnit } from "../types/units.ts";
-import type { Metadata, Omero } from "../types/zarr_metadata.ts";
-import { extractMethodMetadata } from "../utils/parse_metadata.ts";
-import { fromZarrAttrsV06 } from "../utils/from_zarr_attrs.ts";
+import {
+  detectVersion,
+  extractMethodMetadata,
+} from "../utils/parse_metadata.ts";
+import {
+  fromZarrAttrsV04,
+  fromZarrAttrsV05,
+  fromZarrAttrsV06,
+} from "../utils/from_zarr_attrs.ts";
 import { isV06Version, NgffVersion } from "../types/supported_versions.ts";
 import { ensureRangeReads } from "../utils/sharding.ts";
 
@@ -239,165 +242,28 @@ export async function fromOmeZarr(
       });
     }
 
-    // Handle both 0.4 (multiscales at root) and 0.5 (multiscales under ome) formats
-    let multiscalesArray: unknown[];
-    let detectedVersion: string | undefined;
-
-    if (attrs && typeof attrs === "object" && "ome" in attrs) {
-      // OME-Zarr 0.5 format: metadata is under the 'ome' property
-      const omeAttrs = (attrs as Record<string, unknown>).ome as Record<
-        string,
-        unknown
-      >;
-      if (!omeAttrs || !omeAttrs.multiscales) {
-        throw new Error("No multiscales metadata found in OME-Zarr 0.5 store");
-      }
-      multiscalesArray = omeAttrs.multiscales as unknown[];
-      detectedVersion = omeAttrs.version as string | undefined;
-    } else if (attrs && typeof attrs === "object" && "multiscales" in attrs) {
-      // OME-Zarr 0.4 format: metadata is at root
-      multiscalesArray = (attrs as Record<string, unknown>)
-        .multiscales as unknown[];
-    } else {
+    // v0.4 and v0.5 go through the same parsers as the Node reader.
+    const multiscalesSource = (
+      omeForVersion ?? rootAttrsForVersion
+    ) as Record<string, unknown>;
+    if (!multiscalesSource.multiscales) {
       throw new Error("No multiscales metadata found in Zarr store");
     }
-
-    if (!Array.isArray(multiscalesArray) || multiscalesArray.length === 0) {
-      throw new Error("No multiscales metadata found in Zarr store");
-    }
-    const multiscalesMetadata = multiscalesArray[0] as unknown;
-
-    if (validate) {
-      const result = MetadataSchema.safeParse(multiscalesMetadata);
-      if (!result.success) {
-        throw new Error(`Invalid OME-Zarr metadata: ${result.error.message}`);
-      }
-
-      // Check version compatibility if specified
-      if (version) {
-        const metadataWithVersion = multiscalesMetadata as { version?: string };
-        const actualVersion = metadataWithVersion.version || detectedVersion;
-        if (actualVersion !== version) {
-          throw new Error(
-            `Expected OME-Zarr version ${version}, but found ${
-              actualVersion || "unknown"
-            }`,
-          );
-        }
-      }
-    }
-
-    const metadata = multiscalesMetadata as Metadata;
-
-    // Extract omero metadata from root attributes if present
-    if ((attrs as Record<string, unknown>).omero) {
-      const omeroData = (attrs as Record<string, unknown>).omero as Record<
-        string,
-        unknown
-      >;
-
-      // Handle backward compatibility for OMERO window metadata
-      if (omeroData.channels && Array.isArray(omeroData.channels)) {
-        for (
-          const channel of omeroData.channels as Array<
-            Record<string, unknown>
-          >
-        ) {
-          if (channel.window && typeof channel.window === "object") {
-            const window = channel.window as Record<string, number | undefined>;
-
-            // Ensure both min/max and start/end are present for compatibility
-            if (window.min !== undefined && window.max !== undefined) {
-              // If only min/max present, use them for start/end
-              if (window.start === undefined) {
-                window.start = window.min;
-              }
-              if (window.end === undefined) {
-                window.end = window.max;
-              }
-            } else if (window.start !== undefined && window.end !== undefined) {
-              // If only start/end present, use them for min/max
-              if (window.min === undefined) {
-                window.min = window.start;
-              }
-              if (window.max === undefined) {
-                window.max = window.end;
-              }
-            }
-          }
-        }
-      }
-
-      metadata.omero = omeroData as unknown as Omero;
-    }
-
-    const images: NgffImage[] = [];
-
-    for (const dataset of metadata.datasets) {
-      const arrayPath = dataset.path;
-
-      const zarrArray = (await zarr.open(root.resolve(arrayPath), {
-        kind: "array",
-      })) as zarr.Array<zarr.DataType, zarr.Readable>;
-
-      // Verify we have an array with the expected properties
-      if (
-        !zarrArray ||
-        !("shape" in zarrArray) ||
-        !("dtype" in zarrArray) ||
-        !("chunks" in zarrArray)
-      ) {
-        throw new Error(
-          `Invalid zarr array at path ${arrayPath}: missing shape property`,
-        );
-      }
-
-      const scale: Record<string, number> = {};
-      const translation: Record<string, number> = {};
-
-      for (const transform of dataset.coordinateTransformations) {
-        if (transform.type === "scale") {
-          metadata.axes.forEach((axis, i) => {
-            if (i < transform.scale.length) {
-              scale[axis.name] = transform.scale[i];
-            }
-          });
-        } else if (transform.type === "translation") {
-          metadata.axes.forEach((axis, i) => {
-            if (i < transform.translation.length) {
-              translation[axis.name] = transform.translation[i];
-            }
-          });
-        }
-      }
-
-      const dims = metadata.axes.map((axis) => axis.name);
-      const axesUnits = metadata.axes.reduce(
-        (acc, axis) => {
-          if (axis.unit) {
-            acc[axis.name] = axis.unit;
-          }
-          return acc;
-        },
-        {} as Record<string, AxisUnit>,
+    const detectedVersion = detectVersion(rootAttrsForVersion);
+    if (validate && version !== undefined && version !== detectedVersion) {
+      throw new Error(
+        `Expected OME-Zarr version ${version}, but found ${detectedVersion}`,
       );
-
-      const ngffImage = new NgffImage({
-        data: zarrArray,
-        dims,
-        scale,
-        translation,
-        name: metadata.name,
-        axesUnits: Object.keys(axesUnits).length > 0 ? axesUnits : undefined,
-        computedCallbacks: undefined,
-      });
-
-      images.push(ngffImage);
     }
+    const { metadata, images } = detectedVersion === NgffVersion.V05
+      ? await fromZarrAttrsV05(rootAttrsForVersion, resolvedStore, validate)
+      : await fromZarrAttrsV04(rootAttrsForVersion, resolvedStore, validate);
 
-    // Extract method metadata from the multiscales entry (mirrors non-browser version)
     const { method, methodType, methodMetadata } = extractMethodMetadata(
-      multiscalesMetadata as Record<string, unknown>,
+      (multiscalesSource.multiscales as unknown[])[0] as Record<
+        string,
+        unknown
+      >,
     );
     if (methodType) {
       metadata.type = methodType;
