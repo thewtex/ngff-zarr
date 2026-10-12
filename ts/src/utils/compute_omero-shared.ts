@@ -386,7 +386,8 @@ export function updateAccumulator(
   chunk: ArrayLike<number>,
 ): void {
   for (let i = 0; i < chunk.length; i++) {
-    const v = chunk[i];
+    // int64/uint64 data arrives as bigint; statistics are numbers.
+    const v = Number(chunk[i]);
     if (Number.isNaN(v)) {
       continue;
     }

@@ -245,8 +245,14 @@ function copyTypedArray(
   | Uint16Array
   | Int16Array
   | Uint32Array
-  | Int32Array {
-  if (data instanceof Float32Array) {
+  | Int32Array
+  | BigInt64Array
+  | BigUint64Array {
+  if (data instanceof BigInt64Array) {
+    return new BigInt64Array(data);
+  } else if (data instanceof BigUint64Array) {
+    return new BigUint64Array(data);
+  } else if (data instanceof Float32Array) {
     return new Float32Array(data);
   } else if (data instanceof Float64Array) {
     return new Float64Array(data);
@@ -400,7 +406,9 @@ export async function zarrToItkImage(
     | Uint16Array
     | Int16Array
     | Uint32Array
-    | Int32Array;
+    | Int32Array
+    | BigInt64Array
+    | BigUint64Array;
   let shape = result.shape;
   let _finalDims = dims;
 
@@ -517,6 +525,10 @@ export async function itkImageToZarr(
     dataType = "float32";
   } else if (itkImage.data instanceof Float64Array) {
     dataType = "float64";
+  } else if (itkImage.data instanceof BigInt64Array) {
+    dataType = "int64";
+  } else if (itkImage.data instanceof BigUint64Array) {
+    dataType = "uint64";
   } else {
     throw new Error(`Unsupported data type: ${itkImage.data.constructor.name}`);
   }
