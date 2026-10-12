@@ -115,13 +115,10 @@ async def convert_to_ome_zarr(
 
         check_output_path(options.output_path, options.overwrite)
 
-        # Setup Dask if needed
-        client = setup_dask_config(
+        with setup_dask_config(
             use_local_cluster=options.use_local_cluster,
             cache_dir=options.cache_dir,
-        )
-
-        try:
+        ):
             # Check if input is already a zarr store
             multiscales_obj = None
             ngff_image = None
@@ -292,11 +289,6 @@ async def convert_to_ome_zarr(
                 store_info=store_info.model_dump(),
                 error=None,
             )
-
-        finally:
-            # Cleanup Dask client
-            if client:
-                client.close()
 
     except Exception as e:
         return ConversionResult(

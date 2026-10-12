@@ -3,10 +3,11 @@
 """Utility functions for ngff-zarr MCP server."""
 
 import asyncio
+import contextlib
 import ipaddress
 import json
 import zipfile
-from collections.abc import Mapping, MutableMapping
+from collections.abc import Iterator, Mapping, MutableMapping
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -449,12 +450,16 @@ def get_available_compression_codecs() -> list[str]:
     return get_available_codecs()
 
 
+@contextlib.contextmanager
 def setup_dask_config(
     use_local_cluster: bool = False,
     cache_dir: str | None = None,
-) -> Any | None:
-    """Setup Dask configuration and return client if using LocalCluster."""
+) -> Iterator[Any | None]:
+    """Set the cache directory and start a LocalCluster for one conversion.
 
+    Yields the Client, or None without a LocalCluster. Both are undone on exit.
+    """
+    previous_cache_store = config.cache_store
     if cache_dir:
         cache_path = Path(cache_dir).resolve()
         cache_path.mkdir(parents=True, exist_ok=True)
@@ -463,30 +468,26 @@ def setup_dask_config(
         config.cache_store = cache_path
 
     client = None
-    if use_local_cluster:
-        try:
-            import psutil
-            from dask.distributed import Client, LocalCluster
-
-            n_workers = 4
-
+    try:
+        if use_local_cluster:
             try:
-                cpu_count = psutil.cpu_count(False)
-                if cpu_count is not None:
-                    n_workers = cpu_count // 2
-            except Exception:
-                pass
+                import psutil
+                from dask.distributed import Client
+            except ImportError:
+                raise ImportError("dask[distributed] required for LocalCluster")
 
-            cluster = LocalCluster(
-                n_workers=n_workers,
+            # Given worker options, the Client starts its own LocalCluster and
+            # closes it with itself.
+            client = Client(
+                n_workers=max(1, (psutil.cpu_count(False) or 8) // 2),
                 processes=True,
                 threads_per_worker=2,
             )
-            client = Client(cluster)
-        except ImportError:
-            raise ImportError("dask[distributed] required for LocalCluster")
-
-    return client
+        yield client
+    finally:
+        if client is not None:
+            client.close()
+        config.cache_store = previous_cache_store
 
 
 def validate_conversion_options(options: dict[str, Any]) -> list[str]:
