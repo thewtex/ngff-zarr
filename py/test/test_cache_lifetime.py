@@ -76,6 +76,10 @@ def test_cache_leaves_sigint_alone(cache_dir):
     assert signal.getsignal(signal.SIGINT) is before
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="os.kill(SIGTERM) terminates a Windows process without running handlers",
+)
 def test_sigterm_stops_and_cleans_cache(tmp_path):
     cache = tmp_path / "cache"
     script = textwrap.dedent(
