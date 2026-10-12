@@ -33,6 +33,7 @@ from ._zarrista_utils import (
 from .from_ngff_zarr import REMOTE_URL_SCHEMES, _open_root_node, from_ome_zarr
 from .multiscales import NgffMultiscales
 from .rfc9_zip import ZipReadStore, is_ozx_path, write_store_to_zip
+from .scene import _check_image_path
 from .to_ngff_zarr import to_ome_zarr
 from .v04.zarr_metadata import (
     Plate,
@@ -310,6 +311,7 @@ class HCSWell:
             return None
 
         image_meta = self.metadata.images[field_index]
+        _check_image_path(image_meta.path, parent="well group")
         image_path = f"{self.path}/{image_meta.path}"
 
         # Cache images to avoid reloading

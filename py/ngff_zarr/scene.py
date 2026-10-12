@@ -76,8 +76,8 @@ class NgffScene:
         return from_ome_zarr(store, **{**kwargs, "kind": "scene"})
 
 
-def _check_image_path(path: object) -> None:
-    """Reject an image path that is not a plain path below the scene group.
+def _check_image_path(path: object, parent: str = "scene group") -> None:
+    """Reject an image path that is not a plain path below its *parent* group.
 
     The path is joined to the store, so a backslash counts as a separator
     (Windows does) and a percent-encoded part is read as a URL store does.
@@ -85,7 +85,7 @@ def _check_image_path(path: object) -> None:
     parts = re.split(r"[\\/]", path) if isinstance(path, str) else [""]
     if any(unquote(part) in ("", ".", "..") for part in parts):
         raise ValueError(
-            f"Image path {path!r} must be a relative path below the scene group."
+            f"Image path {path!r} must be a relative path below the {parent}."
         )
 
 
