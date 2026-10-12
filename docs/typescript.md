@@ -983,23 +983,10 @@ environment, consistent with the other I/O functions. In the browser, use a
 
 ### High Content Screening (HCS)
 
-Work with plate and well data:
-
-```typescript
-import { fromHcsZarr } from "@fideus-labs/ngff-zarr";
-
-// Read HCS plate
-const plate = await fromHcsZarr("plate.ome.zarr");
-
-console.log(`Plate: ${plate.metadata.name}`);
-console.log(`Wells: ${plate.metadata.wells.length}`);
-
-// Access specific well
-const well = plate.getWell("A", "1");
-if (well) {
-  console.log(`Well A/1 has ${well.images.length} field(s)`);
-}
-```
+Reading and writing HCS plates is not supported yet in the TypeScript package:
+`fromHcsZarr` and `toHcsZarr` throw. Use the Python package's `from_hcs_zarr`
+and `to_hcs_zarr`. The `HCSPlate`, `HCSWell` and plate metadata types and
+schemas are available for plate metadata you read yourself.
 
 ## 🆚 Comparison with Python
 

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright (c) Fideus Labs LLC
 // SPDX-License-Identifier: MIT
-import { assertEquals, assertNotEquals } from "@std/assert";
+import { assertEquals, assertNotEquals, assertThrows } from "@std/assert";
 import { fromHcsZarr, toHcsZarr } from "../src/io/hcs.ts";
 import { HCSPlate as HCSPlateClass } from "../src/types/hcs.ts";
 import type {
@@ -11,12 +11,44 @@ import type {
   WellImage,
 } from "../src/schemas/index.ts";
 import type { PlateMetadata, WellMetadata } from "../src/types/hcs.ts";
+import {
+  validatePlate,
+  ValidationLevel,
+} from "../src/utils/structural_validation.ts";
 import { existsSync } from "jsr:@std/fs@0.224.0";
 import { resolve } from "jsr:@std/path@0.224.0";
 
 // Test data path - using the Python test data
 const TEST_DATA_DIR = resolve("../py/test/data/input");
 const HCS_DATA_PATH = resolve(TEST_DATA_DIR, "hcs.ome.zarr");
+
+// fromHcsZarr does not read plate metadata yet, so the plate tests build an
+// HCSPlate over the fixture from this metadata; wells load from the store.
+const PLATE_METADATA: PlateMetadata = {
+  columns: [{ name: "1" }, { name: "2" }],
+  rows: [{ name: "A" }, { name: "B" }],
+  wells: [
+    { path: "A/1", rowIndex: 0, columnIndex: 0 },
+    { path: "A/2", rowIndex: 0, columnIndex: 1 },
+    { path: "B/1", rowIndex: 1, columnIndex: 0 },
+    { path: "B/2", rowIndex: 1, columnIndex: 1 },
+  ],
+  version: "0.4",
+  acquisitions: [{ id: 0, name: "Test Acquisition" }],
+  field_count: 2,
+  name: "Test Plate",
+};
+
+function fixturePlate(validate = false): HCSPlateClass {
+  if (validate) {
+    validatePlate(PLATE_METADATA, { level: ValidationLevel.Strict });
+  }
+  return new HCSPlateClass({
+    store: HCS_DATA_PATH,
+    metadata: PLATE_METADATA,
+    validate,
+  });
+}
 
 Deno.test("test_hcs_data_exists", () => {
   assertEquals(existsSync(HCS_DATA_PATH), true, "HCS test data should exist");
@@ -28,7 +60,7 @@ Deno.test("test_hcs_data_exists", () => {
 });
 
 Deno.test("test_from_hcs_zarr_basic", () => {
-  const plate = fromHcsZarr(HCS_DATA_PATH);
+  const plate = fixturePlate();
 
   assertEquals(
     plate instanceof HCSPlateClass,
@@ -37,7 +69,7 @@ Deno.test("test_from_hcs_zarr_basic", () => {
   );
   assertEquals(plate.name, "Test Plate", "Plate should have correct name");
 
-  // Check plate structure (using mock data for now)
+  // Check plate structure
   assertEquals(plate.rows.length, 2, "Should have 2 rows (A, B)");
   assertEquals(plate.columns.length, 2, "Should have 2 columns (1, 2)");
   assertEquals(
@@ -63,7 +95,7 @@ Deno.test("test_from_hcs_zarr_basic", () => {
 });
 
 Deno.test("test_from_hcs_zarr_acquisitions", () => {
-  const plate = fromHcsZarr(HCS_DATA_PATH);
+  const plate = fixturePlate();
 
   assertNotEquals(
     plate.acquisitions,
@@ -77,13 +109,13 @@ Deno.test("test_from_hcs_zarr_acquisitions", () => {
 });
 
 Deno.test("test_from_hcs_zarr_field_count", () => {
-  const plate = fromHcsZarr(HCS_DATA_PATH);
+  const plate = fixturePlate();
 
   assertEquals(plate.fieldCount, 2, "Should have field count of 2");
 });
 
 Deno.test("test_get_well_by_name", () => {
-  const plate = fromHcsZarr(HCS_DATA_PATH);
+  const plate = fixturePlate();
 
   const well = plate.getWell("A", "1");
   assertNotEquals(well, null, "Should find well A/1");
@@ -97,7 +129,7 @@ Deno.test("test_get_well_by_name", () => {
 });
 
 Deno.test("test_get_well_by_indices", () => {
-  const plate = fromHcsZarr(HCS_DATA_PATH);
+  const plate = fixturePlate();
 
   const well1 = plate.getWellByIndices(0, 0); // A/1
   assertNotEquals(well1, null, "Should find well at indices 0,0");
@@ -113,7 +145,7 @@ Deno.test("test_get_well_by_indices", () => {
 });
 
 Deno.test("test_well_images", () => {
-  const plate = fromHcsZarr(HCS_DATA_PATH);
+  const plate = fixturePlate();
   const well = plate.getWell("A", "1");
 
   assertNotEquals(well, null, "Well should not be null");
@@ -131,16 +163,13 @@ Deno.test("test_well_images", () => {
 });
 
 Deno.test("test_get_image_from_well", async () => {
-  const plate = fromHcsZarr(HCS_DATA_PATH);
+  const plate = fixturePlate();
   const well = plate.getWell("A", "1");
 
   assertNotEquals(well, null, "Well should not be null");
 
   // Get first field of view
   const _image = await well!.getImage(0);
-  // Note: This will be null in the mock implementation, but when real data loading is implemented,
-  // it should return a proper multiscales object
-  // assertNotEquals(image, null, "Should get image");
 
   // Test invalid field index
   const noneImage = await well!.getImage(99);
@@ -148,15 +177,13 @@ Deno.test("test_get_image_from_well", async () => {
 });
 
 Deno.test("test_get_image_by_acquisition", async () => {
-  const plate = fromHcsZarr(HCS_DATA_PATH);
+  const plate = fixturePlate();
   const well = plate.getWell("A", "1");
 
   assertNotEquals(well, null, "Well should not be null");
 
   // Get image from acquisition 0
   const _image = await well!.getImageByAcquisition(0, 0);
-  // Note: This will be null in the mock implementation
-  // assertNotEquals(image, null, "Should get image from acquisition");
 
   // Test non-existent acquisition
   const noneImage = await well!.getImageByAcquisition(99, 0);
@@ -217,127 +244,29 @@ Deno.test("test_well_metadata_creation", () => {
   assertEquals(wellMetadata.images[0].acquisition, 0);
 });
 
-Deno.test("test_to_hcs_zarr_basic", () => {
-  // Create a simple plate structure
-  const columns: PlateColumn[] = [{ name: "1" }];
-  const rows: PlateRow[] = [{ name: "A" }];
-  const wells: PlateWell[] = [{ path: "A/1", rowIndex: 0, columnIndex: 0 }];
-
-  const plateMetadata: PlateMetadata = {
-    columns,
-    rows,
-    wells,
-    name: "Test Plate",
-    field_count: 1,
-    version: "0.4",
-  };
-
-  const plate = new HCSPlateClass({
-    store: "test://store",
-    metadata: plateMetadata,
-  });
-
-  // Write to temporary location (mock implementation for now)
-  const outputPath = "/tmp/test_plate.ome.zarr";
-  toHcsZarr(plate, outputPath);
-
-  // The mock implementation just logs, so we can't check the actual output
-  // In a real implementation, we would check that the structure was created
-});
-
-Deno.test("test_round_trip_basic", () => {
-  // Create simple plate metadata
-  const columns: PlateColumn[] = [{ name: "1" }, { name: "2" }];
-  const rows: PlateRow[] = [{ name: "A" }];
-  const wells: PlateWell[] = [
-    { path: "A/1", rowIndex: 0, columnIndex: 0 },
-    { path: "A/2", rowIndex: 0, columnIndex: 1 },
-  ];
-  const acquisitions: PlateAcquisition[] = [
-    {
-      id: 0,
-      name: "Test Acq",
-      maximumfieldcount: 1,
-    },
-  ];
-
-  const originalMetadata: PlateMetadata = {
-    columns,
-    rows,
-    wells,
-    acquisitions,
-    field_count: 1,
-    name: "Round Trip Test",
-    version: "0.4",
-  };
-
-  const originalPlate = new HCSPlateClass({
-    store: "test://original",
-    metadata: originalMetadata,
-  });
-
-  const outputPath = "/tmp/roundtrip.ome.zarr";
-
-  // Save (mock implementation)
-  toHcsZarr(originalPlate, outputPath);
-
-  // Load (using mock data, but would load from actual saved data in real implementation)
-  const loadedPlate = fromHcsZarr(outputPath);
-
-  // Compare metadata (note: the mock implementation returns fixed data,
-  // so these assertions test the structure rather than the actual round-trip)
-  assertEquals(typeof loadedPlate.name, "string");
-  assertEquals(loadedPlate.rows.length >= 1, true);
-  assertEquals(loadedPlate.columns.length >= 1, true);
-  assertEquals(loadedPlate.wells.length >= 1, true);
-
-  // Check acquisitions exist
-  assertNotEquals(loadedPlate.acquisitions, undefined);
-  assertEquals(loadedPlate.acquisitions!.length >= 1, true);
-
-  const loadedAcq = loadedPlate.acquisitions![0];
-  assertEquals(typeof loadedAcq.id, "number");
-});
-
-Deno.test("test_hcs_image_axes_and_dims", async () => {
-  const plate = fromHcsZarr(HCS_DATA_PATH);
-  const well = plate.getWell("A", "1");
-
-  if (well !== null) {
-    const _image = await well.getImage(0);
-
-    // Note: In the mock implementation, image will be null
-    // When real data loading is implemented, these checks would be enabled:
-
-    // assertNotEquals(image, null, "Image should not be null");
-
-    // Check the first scale level
-    // const ngffImage = image!.images[0];
-
-    // Should have t, c, z, y, x dimensions based on the test data
-    // const expectedDims = ["t", "c", "z", "y", "x"];
-    // assertEquals(ngffImage.dims, expectedDims);
-
-    // Check that the data has the right number of dimensions
-    // assertEquals(ngffImage.data.shape.length, 5);
-  }
-});
-
 Deno.test("test_validate_hcs_metadata", () => {
-  // With validate: true, fromHcsZarr now runs the strict plate structural
-  // rules (validatePlate). The mock plate is internally consistent, so this
-  // must not throw.
-  const plate = fromHcsZarr(HCS_DATA_PATH, { validate: true });
+  // The strict plate structural rules (validatePlate) accept the fixture's
+  // internally consistent plate metadata.
+  const plate = fixturePlate(true);
   assertNotEquals(plate, null);
 });
 
 Deno.test("test_validate_hcs_well_metadata", () => {
   // Loading a well from a plate read with validate: true runs the strict
   // per-well structural rules (validateWell) where the well's own metadata is
-  // first available. The mock plate declares a single acquisition, so the
+  // first available. The fixture plate declares a single acquisition, so the
   // acquisition rule is a no-op and the well loads without throwing.
-  const plate = fromHcsZarr(HCS_DATA_PATH, { validate: true });
+  const plate = fixturePlate(true);
   const well = plate.getWell("A", "1");
   assertNotEquals(well, null, "Well A/1 should load under validation");
   assertEquals(well!.images.length, 2, "Well should expose its two fields");
+});
+
+Deno.test("fromHcsZarr and toHcsZarr refuse instead of faking a plate", () => {
+  assertThrows(() => fromHcsZarr(HCS_DATA_PATH), Error, "not supported");
+  assertThrows(
+    () => toHcsZarr(fixturePlate(), "/tmp/plate.ome.zarr"),
+    Error,
+    "not supported",
+  );
 });
