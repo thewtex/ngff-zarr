@@ -137,7 +137,7 @@ def detect_cli_io_backend(input: list[str]) -> ConversionBackend:
 
     # Leica image file formats (LIF, LOF, XLIF, XLEF, XLCF)
     liffile_supported_extensions = (".lif", ".lof", ".xlif", ".xlef", ".xlcf")
-    if extension in liffile_supported_extensions:
+    if _matches_extension(extension, liffile_supported_extensions):
         return ConversionBackend.LIFFILE
 
     try:
