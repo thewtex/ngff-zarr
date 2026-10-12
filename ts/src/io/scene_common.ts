@@ -562,8 +562,10 @@ export async function writeSceneToStore(
     try {
       const existing = await zarr.open(root, { kind: "group" });
       attributes = { ...(existing.attrs as Record<string, unknown>) };
-    } catch {
-      // No root group yet: nothing to keep.
+    } catch (error) {
+      // No root group yet: nothing to keep. A malformed root must surface,
+      // not be replaced.
+      if (!zarr.isZarritaError(error, "NotFoundError")) throw error;
     }
   }
   const ondisk = version === "0.6" ? V06_ONDISK_VERSION : version;

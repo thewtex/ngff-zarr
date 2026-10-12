@@ -892,3 +892,17 @@ Deno.test("upstream registration example", async () => {
   assertEquals(field.path, "coordinateTransformations/dfield");
   assertEquals(field.interpolation, "linear");
 });
+
+Deno.test("overwrite false surfaces a malformed root instead of replacing it", async () => {
+  const { scene } = await tilesScene();
+  const store: MemoryStore = new Map([
+    ["/zarr.json", new TextEncoder().encode("{not json")],
+  ]);
+  await assertRejects(
+    () => toOmeZarr(store, scene, { overwrite: false }),
+  );
+  assertEquals(
+    new TextDecoder().decode(store.get("/zarr.json")),
+    "{not json",
+  );
+});
