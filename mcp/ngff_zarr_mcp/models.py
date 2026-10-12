@@ -75,7 +75,7 @@ class ConversionOptions(BaseModel):
 
     # Storage options
     compression_codec: str | None = Field(
-        None, description="Compression codec (gzip, lz4, zstd, blosc)"
+        None, description="Compression codec (gzip, zstd, blosc:zstd, blosc:lz4)"
     )
     compression_level: int | None = Field(None, description="Compression level")
     use_tensorstore: bool = Field(

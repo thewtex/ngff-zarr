@@ -283,7 +283,6 @@ def get_compression_codecs() -> str:
 
     codec_descriptions = {
         "gzip": "General purpose, good compression ratio, slower",
-        "lz4": "Fast compression/decompression, moderate compression",
         "zstd": "Good balance of speed and compression ratio",
         "blosc": "Meta-compressor with various algorithms",
     }
