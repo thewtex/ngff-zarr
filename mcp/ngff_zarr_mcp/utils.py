@@ -18,25 +18,9 @@ from ngff_zarr import (  # type: ignore[import-untyped]
     config,
     from_ome_zarr,
 )
-
-# Import unit validation function
-try:
-    from ngff_zarr.v04.zarr_metadata import (
-        is_unit_supported,  # type: ignore[import-untyped]
-    )
-except ImportError:
-    # Fallback if not available
-    def is_unit_supported(unit: str) -> bool:
-        common_units = [
-            "meter",
-            "millimeter",
-            "micrometer",
-            "nanometer",
-            "second",
-            "millisecond",
-        ]
-        return unit.lower() in common_units
-
+from ngff_zarr.v04.zarr_metadata import (  # type: ignore[import-untyped]
+    is_unit_supported,
+)
 
 from .models import StoreInfo, SupportedFormats
 

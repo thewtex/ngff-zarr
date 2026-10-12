@@ -17,21 +17,7 @@ from ngff_zarr import (  # type: ignore[import-untyped]
     to_multiscales,
     to_ome_zarr,
 )
-
-# Import validation function if available
-try:
-    from ngff_zarr import validate as validate_ngff
-except ImportError:
-    # Fallback if ngff-zarr schema validation is unavailable (no-op stub whose
-    # signature mirrors ngff_zarr.validate).
-    def validate_ngff(
-        ngff_dict: dict,
-        version: str = "0.4",
-        model: str = "image",
-        strict: bool = False,
-    ) -> None:
-        pass
-
+from ngff_zarr import validate as validate_ngff
 
 from .models import (
     ConversionOptions,
