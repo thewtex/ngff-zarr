@@ -27,11 +27,10 @@ jobs:
           environments: ${{ matrix.environment }}
           frozen: true
 
-      - name: Run linting
-        working-directory: ./mcp
-        run: pixi run --frozen -e ${{ matrix.environment }} lint
-
+      # ruff runs for the whole repository in prek.yml. Type checking needs
+      # only one OS per Python version.
       - name: Run type checking
+        if: matrix.os == 'ubuntu-latest'
         working-directory: ./mcp
         run: pixi run --frozen -e ${{ matrix.environment }} typecheck
 
