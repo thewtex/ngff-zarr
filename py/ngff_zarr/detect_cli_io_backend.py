@@ -47,8 +47,8 @@ def detect_cli_io_backend(input: list[str]) -> ConversionBackend:
     else:
         extension = "".join(input_path.suffixes).lower()
 
-    # RFC-9: Support .ozx (zipped OME-Zarr) files
-    ngff_zarr_supported_extensions = (".zarr", ".ome.zarr", ".ozx")
+    # RFC-9: Support .ozx (zipped OME-Zarr) files, and plain .zip archives
+    ngff_zarr_supported_extensions = (".zarr", ".ome.zarr", ".ozx", ".zip")
     if _matches_extension(extension, ngff_zarr_supported_extensions):
         return ConversionBackend.NGFF_ZARR
 
