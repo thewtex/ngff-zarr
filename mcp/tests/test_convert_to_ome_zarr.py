@@ -238,6 +238,25 @@ async def test_convert_to_ome_zarr_invalid_input():
 
 
 @pytest.mark.asyncio
+async def test_unreadable_input_returns_an_error(tmp_path, capsys):
+    """A bad input is an error result, not a dead server.
+
+    ngff-zarr reports an unreadable input on stdout and calls sys.exit. Under
+    the stdio transport stdout carries the JSON-RPC messages, and SystemExit
+    escapes ``except Exception``, so the server died mid-request.
+    """
+    bad = tmp_path / "scan.tif"
+    bad.write_bytes(b"not a TIFF")
+    options = ConversionOptions(output_path=str(tmp_path / "scan.ome.zarr"))
+
+    result = await convert_to_ome_zarr([str(bad)], options)
+
+    assert not result.success
+    assert "scan.tif" in result.error
+    assert capsys.readouterr().out == ""
+
+
+@pytest.mark.asyncio
 async def test_convert_to_ome_zarr_invalid_options(test_input_file, temp_output_dir):
     """Test conversion with invalid options."""
     # Verify input file exists

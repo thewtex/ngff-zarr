@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MIT
 """MCP tools for ngff-zarr image conversion."""
 
+import contextlib
+import io
 import tempfile
 import warnings
 from pathlib import Path
@@ -48,6 +50,25 @@ from .utils import (
     setup_dask_config,
     validate_conversion_options,
 )
+
+
+def _read_input(inputs: list[str]):
+    """Read input files into an NgffImage, reporting a bad input as ValueError.
+
+    ngff-zarr reports a bad input on stdout and calls sys.exit. Under the stdio
+    transport stdout carries the JSON-RPC messages and SystemExit would end the
+    server, so capture the message and raise it instead.
+    """
+    printed = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(printed):
+            return cli_input_to_ngff_image(detect_cli_io_backend(inputs), inputs)
+    except SystemExit as e:
+        # shortcut: rich wraps the message at 80 columns, so a long path can gain
+        # a space; ngff-zarr versions that raise CliInputError skip this path.
+        raise ValueError(
+            " ".join(printed.getvalue().split()) or f"Could not read {inputs}"
+        ) from e
 
 
 async def convert_to_ome_zarr(
@@ -107,12 +128,7 @@ async def convert_to_ome_zarr(
                 # Prepare input files (download remote files if needed)
                 with tempfile.TemporaryDirectory() as temp_dir:
                     prepared_inputs = await prepare_input_files(input_paths, temp_dir)
-
-                    # Detect input backend
-                    backend = detect_cli_io_backend(prepared_inputs)
-
-                    # Load input image
-                    ngff_image = cli_input_to_ngff_image(backend, prepared_inputs)
+                    ngff_image = _read_input(prepared_inputs)
 
             # Apply metadata options (dims, scale, translation, name,
             # anatomical_orientation). These overrides apply only to file/array
