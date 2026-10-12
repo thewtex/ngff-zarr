@@ -174,3 +174,22 @@ Deno.test("2D RGB image: data round-trips correctly", async () => {
   const expected = Array.from(image.data as Uint8Array);
   assertEquals(actual, expected);
 });
+
+Deno.test("4D scalar image: spatial spacing, origin and orientation", async () => {
+  // ITK size, spacing and origin run x, y, z, t.
+  const image = mockItkImage([5, 4, 3, 2], "float32");
+  image.spacing = [0.5, 0.6, 0.7, 9];
+  image.origin = [1, 2, 3, 40];
+  const ngff = await itkImageToNgffImage(image);
+
+  assertEquals(ngff.dims, ["t", "z", "y", "x"]);
+  assertEquals(ngff.scale, { z: 0.7, y: 0.6, x: 0.5 });
+  assertEquals(ngff.translation, { z: 3, y: 2, x: 1 });
+
+  // An identity direction gives the same orientations as a 3D image.
+  const image3d = mockItkImage([5, 4, 3], "float32");
+  assertEquals(
+    ngff.axesOrientations,
+    (await itkImageToNgffImage(image3d)).axesOrientations,
+  );
+});
