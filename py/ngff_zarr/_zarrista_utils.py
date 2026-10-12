@@ -35,6 +35,7 @@ import re
 import shutil
 import threading
 import time
+import weakref
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
 
@@ -832,22 +833,28 @@ def is_zarrista_array(obj) -> bool:
 
 
 def zarrista_array_to_dask(
-    arr, store_path: Path | None = None, node_path: str | None = None
+    arr,
+    store_path: Path | None = None,
+    node_path: str | None = None,
+    on_release=None,
 ) -> dask.array.Array:
     """Wrap zarrista ``Array`` *arr* as a lazy dask array.
 
     Chunks follow the stored chunk grid, using the subchunk (inner chunk)
     shape for sharded arrays so reads stay at the efficient granularity.
     *store_path* and *node_path* name the array's place in a local store
-    (see :class:`_ZarristaArrayAdapter`).
+    (see :class:`_ZarristaArrayAdapter`). *on_release* is called once no
+    dask graph reads the array any more, or at interpreter exit.
     """
     if arr.is_sharded:
         chunks = tuple(arr.subchunk_shape)
     else:
         chunks = tuple(arr.chunk_shape([0] * arr.ndim))
-    return dask.array.from_array(
-        _ZarristaArrayAdapter(arr, store_path, node_path), chunks=chunks
-    )
+    adapter = _ZarristaArrayAdapter(arr, store_path, node_path)
+    if on_release is not None:
+        # Every dask graph derived from the array holds the adapter.
+        weakref.finalize(adapter, on_release)
+    return dask.array.from_array(adapter, chunks=chunks)
 
 
 def open_zarrista_lazy(path, component: str | None = None) -> dask.array.Array:
