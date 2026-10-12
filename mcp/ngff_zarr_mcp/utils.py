@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: MIT
 """Utility functions for ngff-zarr MCP server."""
 
+import asyncio
+import ipaddress
 import json
-import tempfile
 import zipfile
 from collections.abc import Mapping, MutableMapping
 from pathlib import Path
@@ -39,9 +40,24 @@ except ImportError:
 from .models import StoreInfo, SupportedFormats
 
 
+async def _refuse_local_host(request: httpx.Request) -> None:
+    """Refuse loopback and link-local hosts, such as cloud metadata endpoints.
+
+    shortcut: the address is resolved again on connect, so DNS rebinding can
+    slip past; bind the connection to the checked address if that matters.
+    """
+    host = request.url.host
+    for *_, sockaddr in await asyncio.get_running_loop().getaddrinfo(host, None):
+        address = ipaddress.ip_address(sockaddr[0])
+        if address.is_loopback or address.is_link_local:
+            raise ValueError(f"Refusing to download from {host}: a local address.")
+
+
 async def download_file(url: str, destination: Path) -> None:
     """Download a file from URL to destination."""
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(
+        follow_redirects=True, event_hooks={"request": [_refuse_local_host]}
+    ) as client:
         async with client.stream("GET", url) as response:
             response.raise_for_status()
             async with aiofiles.open(destination, "wb") as f:
@@ -508,13 +524,8 @@ def validate_conversion_options(options: dict[str, Any]) -> list[str]:
     return errors
 
 
-async def prepare_input_files(
-    input_paths: list[str], temp_dir: str | None = None
-) -> list[str]:
+async def prepare_input_files(input_paths: list[str], temp_dir: str) -> list[str]:
     """Prepare input files, downloading remote files if necessary."""
-    if temp_dir is None:
-        temp_dir = tempfile.mkdtemp()
-
     temp_path = Path(temp_dir)
     temp_path.mkdir(parents=True, exist_ok=True)
 
@@ -527,7 +538,10 @@ async def prepare_input_files(
             if not filename:
                 filename = f"downloaded_file_{len(prepared_paths)}"
 
+            # Keep the name: a header such as .mhd names its data file.
             local_path = temp_path / filename
+            if local_path.exists():
+                raise ValueError(f"Two inputs download to the same name {filename!r}.")
             await download_file(input_path, local_path)
             prepared_paths.append(str(local_path))
         else:
