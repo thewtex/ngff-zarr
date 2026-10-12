@@ -54,3 +54,16 @@ Deno.test("chunks keyed by name land on their axes with a channel axis", async (
   });
   assertEquals(multiscales.images[1].data.chunks.slice(1), [16, 16]);
 });
+
+Deno.test("label images with a few channels downsample per channel", async () => {
+  const size = 16;
+  const image = await toNgffImage(new Uint8Array(3 * size * size).fill(2), {
+    dims: ["c", "y", "x"],
+    shape: [3, size, size],
+  });
+  const multiscales = await toMultiscales(image, {
+    scaleFactors: [2],
+    method: Methods.ITKWASM_LABEL_IMAGE,
+  });
+  assertEquals(multiscales.images[1].data.shape, [3, 8, 8]);
+});

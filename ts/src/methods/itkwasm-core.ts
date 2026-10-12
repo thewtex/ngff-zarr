@@ -442,13 +442,9 @@ async function downsampleLabelImageImpl(
     );
   }
 
-  // Determine if we should use vector mode for multi-channel images.
-  // Only use vector mode for small channel counts (≤ MAX_VECTOR_COMPONENTS)
-  // to avoid itkwasm limitations with VariableLengthVector images.
-  const cIndex = image.dims.indexOf("c");
-  const hasChannels = cIndex !== -1;
-  const numChannels = hasChannels ? image.data.shape[cIndex] : 1;
-  const isVector = hasChannels && numChannels <= MAX_VECTOR_COMPONENTS;
+  // downsampleLabelImage takes no vector images, so channels go one by one.
+  const hasChannels = image.dims.includes("c");
+  const isVector = false;
 
   // Handle channel dimension by processing each channel independently when not using vector mode
   if (hasChannels && !isVector) {
