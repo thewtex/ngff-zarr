@@ -1350,3 +1350,39 @@ Deno.test("shared RFC-5 cases match the expected verdict", async () => {
     }
   }
 });
+
+Deno.test("nested transforms are checked at the document's version", async () => {
+  const { validateV06Transform } = await import("../src/utils/v06_metadata.ts");
+  // 0.9.dev1 (RFC-3) lifts the five-axis cap; a wrapper must pass that on.
+  const six = createMapAxis([5, 4, 3, 2, 1, 0]);
+  validateV06Transform(createTransformSequence([six]), [], "0.9.dev1");
+  validateV06Transform(createBijection(six, six), [], "0.9.dev1");
+  assertThrows(
+    () => validateV06Transform(createTransformSequence([six]), [], "0.6"),
+    Error,
+    "between 2 and 5",
+  );
+});
+
+Deno.test("global transforms may map between systems of other sizes", async () => {
+  const { validateScaleLength } = await import(
+    "../src/utils/structural_validation.ts"
+  );
+  // At 0.6 a multiscale-level scale acts in the coordinate system it maps
+  // into, which need not have as many axes as the image.
+  const axes = ["t", "z", "y", "x"].map((name) =>
+    createAxis(name as "t" | "z" | "y" | "x", name === "t" ? "time" : "space")
+  );
+  const world = createCoordinateSystem("world", axes.slice(1));
+  validateScaleLength({
+    axes,
+    datasets: [{
+      path: "s0",
+      coordinateTransformations: [createScale([1, 1, 1, 1])],
+    }],
+    coordinateTransformations: [createScale([2, 2, 2])],
+    coordinateSystems: [createCoordinateSystem("intrinsic", axes), world],
+    name: "image",
+    version: "0.6",
+  } as never, "0.6");
+});

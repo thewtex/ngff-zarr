@@ -42,6 +42,7 @@ import {
   isRfc3AxisModelAllowed,
   isRfc4OrientationEnforced,
   isV06Version,
+  NgffVersion,
 } from "../types/supported_versions.ts";
 
 /**
@@ -504,9 +505,17 @@ export function validatePerDatasetScaleCount(metadata: Metadata): void {
  * first transform whose vector length disagrees with `metadata.axes.length`;
  * location identifies the offending transform.
  */
-export function validateScaleLength(metadata: Metadata): void {
+export function validateScaleLength(
+  metadata: Metadata,
+  version?: string,
+): void {
   const axesLen = metadata.axes.length;
-  const globalTransforms = metadata.coordinateTransformations;
+  // From 0.6 on, a multiscale-level transform acts between the coordinate
+  // systems it names, which need not have the image's axis count.
+  const globalTransforms = version !== undefined &&
+      (isV06Version(version) || version === NgffVersion.V09dev1)
+    ? undefined
+    : metadata.coordinateTransformations;
   if (globalTransforms) {
     for (let j = 0; j < globalTransforms.length; j++) {
       const mismatch = transformLenMismatch(globalTransforms[j], axesLen);
@@ -1033,7 +1042,7 @@ export function validateStructural(
   validateSpatialAxisOrder(metadata, version);
   validateAxisNamesUnique(metadata, version);
   validatePerDatasetScaleCount(metadata);
-  validateScaleLength(metadata);
+  validateScaleLength(metadata, version);
   validateTransformOrder(metadata);
   validateDatasetOrder(metadata);
   validateOmeroColorHex(metadata);
