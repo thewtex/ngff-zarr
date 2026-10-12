@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: Copyright (c) Fideus Labs LLC
 # SPDX-License-Identifier: MIT
+import pytest
 import zarr
 from ngff_zarr import ConversionBackend, cli_input_to_ngff_image
 from packaging import version
@@ -89,3 +90,25 @@ def test_cli_input_to_ngff_image_imageio_spacing_mismatch():
         assert image.dims == ("y", "x")
         # Scale should only contain spatial dimensions
         assert set(image.scale.keys()).issubset({"x", "y", "z"})
+
+
+def test_unreadable_input_raises_without_printing(tmp_path, capsys):
+    """Library callers (e.g. the MCP server, which talks JSON-RPC over stdout)
+    get an exception, not a process exit and stray stdout text."""
+    from ngff_zarr.cli_input_to_ngff_image import CliInputError
+
+    missing = str(tmp_path / "missing.tif")
+    with pytest.raises(CliInputError, match="Could not read TIFF"):
+        cli_input_to_ngff_image(ConversionBackend.TIFFFILE, [missing])
+    assert capsys.readouterr().out == ""
+
+
+def test_cli_reports_unreadable_input_and_exits(tmp_path, capsys):
+    from ngff_zarr import cli
+
+    missing = str(tmp_path / "missing.tif")
+    output = str(tmp_path / "out.tif")  # non-Zarr outputs read through the loader
+    with pytest.raises(SystemExit) as exit_info:
+        cli.main(["-i", missing, "-o", output])
+    assert exit_info.value.code == 1
+    assert "Could not read TIFF" in " ".join(capsys.readouterr().out.split())
