@@ -384,6 +384,15 @@ def test_a_nested_map_axis_follows_the_document_version():
         Bijection(forward=six, inverse=six).validate(version="0.6")
 
 
+def test_validate_transform_passes_the_version_down():
+    """validate_transform, which the readers and writers call, forwards the
+    version to nested transforms, including a projectAxis."""
+    six = MapAxis(mapAxis=[5, 4, 3, 2, 1, 0])
+    validate_transform(TransformSequence(transformations=[six]), None, "0.9.dev1")
+    project = ProjectAxis(droppedInputs=[0])
+    validate_transform(TransformSequence(transformations=[project]), None, "0.6")
+
+
 def test_map_axis_is_a_permutation_at_every_version():
     """The permutation rule holds regardless of the version."""
     for ngff_version in (None, "0.6", "0.9.dev1"):

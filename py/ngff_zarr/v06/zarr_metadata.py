@@ -312,7 +312,11 @@ class ProjectAxis(BaseTransform):
                     f"{_PROJECT_AXIS_MAX_OPERATIONS} axes; got {indices}"
                 )
 
-    def validate(self, coordinateSystems: list[CoordinateSystem] | None = None) -> None:
+    def validate(
+        self,
+        coordinateSystems: list[CoordinateSystem] | None = None,
+        version: object | None = None,  # noqa: ARG002 - no version-dependent rule
+    ) -> None:
         self._check_intrinsic()
         dropped = self.droppedInputs or []
         created = self.createdOutputs or []
@@ -605,7 +609,7 @@ def validate_transform(
     This also checks the ones that need the ``input`` and ``output``
     coordinate systems, when those resolve in ``coordinateSystems``.
     """
-    transformation.validate(coordinateSystems)
+    transformation.validate(coordinateSystems, version)
 
 
 @dataclass
