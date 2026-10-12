@@ -42,6 +42,22 @@ Deno.test("validateMetadata - valid metadata", () => {
   assertEquals(result.version, "0.4");
 });
 
+Deno.test("validateMetadata - axes the spec allows", () => {
+  // A vector-component axis of a displacement field, and an axis without a
+  // type (valid at 0.4).
+  for (const c of [{ name: "c", type: "displacement" }, { name: "c" }]) {
+    validateMetadata({
+      axes: [c, { name: "y", type: "space" }, { name: "x", type: "space" }],
+      datasets: [{
+        path: "0",
+        coordinateTransformations: [{ type: "scale", scale: [1, 1, 1] }],
+      }],
+      name: "field",
+      version: "0.4",
+    });
+  }
+});
+
 Deno.test("validateMetadata - invalid metadata", () => {
   const invalidMetadata = {
     axes: [{ name: "invalid", type: "space" }],
