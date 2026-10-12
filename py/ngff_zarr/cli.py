@@ -744,7 +744,8 @@ def _convert_main(argv: list[str] | None = None) -> None:
         try:
             import psutil
 
-            n_workers = psutil.cpu_count(False) // 2
+            # cpu_count is None when unknown, and 1 core // 2 would be 0 workers.
+            n_workers = max(1, (psutil.cpu_count(False) or 2) // 2)
             worker_memory_target = config.memory_target // n_workers
         except ImportError:
             pass
