@@ -720,8 +720,7 @@ def _convert_main(argv: list[str] | None = None) -> None:
 
     if args.cache_dir:
         cache_dir = Path(args.cache_dir).resolve()
-        if not cache_dir.exists():
-            Path.makedirs(cache_dir, parents=True)
+        cache_dir.mkdir(parents=True, exist_ok=True)
         config.cache_store = cache_dir
 
     console = _build_console()
@@ -846,14 +845,22 @@ def _convert_main(argv: list[str] | None = None) -> None:
             else:
                 photometric = "minisblack"
 
-            # Build OME-TIFF resolution metadata
+            # Build OME-TIFF resolution metadata, in micrometers
+            from .tiff_to_ngff_image import _convert_unit_value
+
+            units = ngff_image.axes_units or {}
+
+            def micrometers(dim):
+                unit = units.get(dim) or "micrometer"
+                return _convert_unit_value(ngff_image.scale[dim], unit, "micrometer")
+
             metadata = {"axes": axes}
             resolution = None
             resolutionunit = None
 
             if "x" in ngff_image.scale and "y" in ngff_image.scale:
-                x_scale = ngff_image.scale["x"]
-                y_scale = ngff_image.scale["y"]
+                x_scale = micrometers("x")
+                y_scale = micrometers("y")
                 if x_scale > 0 and y_scale > 0:
                     resolution = (1e4 / x_scale, 1e4 / y_scale)
                     resolutionunit = "CENTIMETER"
@@ -863,7 +870,7 @@ def _convert_main(argv: list[str] | None = None) -> None:
                     metadata["PhysicalSizeYUnit"] = "µm"
 
             if "z" in ngff_image.scale:
-                z_scale = ngff_image.scale["z"]
+                z_scale = micrometers("z")
                 if z_scale > 0:
                     metadata["PhysicalSizeZ"] = z_scale
                     metadata["PhysicalSizeZUnit"] = "µm"
@@ -932,7 +939,11 @@ def _convert_main(argv: list[str] | None = None) -> None:
             if isinstance(rich_dask_progress, NgffProgressCallback):
                 rich_dask_progress.add_callback_task("[green]Converting to NIfTI")
 
-            data = np.asarray(ngff_image.data)
+            # NIfTI voxel axes run x, y, z (, t, c): the reverse of OME-Zarr.
+            nifti_dims = [d for d in ("x", "y", "z", "t", "c") if d in ngff_image.dims]
+            data = np.asarray(ngff_image.data).transpose(
+                [ngff_image.dims.index(d) for d in nifti_dims]
+            )
 
             # Build affine matrix from scale and translation
             affine = np.eye(4)
