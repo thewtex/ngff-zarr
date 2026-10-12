@@ -4,7 +4,7 @@ version = "0.38.0"
 tag_format = "ts-v$version"
 update_changelog_on_bump = true
 changelog_file = "CHANGELOG.md"
-template = ".commitizen/templates/ts_changelog.md.j2"
+template = ".commitizen/templates/changelog.md.j2"
 version_files = [
     "deno.json:version",
     "scripts/build_npm.ts:version"
