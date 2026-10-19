@@ -107,7 +107,7 @@ const multiscalesV6 = await fromOmeZarr("image.ome.zarr", {
 
 ### Creating and Writing OME-Zarr Files
 
-Create a simple OME-Zarr file from scratch:
+Create a simple OME-Zarr file from scratch. The [`createAxis`], [`createDataset`], [`createMetadata`], and [`createMultiscales`] helpers build the metadata and container:
 
 ```typescript
 import {
@@ -125,7 +125,7 @@ for (let i = 0; i < data.length; i++) {
   data[i] = Math.floor(Math.random() * 256);
 }
 
-// Create an NgffImage with metadata
+// Create an [`NgffImage`] with metadata
 const image = createNgffImage(
   data.buffer,
   [256, 256],           // shape
@@ -160,7 +160,7 @@ await toOmeZarr("output.ome.zarr", multiscales);
 
 ### Generating Multiscale Pyramids
 
-Create multiscale image pyramids with downsampling:
+Create multiscale image pyramids with downsampling. The [`toMultiscales`] helper builds a pyramid from an [`NgffImage`], and the [`Methods`] enum chooses the downsampling strategy:
 
 ```typescript
 import {
@@ -199,8 +199,8 @@ multiscale images. The vector-component axis, in the channel position, carries
 `type: "displacement"` (or `type: "coordinate"`) instead of `type: "channel"`.
 Like a channel/component axis it is `discrete` (it indexes vector components
 rather than a continuous coordinate). Set the type with the `axesTypes` option
-of the image (`createNgffImage` / `toNgffImage`), which maps a dimension name to
-its axis type:
+of the image ([`createNgffImage`]), which maps a dimension name to its axis
+type:
 
 ```typescript
 import {
@@ -313,7 +313,7 @@ Works in modern browsers with ES modules:
 
 ### Core Types
 
-#### `NgffImage`
+#### [`NgffImage`]
 
 Represents a single-scale image with associated metadata:
 
@@ -342,7 +342,7 @@ const image = createNgffImage(
 );
 ```
 
-#### `NgffMultiscales`
+#### [`NgffMultiscales`]
 
 Container for multiple resolution levels:
 
@@ -356,7 +356,7 @@ interface NgffMultiscales {
 }
 ```
 
-#### `Metadata`
+#### [`Metadata`]
 
 OME-Zarr metadata structure:
 
@@ -372,7 +372,7 @@ interface Metadata {
 }
 ```
 
-#### `Axis`
+#### [`Axis`]
 
 Dimension axis definition:
 
@@ -386,7 +386,7 @@ interface Axis {
 
 ### I/O Functions
 
-#### `fromOmeZarr()`
+#### [`fromOmeZarr`]
 
 Read an OME-Zarr file:
 
@@ -422,7 +422,7 @@ const validatedMs = await fromOmeZarr("data.ome.zarr", {
 const remoteMs = await fromOmeZarr("https://example.com/data.ome.zarr");
 ```
 
-#### `toOmeZarr()`
+#### [`toOmeZarr`]
 
 Write an NgffMultiscales object to OME-Zarr:
 
@@ -1085,3 +1085,17 @@ Contributions are welcome! See the [development documentation](./development.md)
 - Running tests
 - Building the npm package
 - Browser testing with Playwright
+
+[`NgffImage`]: https://jsr.io/@fideus-labs/ngff-zarr/doc/~/NgffImage
+[`NgffMultiscales`]: https://jsr.io/@fideus-labs/ngff-zarr/doc/~/NgffMultiscales
+[`Metadata`]: https://jsr.io/@fideus-labs/ngff-zarr/doc/~/Metadata
+[`Axis`]: https://jsr.io/@fideus-labs/ngff-zarr/doc/~/Axis
+[`Methods`]: https://jsr.io/@fideus-labs/ngff-zarr/doc/~/Methods
+[`createAxis`]: https://jsr.io/@fideus-labs/ngff-zarr/doc/~/createAxis
+[`createDataset`]: https://jsr.io/@fideus-labs/ngff-zarr/doc/~/createDataset
+[`createMetadata`]: https://jsr.io/@fideus-labs/ngff-zarr/doc/~/createMetadata
+[`createMultiscales`]: https://jsr.io/@fideus-labs/ngff-zarr/doc/~/createMultiscales
+[`createNgffImage`]: https://jsr.io/@fideus-labs/ngff-zarr/doc/~/createNgffImage
+[`toMultiscales`]: https://jsr.io/@fideus-labs/ngff-zarr/doc/~/toMultiscales
+[`fromOmeZarr`]: https://jsr.io/@fideus-labs/ngff-zarr/doc/~/fromOmeZarr
+[`toOmeZarr`]: https://jsr.io/@fideus-labs/ngff-zarr/doc/~/toOmeZarr
