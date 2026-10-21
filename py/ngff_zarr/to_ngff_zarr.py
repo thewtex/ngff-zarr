@@ -1237,8 +1237,8 @@ def _compute_write_regions(
     # If z dimension exists, handle 3D data
     if "z" in dims:
         z_index = dims.index("z")
-        # memory_usage gives one chunk-thick slab; the split counts slices.
-        slice_bytes = memory_usage(image, {"z"}) / image.data.chunksize[z_index]
+        # Bytes of one z slice: the split counts slices.
+        slice_bytes = memory_usage(image) / shape[z_index]
         slab_slices = min(
             int(np.ceil(config.memory_target / slice_bytes)), arr.shape[z_index]
         )
@@ -1302,8 +1302,8 @@ def _compute_plane_regions(
     y_chunks = chunks[y_index]
     x_chunks = chunks[x_index]
 
-    # Calculate how to divide planes
-    plane_bytes = memory_usage(image, {"z", "y"}) / image.data.chunksize[y_index]
+    # Bytes of one y row of the z_chunks-thick slab: the split counts rows.
+    plane_bytes = memory_usage(image) / shape[z_index] * z_chunks / shape[y_index]
     plane_slices = min(
         int(np.ceil(config.memory_target / plane_bytes)),
         arr.shape[y_index],
@@ -1318,10 +1318,8 @@ def _compute_plane_regions(
     num_y_splits = int(np.ceil(shape[y_index] / plane_slices))
 
     if slice_strips:
-        # Need to subdivide further into strips
-        strip_bytes = (
-            memory_usage(image, {"z", "y", "x"}) / image.data.chunksize[x_index]
-        )
+        # Bytes of one x column of a plane_slices-tall plane of that slab.
+        strip_bytes = plane_bytes * plane_slices / shape[x_index]
         strip_slices = min(
             int(np.ceil(config.memory_target / strip_bytes)),
             arr.shape[x_index],
