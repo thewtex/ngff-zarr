@@ -106,3 +106,34 @@ def test_sigterm_stops_and_cleans_cache(tmp_path):
     assert "still running" not in result.stdout
     assert result.returncode == 128 + signal.SIGTERM, result.stderr
     assert not list(cache.glob("*-cache-*"))
+
+
+def test_failed_cache_write_removed_at_exit(tmp_path):
+    cache = tmp_path / "cache"
+    script = textwrap.dedent(
+        f"""
+        import dask.array
+        from ngff_zarr import Methods, config, to_multiscales, to_ngff_image
+
+        config.cache_store = {str(cache)!r}
+
+        def fail(block, block_info=None):
+            if block_info and block_info[0]["chunk-location"][0] == 1:
+                raise OSError("No space left on device")
+            return block
+
+        data = dask.array.ones((128, 64, 64), dtype="uint16", chunks=32)
+        image = to_ngff_image(data.map_blocks(fail), dims=("z", "y", "x"))
+        try:
+            to_multiscales(
+                image, scale_factors=[2], method=Methods.DASK_BIN_SHRINK, cache=True
+            )
+        except OSError:
+            print("write failed")
+        """
+    )
+    result = subprocess.run(
+        [sys.executable, "-c", script], capture_output=True, text=True, timeout=120
+    )
+    assert "write failed" in result.stdout, result.stderr
+    assert not list(cache.glob("*-cache-*"))

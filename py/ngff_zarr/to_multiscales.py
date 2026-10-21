@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: Copyright (c) Fideus Labs LLC
 # SPDX-License-Identifier: MIT
+import atexit
 import copy
 import functools
 import shutil
@@ -133,6 +134,9 @@ class _CacheTarget:
 
     def create_array(self, component, shape, chunks, dtype):
         """Create the cache array at *component*, ready for region writes."""
+        # read_lazy removes the array once nothing reads it; a write that
+        # fails before then leaves it to this exit cleanup.
+        atexit.register(shutil.rmtree, self.path / component, True)
         # The cache is written and read back only through zarrista, so it
         # always uses zarr format 3.
         return create_zarrista_array(
