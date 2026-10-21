@@ -58,11 +58,22 @@ export async function createNgffImage(
   const stride = shape.map((_, i) =>
     shape.slice(i + 1).reduce((size, extent) => size * extent, 1)
   );
-  await zarr.set(zarrArray, null, {
-    data: new TypedArray(data),
-    shape,
-    stride,
-  });
+  const count = shape.reduce((size, extent) => size * extent, 1);
+  // int64 and uint64 hold bigints, which a typed array does not convert from.
+  const values = Array.isArray(data) && dtype.endsWith("int64")
+    ? data.map(BigInt)
+    : data;
+  const pixels = new TypedArray(values as ArrayBuffer | number[]);
+  // Empty data leaves the fill value, for pixels set afterwards.
+  if (pixels.length !== 0) {
+    if (pixels.length !== count) {
+      throw new Error(
+        `createNgffImage got ${pixels.length} pixels for shape ` +
+          `[${shape.join(", ")}], which holds ${count} pixels.`,
+      );
+    }
+    await zarr.set(zarrArray, null, { data: pixels, shape, stride });
+  }
 
   return new NgffImage({
     data: zarrArray,

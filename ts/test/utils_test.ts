@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright (c) Fideus Labs LLC
 // SPDX-License-Identifier: MIT
-import { assertEquals, assertThrows } from "@std/assert";
+import { assertEquals, assertRejects, assertThrows } from "@std/assert";
 import * as zarr from "zarrita";
 import {
   isValidDimension,
@@ -165,6 +165,30 @@ Deno.test("createNgffImage keeps the pixel data it is given", async () => {
   );
   const readNumbers = await zarr.get(fromNumbers.data);
   assertEquals(Array.from(readNumbers.data as Float32Array), [0.5, 1.5]);
+});
+
+Deno.test("createNgffImage refuses a pixel count that does not fill the shape", async () => {
+  for (const data of [[1, 2, 3], [1, 2, 3, 4, 5]]) {
+    await assertRejects(
+      () => createNgffImage(data, [2, 2], "uint8", ["y", "x"], {}, {}),
+      Error,
+      "4 pixels",
+    );
+  }
+  // Empty data leaves the fill value, for pixels set afterwards.
+  const empty = await createNgffImage([], [2, 2], "uint8", ["y", "x"], {}, {});
+  assertEquals(Array.from((await zarr.get(empty.data)).data as Uint8Array), [
+    0,
+    0,
+    0,
+    0,
+  ]);
+});
+
+Deno.test("createNgffImage takes int64 values as numbers", async () => {
+  const image = await createNgffImage([1, -2], [2], "int64", ["x"], {}, {});
+  const read = await zarr.get(image.data);
+  assertEquals(Array.from(read.data as BigInt64Array), [1n, -2n]);
 });
 
 Deno.test("createMultiscales", async () => {
