@@ -112,7 +112,7 @@ filterwarnings = [
   "ignore:(ast.Str|Attribute s|ast.NameConstant|ast.Num) is deprecated:DeprecationWarning:_pytest",
 ]
 log_cli_level = "INFO"
-testpaths = ["tests"]
+testpaths = ["test"]
 
 [tool.ruff]
 src = ["ngff_zarr"]
@@ -284,7 +284,7 @@ version_provider = "commitizen"
 tag_format = "py-v$version"
 update_changelog_on_bump = true
 changelog_file = "CHANGELOG.md"
-template = ".commitizen/templates/py_changelog.md.j2"
+template = ".commitizen/templates/changelog.md.j2"
 version_files = [
     "ngff_zarr/__about__.py:__version__"
 ]

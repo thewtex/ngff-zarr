@@ -196,7 +196,7 @@ version_provider = "commitizen"
 tag_format = "mcp-v$version"
 update_changelog_on_bump = true
 changelog_file = "CHANGELOG.md"
-template = ".commitizen/templates/mcp_changelog.md.j2"
+template = ".commitizen/templates/changelog.md.j2"
 version_files = [
     "ngff_zarr_mcp/__about__.py:__version__"
 ]

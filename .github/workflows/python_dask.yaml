@@ -36,9 +36,4 @@ jobs:
 
       - name: Test with pytest
         run: |
-          cd py && pytest --junitxml=junit/test-results.xml
-
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v2
-        with:
-          report_paths: "junit/test-results*.xml"
+          cd py && pytest

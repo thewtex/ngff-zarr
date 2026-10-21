@@ -42,12 +42,8 @@ To modify filtering logic, edit the `_should_include_for_*` methods in
 
 ## Templates
 
-The plugin uses custom Jinja2 templates located in `templates/`:
-- `py_changelog.md.j2` - Python package changelog
-- `mcp_changelog.md.j2` - MCP package changelog
-- `ts_changelog.md.j2` - TypeScript package changelog
-
-All templates include GitHub commit links in the format:
+All three packages render their changelog with one Jinja2 template,
+`templates/changelog.md.j2`, which includes GitHub commit links in the format:
 ```markdown
 - **scope**: message ([abc1234](https://github.com/fideus-labs/ngff-zarr/commit/abc1234...))
 ```
