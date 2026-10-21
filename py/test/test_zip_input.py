@@ -35,3 +35,16 @@ def test_read_zipped_store(tmp_path, version):
 
 def test_cli_detects_zip_as_ome_zarr():
     assert detect_cli_io_backend(["image.ome.zarr.zip"]) is ConversionBackend.NGFF_ZARR
+
+
+def test_cli_refuses_a_zip_output(tmp_path):
+    from ngff_zarr.cli import main
+
+    image = tmp_path / "image.ome.zarr"
+    to_ome_zarr(image, to_multiscales(to_ngff_image(np.ones((8, 8), np.uint8))))
+    output = tmp_path / "out.zip"
+
+    with pytest.raises(SystemExit) as exit_info:
+        main(["-i", str(image), "-o", str(output)])
+    assert exit_info.value.code == 1
+    assert not output.exists()

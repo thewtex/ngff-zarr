@@ -788,6 +788,12 @@ def _convert_main(argv: list[str] | None = None) -> None:
                 args.output,
             ]
         )
+        # A .zip input reads as OME-Zarr, but a zipped OME-Zarr output is .ozx.
+        if args.output.lower().endswith(".zip"):
+            _build_console().print(
+                f"[red]✗ {args.output}: write a zipped OME-Zarr with the .ozx extension"
+            )
+            sys.exit(1)
     output_store = None
     if args.output and output_backend is ConversionBackend.NGFF_ZARR:
         # Pass the path directly; to_ngff_zarr handles .ozx and directories.
