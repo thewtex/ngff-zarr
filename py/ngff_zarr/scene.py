@@ -18,6 +18,7 @@ import os
 import posixpath
 import re
 from dataclasses import asdict, dataclass
+from pathlib import PureWindowsPath
 from typing import Any
 from urllib.parse import unquote
 
@@ -80,10 +81,12 @@ def _check_image_path(path: object, parent: str = "scene group") -> None:
     """Reject an image path that is not a plain path below its *parent* group.
 
     The path is joined to the store, so a backslash counts as a separator
-    (Windows does) and a percent-encoded part is read as a URL store does.
+    and a drive such as ``C:`` replaces the store (Windows does both), and a
+    percent-encoded part is read as a URL store does.
     """
     parts = re.split(r"[\\/]", path) if isinstance(path, str) else [""]
-    if any(unquote(part) in ("", ".", "..") for part in parts):
+    drive = isinstance(path, str) and PureWindowsPath(path).drive
+    if drive or any(unquote(part) in ("", ".", "..") for part in parts):
         raise ValueError(
             f"Image path {path!r} must be a relative path below the {parent}."
         )

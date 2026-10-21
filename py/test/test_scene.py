@@ -314,7 +314,8 @@ def test_read_validates_references_against_the_store(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "path", ["../tile_0", "..\\tile_0", "%2e%2e/tile_0", "/tile_0"]
+    "path",
+    ["../tile_0", "..\\tile_0", "%2e%2e/tile_0", "/tile_0", "C:/tile_0", "C:tile_0"],
 )
 def test_read_refuses_image_paths_outside_the_scene(tmp_path, path):
     _, scene = _tiles_scene()
