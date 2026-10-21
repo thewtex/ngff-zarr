@@ -65,10 +65,10 @@ def itk_image_to_ngff_image(
     spatial_dims = [dim for dim in dims if dim in all_spatial_dims]
 
     spacing = image_dict["spacing"]
-    scale = {dim: spacing[itk_axes.index(dim)] for dim in spatial_dims}
+    scale = {dim: spacing[itk_axes.index(dim)] for dim in dims if dim in itk_axes}
 
     origin = image_dict["origin"]
-    translation = {dim: origin[itk_axes.index(dim)] for dim in spatial_dims}
+    translation = {dim: origin[itk_axes.index(dim)] for dim in dims if dim in itk_axes}
 
     # Add anatomical orientation if requested
     axes_orientations = None

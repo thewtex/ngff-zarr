@@ -107,12 +107,21 @@ def test_4d_scalar_itkwasm_image_has_a_time_axis():
     ngff_image = itk_image_to_ngff_image(_itkwasm_4d())
 
     assert ngff_image.dims == ("t", "z", "y", "x")
-    assert ngff_image.scale == {"z": 0.7, "y": 0.6, "x": 0.5}
-    assert ngff_image.translation == {"z": 3.0, "y": 2.0, "x": 1.0}
+    assert ngff_image.scale == {"t": 10.0, "z": 0.7, "y": 0.6, "x": 0.5}
+    assert ngff_image.translation == {"t": 40.0, "z": 3.0, "y": 2.0, "x": 1.0}
+
+
+def test_4d_itkwasm_image_round_trips():
+    from ngff_zarr import ngff_image_to_itk_image
+
+    itk_image = ngff_image_to_itk_image(itk_image_to_ngff_image(_itkwasm_4d()))
+
+    assert list(itk_image.spacing) == [0.5, 0.6, 0.7, 10.0]
+    assert list(itk_image.origin) == [1.0, 2.0, 3.0, 40.0]
 
 
 def test_4d_vector_itkwasm_image():
     ngff_image = itk_image_to_ngff_image(_itkwasm_4d(components=3))
 
     assert ngff_image.dims == ("t", "z", "y", "x", "c")
-    assert ngff_image.scale == {"z": 0.7, "y": 0.6, "x": 0.5}
+    assert ngff_image.scale == {"t": 10.0, "z": 0.7, "y": 0.6, "x": 0.5}
