@@ -72,3 +72,17 @@ async def test_optimize_keeps_an_existing_output(test_input_file, tmp_path):
     assert not result.success
     assert "already exists" in result.error
     assert thesis.read_text() == "only copy"
+
+
+@pytest.mark.asyncio
+async def test_convert_keeps_a_file_that_is_not_a_store(test_input_file, tmp_path):
+    """A file named like an archive is replaced only when it is a Zarr store."""
+    notes = tmp_path / "notes.ozx"
+    notes.write_text("only copy")
+
+    result = await convert_to_ome_zarr(
+        [str(test_input_file)], _options(notes, overwrite=True)
+    )
+    assert not result.success
+    assert "not a Zarr store" in result.error
+    assert notes.read_text() == "only copy"

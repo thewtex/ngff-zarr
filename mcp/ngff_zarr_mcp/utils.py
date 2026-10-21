@@ -74,7 +74,12 @@ def is_zarr_store(path: str) -> bool:
 
     path_obj = Path(path)
     if path_obj.suffix == ".ozx":
-        return path_obj.is_file()
+        # An RFC-9 archive holds the root zarr.json.
+        try:
+            with zipfile.ZipFile(path_obj) as archive:
+                return "zarr.json" in archive.namelist()
+        except (OSError, zipfile.BadZipFile):
+            return False
     return (
         (path_obj / "zarr.json").exists()
         or (path_obj / ".zgroup").exists()
@@ -96,10 +101,9 @@ def check_output_path(output_path: str, overwrite: bool) -> None:
             f"Output path already exists: {output_path}. "
             "Pass overwrite=True to replace the store there."
         )
-    if path.is_dir() and any(path.iterdir()) and not is_zarr_store(output_path):
+    if not is_zarr_store(output_path) and (path.is_file() or any(path.iterdir())):
         raise FileExistsError(
-            f"Refusing to overwrite {output_path}: it is a non-empty directory "
-            "but not a Zarr store."
+            f"Refusing to overwrite {output_path}: it is not a Zarr store."
         )
 
 
