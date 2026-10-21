@@ -138,11 +138,11 @@ export async function itkImageToNgffImage(
   const spatialDims = dims.filter((dim) => allSpatialDims.has(dim));
 
   // ITK stores spacing and origin per ITK axis (x, y, z, then t); pick each
-  // spatial axis's entry by name, so a time axis's spacing is not shifted in.
+  // axis's entry by name, so a time axis's spacing is not shifted into z.
   const itkAxes = ["x", "y", "z", "t"].slice(0, imageType.dimension);
   const scale: Record<string, number> = {};
   const translation: Record<string, number> = {};
-  for (const dim of spatialDims) {
+  for (const dim of dims.filter((d) => itkAxes.includes(d))) {
     scale[dim] = spacing[itkAxes.indexOf(dim)];
     translation[dim] = origin[itkAxes.indexOf(dim)];
   }
