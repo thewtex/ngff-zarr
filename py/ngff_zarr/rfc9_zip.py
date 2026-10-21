@@ -11,6 +11,7 @@ import json
 import os
 import posixpath
 import threading
+import uuid
 import zipfile
 from collections.abc import Iterator, Mapping
 from pathlib import Path
@@ -253,8 +254,9 @@ def write_store_to_zip(
             )
 
     # Write beside the destination and move it into place only when complete,
-    # so a failure (e.g. a full disk) keeps any previous archive intact.
-    partial = zip_path.with_name(zip_path.name + ".partial")
+    # so a failure (e.g. a full disk) keeps any previous archive intact. The
+    # name is unique per call so concurrent writers never share it.
+    partial = zip_path.with_name(f"{zip_path.name}.{uuid.uuid4().hex}.partial")
     try:
         _write_zip(partial, ordered_files, root_dir, source_store, version, compression)
         # A directory at the destination, e.g. a plate first written unzipped
