@@ -243,7 +243,6 @@ def _map_lif_dims_to_ngff(
 def _reshape_for_flattened_channels(
     data: da.Array,
     lif_dims: Sequence[str],
-    lif_shape: Sequence[int],
     ngff_dims: Sequence[str],
     ngff_shape: Sequence[int],
 ) -> da.Array:
@@ -315,9 +314,7 @@ def lif_to_ngff_image(
     # handle is closed.
     data = _delayed_lif_data(lif_image, lif_shape, dtype)
 
-    data = _reshape_for_flattened_channels(
-        data, lif_dims, lif_shape, ngff_dims, ngff_shape
-    )
+    data = _reshape_for_flattened_channels(data, lif_dims, ngff_dims, ngff_shape)
 
     # Get image name
     if name is None:
@@ -560,7 +557,7 @@ def lif_to_hcs_plate(
                     translation[dim] = 0.0
 
         pos_data = _reshape_for_flattened_channels(
-            pos_data, new_dims, new_shape, ngff_dims, ngff_shape
+            pos_data, new_dims, ngff_dims, ngff_shape
         )
 
         ngff_image = NgffImage(

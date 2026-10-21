@@ -198,7 +198,7 @@ class TestChannelAxisMove:
         data = np.arange(np.prod(lif_shape)).reshape(lif_shape)
         ngff_dims, ngff_shape = _map_lif_dims_to_ngff(lif_dims, lif_shape)
         out = _reshape_for_flattened_channels(
-            da.from_array(data), lif_dims, lif_shape, ngff_dims, ngff_shape
+            da.from_array(data), lif_dims, ngff_dims, ngff_shape
         )
         return data, ngff_dims, np.asarray(out)
 
