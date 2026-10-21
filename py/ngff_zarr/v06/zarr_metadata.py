@@ -953,20 +953,7 @@ class Metadata:
                 first = dataset["coordinateTransformations"][0]
                 output_name = (first.get("output") or {}).get("name")
             else:
-                fallback = coordinate_systems[0]
-                output_name = fallback.name
-                n_axes = len(fallback.axes)
-                coordinateTransformations = [
-                    TransformSequence(
-                        transformations=[
-                            Scale(scale=[1.0] * n_axes),
-                            Translation(translation=[0.0] * n_axes),
-                        ],
-                        input=CoordinateSystemIdentifier(path=dataset["path"]),
-                        output=CoordinateSystemIdentifier(name=fallback.name),
-                        name=f"scale_{index}_to_{fallback.name}",
-                    )
-                ]
+                output_name = coordinate_systems[0].name
 
             # The image's axes are those of the system its datasets map into,
             # which need not be listed first.
@@ -997,6 +984,15 @@ class Metadata:
                             "Unsupported transform type: "
                             f"{transform.type} in dataset {dataset['path']}"
                         )
+            else:
+                coordinateTransformations = [
+                    TransformSequence(
+                        transformations=[scale, translation],
+                        input=CoordinateSystemIdentifier(path=dataset["path"]),
+                        output=CoordinateSystemIdentifier(name=output_name),
+                        name=f"scale_{index}_to_{output_name}",
+                    )
+                ]
 
             datasets.append(
                 Dataset(
