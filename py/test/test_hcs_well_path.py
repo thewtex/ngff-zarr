@@ -136,6 +136,8 @@ def test_well_image_path_stays_inside_the_plate(hcs_data_path, tmp_path):
     import json
     import shutil
 
+    if not hcs_data_path.exists():
+        pytest.skip("HCS test data not available")
     plate = tmp_path / "hcs.ome.zarr"
     shutil.copytree(hcs_data_path, plate)
     attrs_path = plate / "A" / "1" / ".zattrs"
