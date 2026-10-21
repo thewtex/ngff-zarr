@@ -45,6 +45,10 @@ async def test_follows_a_redirect(served, tmp_path):
     [
         "http://127.0.0.1/image.nrrd",
         "http://[::1]/image.nrrd",
+        # The unspecified address reaches a listener bound to all interfaces.
+        "http://0.0.0.0/image.nrrd",
+        "http://[::]/image.nrrd",
+        "http://[::ffff:127.0.0.1]/image.nrrd",
         # A cloud metadata endpoint, reached through a redirect.
         f"{REMOTE}/record?to=http://169.254.169.254/image.nrrd",
     ],

@@ -34,7 +34,9 @@ async def _refuse_local_host(request: httpx.Request) -> None:
     host = request.url.host
     for *_, sockaddr in await asyncio.get_running_loop().getaddrinfo(host, None):
         address = ipaddress.ip_address(sockaddr[0])
-        if address.is_loopback or address.is_link_local:
+        # Some patch releases do not treat ::ffff:127.0.0.1 as loopback.
+        address = getattr(address, "ipv4_mapped", None) or address
+        if address.is_loopback or address.is_link_local or address.is_unspecified:
             raise ValueError(f"Refusing to download from {host}: a local address.")
 
 
