@@ -7,7 +7,7 @@ import contextlib
 import ipaddress
 import json
 import zipfile
-from collections.abc import Iterator, Mapping, MutableMapping
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -107,15 +107,6 @@ def check_output_path(output_path: str, overwrite: bool) -> None:
         )
 
 
-def url_store_mapping(
-    store_path: str, storage_options: dict | None = None
-) -> MutableMapping:
-    """Key-to-bytes mapping over a remote store URL (S3 needs s3fs)."""
-    import fsspec  # type: ignore[import-untyped]
-
-    return fsspec.get_mapper(store_path, **(storage_options or {}))
-
-
 def _store_doc(store: str | Path | Mapping, name: str) -> str | None:
     """Raw metadata document *name* at the store root, or None if unreadable."""
     if isinstance(store, (str, Path)):
@@ -144,7 +135,10 @@ def read_root_attrs(
     zarr-python involved.
     """
     if isinstance(store, str) and is_url(store):
-        store = url_store_mapping(store, storage_options)
+        # A key-to-bytes mapping over the remote store (S3 needs s3fs).
+        import fsspec  # type: ignore[import-untyped]
+
+        store = fsspec.get_mapper(store, **(storage_options or {}))
     text = _store_doc(store, "zarr.json")
     if text is not None:
         try:
