@@ -1894,6 +1894,21 @@ def _to_ngff_zarr_impl(
             "overwrite=True, or keep consolidate_metadata=True."
         )
 
+    # Refuse before the root is rewritten, so the refusal leaves the store
+    # readable.
+    if not (start_level or overwrite or metadata_only):
+        for index, dataset in enumerate(metadata.datasets):
+            parent = str(PurePosixPath(dataset.path).parent)
+            if parent not in (".", "/") and (
+                read_group_attributes(store, parent, zarr_format=zarr_format)
+                is not None
+            ):
+                raise ValueError(
+                    f"The store already holds scale level {index} at "
+                    f"'{parent}'. Pass start_level to append levels after the "
+                    "ones it holds, or overwrite=True to replace the store."
+                )
+
     # Create Zarr root
     # The root names only the levels already in place until the new arrays
     # are written, so an interrupted call never leaves a store that reads as
@@ -1963,17 +1978,6 @@ def _to_ngff_zarr_impl(
 
         # Create parent groups if needed
         if parent not in (".", "/"):
-            if (
-                not start_level
-                and not overwrite
-                and read_group_attributes(store, parent, zarr_format=zarr_format)
-                is not None
-            ):
-                raise ValueError(
-                    f"The store already holds scale level {index} at "
-                    f"'{parent}'. Pass start_level to append levels after the "
-                    "ones it holds, or overwrite=True to replace the store."
-                )
             create_zarrista_subgroup(
                 store,
                 parent,

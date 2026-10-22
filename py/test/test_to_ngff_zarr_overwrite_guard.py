@@ -134,3 +134,14 @@ def test_overwrite_accepts_an_empty_folder_and_a_store(tmp_path):
     to_ome_zarr(folder, _multiscales(), overwrite=True)
     to_ome_zarr(folder, _multiscales(rng_seed=1), overwrite=True)
     assert from_ome_zarr(folder).images[0].data.shape == (1, 64, 64, 64)
+
+
+@pytest.mark.parametrize("version", ["0.4", "0.5"])
+def test_refused_overwrite_keeps_the_store_readable(tmp_path, version):
+    store = tmp_path / "image.ome.zarr"
+    multiscales = _multiscales(scale_factors=[2])
+    to_ome_zarr(store, multiscales, version=version)
+
+    with pytest.raises(ValueError, match="already holds scale level 0"):
+        to_ome_zarr(store, multiscales, version=version, overwrite=False)
+    assert len(from_ome_zarr(store).images) == 2
