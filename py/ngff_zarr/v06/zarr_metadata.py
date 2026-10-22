@@ -432,7 +432,10 @@ class ByDimensionItem:
 
     @classmethod
     def from_dict(
-        cls, data: dict, coordinateSystems: list[CoordinateSystem] | None = None
+        cls,
+        data: dict,
+        coordinateSystems: list[CoordinateSystem] | None = None,
+        version: object | None = None,
     ) -> "ByDimensionItem":
         # ngff-zarr 0.43.0 wrote these two keys in snake_case; the spec and the
         # 0.6 schema spell them inputAxes and outputAxes, which is what is
@@ -445,7 +448,7 @@ class ByDimensionItem:
             data, ("transformation", "inputAxes", "outputAxes"), "byDimension item"
         )
         (transformation,) = Metadata._parse_transforms(
-            [data["transformation"]], coordinateSystems or []
+            [data["transformation"]], coordinateSystems or [], version
         )
         return cls(
             transformation=transformation,
@@ -520,12 +523,15 @@ class ByDimension(BaseTransform):
 
     @classmethod
     def from_dict(
-        cls, data: dict, coordinateSystems: list[CoordinateSystem] | None = None
+        cls,
+        data: dict,
+        coordinateSystems: list[CoordinateSystem] | None = None,
+        version: object | None = None,
     ) -> "ByDimension":
         _require_keys(data, ("transformations",), "byDimension")
         return cls(
             transformations=[
-                ByDimensionItem.from_dict(item, coordinateSystems)
+                ByDimensionItem.from_dict(item, coordinateSystems, version)
                 for item in data["transformations"]
             ]
         )
@@ -561,12 +567,15 @@ class Bijection(BaseTransform):
 
     @classmethod
     def from_dict(
-        cls, data: dict, coordinateSystems: list[CoordinateSystem] | None = None
+        cls,
+        data: dict,
+        coordinateSystems: list[CoordinateSystem] | None = None,
+        version: object | None = None,
     ) -> "Bijection":
         _require_keys(data, ("forward", "inverse"), "bijection")
         systems = coordinateSystems or []
-        (forward,) = Metadata._parse_transforms([data["forward"]], systems)
-        (inverse,) = Metadata._parse_transforms([data["inverse"]], systems)
+        (forward,) = Metadata._parse_transforms([data["forward"]], systems, version)
+        (inverse,) = Metadata._parse_transforms([data["inverse"]], systems, version)
         return cls(forward=forward, inverse=inverse)
 
 
@@ -1076,9 +1085,13 @@ class Metadata:
                     ),
                 )
             elif transform["type"] == "byDimension":
-                transformation = ByDimension.from_dict(transform, coordinateSystems)
+                transformation = ByDimension.from_dict(
+                    transform, coordinateSystems, version
+                )
             elif transform["type"] == "bijection":
-                transformation = Bijection.from_dict(transform, coordinateSystems)
+                transformation = Bijection.from_dict(
+                    transform, coordinateSystems, version
+                )
             elif transform["type"] == "sequence":
                 # TODO: Undo nested sequences on import?
                 sub_transforms = cls._parse_transforms(
