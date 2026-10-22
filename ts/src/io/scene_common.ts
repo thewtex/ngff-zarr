@@ -661,6 +661,8 @@ export interface SceneOzxOptions {
    * unless given, the `.ozx` default.
    */
   chunksPerShard?: ChunksPerShard | undefined;
+  /** Codecs for every image's arrays (default: the writer's pipeline). */
+  codecs?: ZarrCodec[] | undefined;
   /** Consolidate the whole archive's metadata at its root (default `true`). */
   consolidateMetadata?: boolean | undefined;
   /** Reports the writes of all the images together. */
@@ -707,6 +709,7 @@ export async function sceneToOzx(
   await writeSceneToStore(store, scene, arrayWriter, {
     version,
     chunksPerShard: options.chunksPerShard ?? DEFAULT_OZX_CHUNKS_PER_SHARD,
+    ...(options.codecs !== undefined && { codecs: options.codecs }),
     ...(options.consolidateMetadata !== undefined &&
       { consolidateMetadata: options.consolidateMetadata }),
     ...(options.onProgress !== undefined &&
