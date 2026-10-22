@@ -145,3 +145,16 @@ def test_refused_overwrite_keeps_the_store_readable(tmp_path, version):
     with pytest.raises(ValueError, match="already holds scale level 0"):
         to_ome_zarr(store, multiscales, version=version, overwrite=False)
     assert len(from_ome_zarr(store).images) == 2
+
+
+@pytest.mark.parametrize(
+    "kwargs", [{"overwrite": True}, {"overwrite": False, "metadata_only": True}]
+)
+def test_invalid_option_leaves_the_store_untouched(tmp_path, kwargs):
+    store = tmp_path / "image.ome.zarr"
+    multiscales = _multiscales(scale_factors=[2])
+    to_ome_zarr(store, multiscales, version="0.4")
+
+    with pytest.raises(ValueError, match="compressors"):
+        to_ome_zarr(store, multiscales, version="0.4", compressors=[{}], **kwargs)
+    assert len(from_ome_zarr(store).images) == 2

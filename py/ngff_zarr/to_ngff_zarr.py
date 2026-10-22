@@ -1894,6 +1894,12 @@ def _to_ngff_zarr_impl(
             "overwrite=True, or keep consolidate_metadata=True."
         )
 
+    if version == "0.4" and kwargs.get("compressors") is not None:
+        raise ValueError(
+            "The argument `compressors` is not supported for OME-Zarr version 0.4 "
+            "(Zarr v2). Use `compressor` instead."
+        )
+
     # Refuse before the root is rewritten, so the refusal leaves the store
     # readable.
     if not (start_level or overwrite or metadata_only):
@@ -1928,12 +1934,6 @@ def _to_ngff_zarr_impl(
     # will re-consolidate; otherwise this partial block would go stale.
     if was_consolidated and consolidate_metadata:
         _zarrista_consolidate_metadata(store, zarr_format)
-
-    if version == "0.4" and kwargs.get("compressors") is not None:
-        raise ValueError(
-            "The argument `compressors` is not supported for OME-Zarr version 0.4 "
-            "(Zarr v2). Use `compressor` instead."
-        )
 
     # Process each scale level
     nscales = len(multiscales.images)
