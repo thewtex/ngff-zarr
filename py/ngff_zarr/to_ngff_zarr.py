@@ -1250,9 +1250,6 @@ def _compute_write_regions(
         slab_slices = int(slab_slices / z_chunks) * z_chunks
         num_z_splits = int(np.ceil(shape[z_index] / slab_slices))
 
-        # num_y_splits = 1
-        # num_x_splits = 1
-
         for slab_index in range(num_z_splits):
             # Process individual slabs
             if slice_planes:
