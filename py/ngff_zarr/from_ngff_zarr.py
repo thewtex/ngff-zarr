@@ -287,12 +287,13 @@ def from_ome_zarr(
         if not store_str.startswith(REMOTE_URL_SCHEMES):
             store, subpath = _parse_hcs_path(store_str)
 
-    # RFC-9: Handle .ozx (zipped OME-Zarr) files
-    if isinstance(store, (str, Path)) and is_ozx_path(store):
-        # Read version from .ozx comment if not provided
+    # RFC-9: Handle .ozx (zipped OME-Zarr) files, and plain .zip archives
+    is_zip = isinstance(store, (str, Path)) and str(store).lower().endswith(".zip")
+    if is_zip or (isinstance(store, (str, Path)) and is_ozx_path(store)):
+        # Read version from the RFC-9 comment if not provided
         if version is None:
             version = read_ozx_version(store)
-            if version is None:
+            if version is None and not is_zip:
                 version = "0.5"  # Default to 0.5 for .ozx files
 
         # Read the archive through the zarrista-backed zip store handle

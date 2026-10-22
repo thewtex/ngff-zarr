@@ -129,3 +129,22 @@ def test_from_ngff_zarr_hcs_invalid_subpath(hcs_data_path):
 
     error_msg = str(excinfo.value)
     assert "not found" in error_msg.lower() or "sub-path" in error_msg.lower()
+
+
+def test_well_image_path_stays_inside_the_plate(hcs_data_path, tmp_path):
+    """A well image path from the plate's metadata cannot climb out of it."""
+    import json
+    import shutil
+
+    if not hcs_data_path.exists():
+        pytest.skip("HCS test data not available")
+    plate = tmp_path / "hcs.ome.zarr"
+    shutil.copytree(hcs_data_path, plate)
+    attrs_path = plate / "A" / "1" / ".zattrs"
+    attrs = json.loads(attrs_path.read_text())
+    attrs["well"]["images"][0]["path"] = "../../../outside"
+    attrs_path.write_text(json.dumps(attrs))
+
+    well = from_hcs_zarr(str(plate)).get_well("A", "1")
+    with pytest.raises(ValueError, match="relative path below the well group"):
+        well.get_image(0)

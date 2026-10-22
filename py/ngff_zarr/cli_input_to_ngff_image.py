@@ -1,10 +1,8 @@
 # SPDX-FileCopyrightText: Copyright (c) Fideus Labs LLC
 # SPDX-License-Identifier: MIT
-import sys
 from pathlib import Path
 
 from dask.array.image import imread as daimread
-from rich import print
 
 from ._zarrista_utils import open_local_node
 from .detect_cli_io_backend import ConversionBackend
@@ -13,6 +11,10 @@ from .itk_image_to_ngff_image import itk_image_to_ngff_image
 from .ngff_image import NgffImage
 from .nibabel_image_to_ngff_image import nibabel_image_to_ngff_image
 from .to_ngff_image import to_ngff_image
+
+
+class CliInputError(ValueError):
+    """An input the command line cannot read, or a reader it lacks."""
 
 
 def cli_input_to_ngff_image(
@@ -30,16 +32,16 @@ def cli_input_to_ngff_image(
         try:
             import nibabel as nib
         except ImportError:
-            print("[red]Please install the [i]nibabel[/i] package.")
-            sys.exit(1)
+            raise CliInputError("Please install the nibabel package.") from None
         image = nib.load(input[0])
         return nibabel_image_to_ngff_image(image)
     if backend is ConversionBackend.ITKWASM:
         try:
             import itkwasm_image_io
         except ImportError:
-            print("[red]Please install the [i]itkwasm-image-io[/i] package.")
-            sys.exit(1)
+            raise CliInputError(
+                "Please install the itkwasm-image-io package."
+            ) from None
         # This will fail on windows systems if Path is not used and string is passed as input.
         image = itkwasm_image_io.imread(Path(input[0]))
         return itk_image_to_ngff_image(image)
@@ -47,8 +49,7 @@ def cli_input_to_ngff_image(
         try:
             import itk
         except ImportError:
-            print("[red]Please install the [i]itk-io[/i] package.")
-            sys.exit(1)
+            raise CliInputError("Please install the itk-io package.") from None
         if len(input) == 1:
             if "*" in str(input[0]):
 
@@ -66,23 +67,20 @@ def cli_input_to_ngff_image(
         try:
             from liffile import LifFile
         except ImportError:
-            print("[red]Please install the [i]liffile[/i] package.")
-            sys.exit(1)
+            raise CliInputError("Please install the liffile package.") from None
         from .lif_to_ngff_image import lif_to_ngff_image
 
         with LifFile(input[0]) as lif:
             # Default to first series for simple cli_input_to_ngff_image usage
             # Multi-series handling is done in cli.py
             if len(lif.images) == 0:
-                print("[red]No images found in LIF file.")
-                sys.exit(1)
+                raise CliInputError("No images found in LIF file.")
             return lif_to_ngff_image(lif.images[0])
     if backend is ConversionBackend.TIFFFILE:
         try:
             import tifffile
         except ImportError:
-            print("[red]Please install the [i]tifffile[/i] package.")
-            sys.exit(1)
+            raise CliInputError("Please install the tifffile package.") from None
         try:
             # tifffile's aszarr stores import zarr-python; build the lazy
             # view from TIFF page primitives instead so the minimal install
@@ -108,23 +106,20 @@ def cli_input_to_ngff_image(
             path_repr = input[0] if len(input) == 1 else input
             if isinstance(e, (FileNotFoundError, PermissionError, IsADirectoryError)):
                 # Clear path/access error; don't suggest corruption.
-                print(
-                    f"[red]Error: Could not read TIFF file {str(path_repr)!r}. "
+                raise CliInputError(
+                    f"Could not read TIFF file {str(path_repr)!r}. "
                     f"Details: {type(e).__name__}: {e}"
-                )
-            else:
-                print(
-                    f"[red]Error: Failed to read TIFF file {str(path_repr)!r}. "
-                    f"The file may be corrupted, truncated, or have invalid page "
-                    f"offsets. Details: {type(e).__name__}: {e}"
-                )
-            sys.exit(1)
+                ) from e
+            raise CliInputError(
+                f"Failed to read TIFF file {str(path_repr)!r}. "
+                f"The file may be corrupted, truncated, or have invalid page "
+                f"offsets. Details: {type(e).__name__}: {e}"
+            ) from e
     if backend is ConversionBackend.IMAGEIO:
         try:
             import imageio.v3 as iio
         except ImportError:
-            print("[red]Please install the [i]imageio[/i] package.")
-            sys.exit(1)
+            raise CliInputError("Please install the imageio package.") from None
 
         image = iio.imread(str(input[0]))
 

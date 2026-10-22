@@ -30,7 +30,7 @@ from rich.spinner import Spinner
 from rich_argparse import RichHelpFormatter
 
 from ._store_types import StoreLike
-from .cli_input_to_ngff_image import cli_input_to_ngff_image
+from .cli_input_to_ngff_image import CliInputError, cli_input_to_ngff_image
 from .compute_omero import compute_omero_from_multiscales
 from .config import config
 from .detect_cli_io_backend import (
@@ -753,7 +753,8 @@ def _convert_main(argv: list[str] | None = None) -> None:
         try:
             import psutil
 
-            n_workers = psutil.cpu_count(False) // 2
+            # cpu_count is None when unknown, and 1 core // 2 would be 0 workers.
+            n_workers = max(1, (psutil.cpu_count(False) or 2) // 2)
             worker_memory_target = config.memory_target // n_workers
         except ImportError:
             pass
@@ -1092,8 +1093,7 @@ def _convert_main(argv: list[str] | None = None) -> None:
                         )
 
             except ImportError:
-                sys.stdout.write("[red]Please install the [i]tifffile[/i] package.\n")
-                sys.exit(1)
+                raise CliInputError("Please install the tifffile package.") from None
         elif input_backend is ConversionBackend.LIFFILE:
             try:
                 from liffile import LifFile
@@ -1227,8 +1227,7 @@ def _convert_main(argv: list[str] | None = None) -> None:
                             )
 
             except ImportError:
-                sys.stdout.write("[red]Please install the [i]liffile[/i] package.\n")
-                sys.exit(1)
+                raise CliInputError("Please install the liffile package.") from None
         else:
             # Generate NgffImage
             ngff_image = cli_input_to_ngff_image(input_backend, args.input)
@@ -1386,7 +1385,11 @@ def main(argv: list[str] | None = None) -> None:
         return _upgrade_main(argv[1:])
     if argv and argv[0] == "conformance":
         return _conformance_main(argv[1:])
-    return _convert_main(argv)
+    try:
+        return _convert_main(argv)
+    except (CliInputError, OSError) as error:
+        _build_console().print(f"[red]Error: {error}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

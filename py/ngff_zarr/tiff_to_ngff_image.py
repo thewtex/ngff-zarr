@@ -520,7 +520,8 @@ def _extract_ome_translation_metadata(
     if "OME" in ome_metadata:
         ome_metadata = ome_metadata["OME"]
 
-    images = ome_metadata["Image"]
+    # A multi-file data file names a companion file and holds no <Image>.
+    images = ome_metadata.get("Image", [])
     if not isinstance(images, list):
         images = [images]
     if series_index < len(images):

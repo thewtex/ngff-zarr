@@ -1,5 +1,6 @@
 # SPDX-FileCopyrightText: Copyright (c) Fideus Labs LLC
 # SPDX-License-Identifier: MIT
+from pathlib import Path
 from typing import Union
 
 from ._supported_versions import NgffVersion, is_v06_version
@@ -97,6 +98,14 @@ def _parse_omero(omero_data: Union[dict, None]) -> Omero | None:
     return omero
 
 
+def _is_plain_directory(path: str) -> bool:
+    """A local directory that holds no Zarr node metadata."""
+    directory = Path(path)
+    return directory.is_dir() and not any(
+        (directory / doc).is_file() for doc in ("zarr.json", ".zgroup", ".zarray")
+    )
+
+
 def _parse_hcs_path(store_path: str) -> tuple[str, str | None]:
     """Parse a potential HCS path into store and sub-path components.
 
@@ -137,6 +146,9 @@ def _parse_hcs_path(store_path: str) -> tuple[str, str | None]:
                 # Preserve original separators in store path by slicing original input
                 store = store_path[:ext_end]
                 remainder = normalized[ext_end:].strip("/")
+                if remainder and _is_plain_directory(store):
+                    # Only named like a store: the path is a file or store inside it.
+                    return store_path, None
                 subpath = remainder if remainder else None
                 return store, subpath
 
