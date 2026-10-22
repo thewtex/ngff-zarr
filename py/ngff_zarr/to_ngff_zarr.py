@@ -229,11 +229,7 @@ def _write_with_zarrista(
     *store_path* addresses the array node itself (``<store>/<path>``); see
     :func:`_create_dataset` for ``compression_chain``.
     """
-    from ._zarrista_utils import (
-        _native_contiguous,
-        open_zarrista_array,
-        write_dask_array,
-    )
+    from ._zarrista_utils import open_zarrista_array, write_dask_array
 
     # Use full array shape if provided, otherwise use the region array shape
     dataset_shape = tuple(
@@ -255,47 +251,7 @@ def _write_with_zarrista(
         scale_path = Path(store_path)
         dataset = open_zarrista_array(scale_path.parent, scale_path.name)
 
-    # Try to write the dask array directly first
-    try:
-        write_dask_array(array, dataset, region=region)
-    except Exception as e:
-        # If we encounter dimension mismatch or shape-related errors,
-        # compute the array and try again with corrective action
-        error_msg = str(e).lower()
-        if any(
-            keyword in error_msg
-            for keyword in [
-                "dimension",
-                "shape",
-                "mismatch",
-                "size",
-                "extent",
-                "rank",
-                "invalid",
-            ]
-        ):
-            # Compute the array to get the actual shape
-            computed_array = _native_contiguous(array)
-
-            # Adjust region to match the actual computed array shape if needed
-            if len(region) == len(computed_array.shape):
-                adjusted_region = tuple(
-                    slice(
-                        region[i].start or 0,
-                        (region[i].start or 0) + computed_array.shape[i],
-                    )
-                    if isinstance(region[i], slice)
-                    else region[i]
-                    for i in range(len(region))
-                )
-            else:
-                adjusted_region = region
-
-            # Try writing the computed array with adjusted region
-            dataset[adjusted_region] = computed_array
-        else:
-            # Re-raise the exception if it's not related to dimension/shape issues
-            raise
+    write_dask_array(array, dataset, region=region)
 
 
 def _validate_ngff_parameters(
@@ -1208,7 +1164,6 @@ def _handle_large_array_writing(
     arr: dask.array.Array,
     path: str,
     dims: tuple[str, ...],
-    dim_factors: dict[str, int],
     chunks: tuple[int, ...],
     sharding_kwargs: dict,
     store_path: str,
@@ -1222,13 +1177,6 @@ def _handle_large_array_writing(
     **kwargs,
 ) -> None:
     """Handle writing large arrays by splitting them into manageable pieces."""
-    shrink_factors = []
-    for dim in dims:
-        if dim in dim_factors:
-            shrink_factors.append(dim_factors[dim])
-        else:
-            shrink_factors.append(1)
-
     zarr_chunk_shape, chunks, shards, internal_chunk_shape = _resolve_scale_chunks(
         arr, chunks, sharding_kwargs, internal_chunk_shape, shards
     )
@@ -1238,7 +1186,7 @@ def _handle_large_array_writing(
     y_index = dims.index("y")
 
     regions = _compute_write_regions(
-        image, dims, arr, shape, x_index, y_index, zarr_chunk_shape, shrink_factors
+        image, dims, arr, shape, x_index, y_index, zarr_chunk_shape
     )
 
     for region_index, region in enumerate(regions):
@@ -1282,7 +1230,6 @@ def _compute_write_regions(
     x_index: int,
     y_index: int,
     chunks: tuple[int, ...],
-    shrink_factors: list[int],
 ) -> list[tuple[slice, ...]]:
     """Compute the regions for writing a large array in chunks."""
     regions = []
@@ -1290,10 +1237,9 @@ def _compute_write_regions(
     # If z dimension exists, handle 3D data
     if "z" in dims:
         z_index = dims.index("z")
-        slice_bytes = memory_usage(image, {"z"})
-        slab_slices = min(
-            int(np.ceil(config.memory_target / slice_bytes)), arr.shape[z_index]
-        )
+        # Bytes of one z slice: the split counts slices.
+        slice_bytes = memory_usage(image) / shape[z_index]
+        slab_slices = min(int(config.memory_target // slice_bytes), arr.shape[z_index])
         z_chunks = chunks[z_index]
         slice_planes = False
         if slab_slices < z_chunks:
@@ -1303,11 +1249,6 @@ def _compute_write_regions(
             slab_slices = arr.shape[z_index]
         slab_slices = int(slab_slices / z_chunks) * z_chunks
         num_z_splits = int(np.ceil(shape[z_index] / slab_slices))
-        while num_z_splits % shrink_factors[z_index] > 1:
-            num_z_splits += 1
-
-        # num_y_splits = 1
-        # num_x_splits = 1
 
         for slab_index in range(num_z_splits):
             # Process individual slabs
@@ -1322,7 +1263,6 @@ def _compute_write_regions(
                         y_index,
                         z_index,
                         chunks,
-                        shrink_factors,
                         slab_index,
                     )
                 )
@@ -1349,7 +1289,6 @@ def _compute_plane_regions(
     y_index: int,
     z_index: int,
     chunks: tuple[int, ...],
-    shrink_factors: list[int],
     slab_index: int,
 ) -> list[tuple[slice, ...]]:
     """Compute regions for a single z-slab, dividing into planes and strips if needed."""
@@ -1358,10 +1297,10 @@ def _compute_plane_regions(
     y_chunks = chunks[y_index]
     x_chunks = chunks[x_index]
 
-    # Calculate how to divide planes
-    plane_bytes = memory_usage(image, {"z", "y"})
+    # Bytes of one y row of the z_chunks-thick slab: the split counts rows.
+    plane_bytes = memory_usage(image) / shape[z_index] * z_chunks / shape[y_index]
     plane_slices = min(
-        int(np.ceil(config.memory_target / plane_bytes)),
+        int(config.memory_target // plane_bytes),
         arr.shape[y_index],
     )
     slice_strips = False
@@ -1372,14 +1311,12 @@ def _compute_plane_regions(
         plane_slices = arr.shape[y_index]
     plane_slices = int(plane_slices / y_chunks) * y_chunks
     num_y_splits = int(np.ceil(shape[y_index] / plane_slices))
-    while num_y_splits % shrink_factors[y_index] > 1:
-        num_y_splits += 1
 
     if slice_strips:
-        # Need to subdivide further into strips
-        strip_bytes = memory_usage(image, {"z", "y", "x"})
+        # Bytes of one x column of a plane_slices-tall plane of that slab.
+        strip_bytes = plane_bytes * plane_slices / shape[x_index]
         strip_slices = min(
-            int(np.ceil(config.memory_target / strip_bytes)),
+            int(config.memory_target // strip_bytes),
             arr.shape[x_index],
         )
         strip_slices = max(strip_slices, x_chunks)
@@ -1387,8 +1324,6 @@ def _compute_plane_regions(
             strip_slices = arr.shape[x_index]
         strip_slices = int(strip_slices / x_chunks) * x_chunks
         num_x_splits = int(np.ceil(shape[x_index] / strip_slices))
-        while num_x_splits % shrink_factors[x_index] > 1:
-            num_x_splits += 1
 
         for plane_index in range(num_y_splits):
             for strip_index in range(num_x_splits):
@@ -1748,8 +1683,12 @@ def to_ome_zarr(
             chunks_per_shard = 2
 
         # Write to a temporary directory store first, then zip it into the
-        # requested .ozx archive (zarrista can only read zip archives).
-        temp_dir = tempfile.mkdtemp()
+        # requested .ozx archive (zarrista can only read zip archives). Stage
+        # beside the archive: the system temp dir is often a small tmpfs.
+        destination = Path(store)
+        temp_dir = tempfile.mkdtemp(
+            dir=destination.parent, prefix=f".{destination.name}."
+        )
         try:
             _to_ngff_zarr_impl(
                 temp_dir,
@@ -1925,7 +1864,6 @@ def _to_ngff_zarr_impl(
 
     next_image = multiscales.images[0]
     dims = next_image.dims
-    previous_dim_factors = dict.fromkeys(dims, 1)
 
     for index in range(nscales):
         if progress and not metadata_only:
@@ -1935,15 +1873,6 @@ def _to_ngff_zarr_impl(
         arr = image.data
         path = metadata.datasets[index].path
         parent = str(PurePosixPath(path).parent)
-
-        # Calculate dimension factors
-        if index > 0 and index < nscales - 1 and multiscales.scale_factors:
-            dim_factors = _dim_scale_factors(
-                dims, multiscales.scale_factors[index], previous_dim_factors
-            )
-        else:
-            dim_factors = dict.fromkeys(dims, 1)
-        previous_dim_factors = dim_factors
 
         if index < start_level:
             _bind_existing_level(image, store_path, path, index)
@@ -2034,7 +1963,6 @@ def _to_ngff_zarr_impl(
                 arr,
                 path,
                 dims,
-                dim_factors,
                 chunks,
                 sharding_kwargs,
                 store_path,
