@@ -80,6 +80,15 @@ export async function fromOmeZarr(
   store: string | MemoryStore | zarr.FetchStore | zarr.Readable,
   options: FromOmeZarrOptions = {},
 ): Promise<NgffMultiscales | NgffScene | V06Transform> {
+  if (
+    typeof store === "string" && isOzxPath(store) && !/^https?:\/\//.test(store)
+  ) {
+    // A file-backed Blob: the archive is range-read, not loaded whole. Opened
+    // first, so paths below it name entries of the archive.
+    const { openAsBlob } = await import("node:fs");
+    const { ZipFileStore } = await import("@zarrita/storage");
+    store = ZipFileStore.fromBlob(await openAsBlob(store)) as zarr.Readable;
+  }
   if (options.path !== undefined) {
     const { path, ...rest } = options;
     checkPathBelowRoot(path);
@@ -132,12 +141,6 @@ export async function fromOmeZarr(
         );
         if (store instanceof FileSystemStore || store instanceof ZipFileStore) {
           resolvedStore = store as unknown as zarr.Readable;
-        } else if (isOzxPath(storePath)) {
-          // A file-backed Blob: the archive is range-read, not loaded whole.
-          const { openAsBlob } = await import("node:fs");
-          resolvedStore = ZipFileStore.fromBlob(
-            await openAsBlob(storePath),
-          ) as unknown as zarr.Readable;
         } else {
           // Normalize the path for cross-platform compatibility
           const normalizedPath = storePath.replace(/^\/([A-Za-z]:)/, "$1");

@@ -921,3 +921,18 @@ Deno.test("scene .ozx archives use the codecs they are given", async () => {
     assertEquals(JSON.stringify(array.codecs).includes("blosc"), false);
   }
 });
+
+Deno.test("a scene .ozx path reads back by path", async () => {
+  await withTempDir(async (dir) => {
+    const { pixels, scene } = await tilesScene();
+    const archive = `${dir}/tiles.ozx`;
+    await toOmeZarr(archive, scene);
+
+    await assertScenePixels(
+      await fromOmeZarr(archive, { kind: "scene" }),
+      pixels,
+    );
+    const tile = await fromOmeZarr(archive, { path: "tile_1" });
+    assertEquals(await pixelsOf(tile), pixels.tile_1);
+  });
+});
