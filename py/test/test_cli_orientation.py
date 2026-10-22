@@ -167,3 +167,50 @@ def test_cli_itk_input_writes_orientation_automatically(input_images):
         spatial = {ax["name"]: ax for ax in axes_metadata if ax["name"] in ("x", "y")}
         assert spatial["x"]["orientation"]["type"] == "anatomical"
         assert spatial["y"]["orientation"]["type"] == "anatomical"
+
+
+@pytest.mark.skipif(
+    zarr_version < packaging.version.parse("3.0.0b1"),
+    reason="zarr version >= 3.0.0b1 required for OME-Zarr version >= 0.5",
+)
+def test_cli_no_orientation_drops_itk_orientation(input_images):
+    """``--no-orientation`` drops the orientation the ITK backend attaches."""
+    input_path = str(test_data_dir / "input" / "cthead1.png")
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output_path = str(Path(temp_dir) / "cthead1.ome.zarr")
+
+        result = _run_ngff_zarr("-i", input_path, "-o", output_path, "--no-orientation")
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+
+        axes_metadata = _read_axes_metadata(output_path)
+        assert all("orientation" not in ax for ax in axes_metadata)
+
+
+@pytest.mark.skipif(
+    zarr_version < packaging.version.parse("3.0.0b1"),
+    reason="zarr version >= 3.0.0b1 required for OME-Zarr version >= 0.5",
+)
+@pytest.mark.parametrize("input_version", ["0.5", "0.6"])
+def test_cli_no_orientation_drops_ome_zarr_orientation(input_images, input_version):
+    """``--no-orientation`` drops the orientation an OME-Zarr input carries."""
+    input_path = str(test_data_dir / "input" / "cthead1.png")
+    with tempfile.TemporaryDirectory() as temp_dir:
+        oriented_path = Path(temp_dir) / "oriented.ome.zarr"
+        output_path = Path(temp_dir) / "output.ome.zarr"
+
+        result = _run_ngff_zarr(
+            "-i",
+            input_path,
+            "-o",
+            str(oriented_path),
+            "--ome-zarr-version",
+            input_version,
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "orientation" in (oriented_path / "zarr.json").read_text()
+
+        result = _run_ngff_zarr(
+            "-i", str(oriented_path), "-o", str(output_path), "--no-orientation"
+        )
+        assert result.returncode == 0, f"stderr: {result.stderr}"
+        assert "orientation" not in (output_path / "zarr.json").read_text()

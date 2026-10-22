@@ -59,6 +59,9 @@ ngff-zarr -i image.nii.gz -o output.ome.zarr \
 # Inputs that already carry orientation (e.g. NIfTI, NRRD, DICOM via ITK)
 # write it automatically with no extra flags
 ngff-zarr -i image.nii.gz -o output.ome.zarr
+
+# Drop orientation the input carries, e.g. for non-anatomical data read via ITK
+ngff-zarr -i volume.nrrd -o output.ome.zarr --no-orientation
 ```
 
 ### ITK Integration

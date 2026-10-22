@@ -424,6 +424,8 @@ def _apply_cli_metadata_overrides(ngff_image, args, live):
         ngff_image.name = args.name
     if args.orientation:
         ngff_image.axes_orientations = _parse_orientation_arg(args.orientation, live)
+    elif args.no_orientation:
+        ngff_image.axes_orientations = None
 
 
 def _parse_orientation_arg(values, live):
@@ -549,7 +551,14 @@ def _convert_main(argv: list[str] | None = None) -> None:
         default="0.5",
         choices=["0.4", "0.5", "0.6"],
     )
-    metadata_group.add_argument(
+    orientation_group = metadata_group.add_mutually_exclusive_group()
+    orientation_group.add_argument(
+        "--no-orientation",
+        action="store_true",
+        help="Do not write anatomical orientation (RFC 4), even when the input "
+        "carries it, e.g. the LPS orientation the ITK backend attaches.",
+    )
+    orientation_group.add_argument(
         "--orientation",
         nargs="+",
         help="Anatomical orientation (RFC 4) for the spatial axes. Either a preset "
@@ -991,6 +1000,15 @@ def _convert_main(argv: list[str] | None = None) -> None:
                 args.input[0], args.storage_options
             )
             multiscales = from_ome_zarr(input_store, storage_options=storage_options)
+            if args.no_orientation:
+                # An existing store is written from its metadata, not its images.
+                metadata = multiscales.metadata
+                systems = getattr(metadata, "coordinateSystems", None) or []
+                for axis in [
+                    *(getattr(metadata, "axes", None) or []),
+                    *(axis for system in systems for axis in system.axes),
+                ]:
+                    axis.orientation = None
             _multiscales_to_ngff_zarr(
                 live,
                 args,
