@@ -36,6 +36,7 @@ from ._zarrista_utils import (
     normalize_store,
     open_lazy_array,
     read_group_attributes,
+    refuse_non_zarr_directory,
 )
 from ._zarrista_utils import (
     consolidate_metadata as _zarrista_consolidate_metadata,
@@ -1746,6 +1747,10 @@ def to_ome_zarr(
             raise FileExistsError(
                 f"'{store}' already exists; pass overwrite=True to replace it."
             )
+        # write_store_to_zip refuses such a folder only after the pyramid is
+        # computed and zipped.
+        if Path(store).is_dir():
+            refuse_non_zarr_directory(Path(store))
 
         # Default chunks_per_shard to 2 for .ozx files if not specified
         if chunks_per_shard is None:
