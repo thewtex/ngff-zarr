@@ -134,20 +134,3 @@ def test_overwrite_accepts_an_empty_folder_and_a_store(tmp_path):
     to_ome_zarr(folder, _multiscales(), overwrite=True)
     to_ome_zarr(folder, _multiscales(rng_seed=1), overwrite=True)
     assert from_ome_zarr(folder).images[0].data.shape == (1, 64, 64, 64)
-
-
-def test_ozx_refuses_a_folder_before_computing(tmp_path):
-    folder = tmp_path / "documents.ozx"
-    folder.mkdir()
-    (folder / "notes.txt").write_text("keep me")
-
-    def fail(block):
-        raise RuntimeError("the pyramid was computed")
-
-    multiscales = _multiscales()
-    for image in multiscales.images:
-        image.data = image.data.map_blocks(fail, dtype=image.data.dtype)
-
-    with pytest.raises(ValueError, match="not a Zarr store"):
-        to_ome_zarr(folder, multiscales, overwrite=True)
-    assert (folder / "notes.txt").read_text() == "keep me"

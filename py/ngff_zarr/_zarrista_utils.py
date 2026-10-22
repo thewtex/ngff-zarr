@@ -527,8 +527,8 @@ def _write_group_doc(path: Path, doc: dict) -> None:
     )
 
 
-def refuse_non_zarr_directory(path: Path) -> None:
-    """Raise unless the directory at *path* is empty or a Zarr store.
+def remove_zarr_store(path: Path) -> None:
+    """Delete the Zarr store at *path*; refuse any other non-empty directory.
 
     The writers overwrite by default, so a mistyped output path must not wipe
     an unrelated directory.
@@ -540,11 +540,6 @@ def refuse_non_zarr_directory(path: Path) -> None:
             f"Refusing to overwrite '{path}': it is a non-empty directory that "
             "is not a Zarr store. Remove it or choose another output path."
         )
-
-
-def remove_zarr_store(path: Path) -> None:
-    """Delete the Zarr store at *path*; refuse any other non-empty directory."""
-    refuse_non_zarr_directory(path)
     shutil.rmtree(path)
 
 
