@@ -1239,9 +1239,7 @@ def _compute_write_regions(
         z_index = dims.index("z")
         # Bytes of one z slice: the split counts slices.
         slice_bytes = memory_usage(image) / shape[z_index]
-        slab_slices = min(
-            int(np.ceil(config.memory_target / slice_bytes)), arr.shape[z_index]
-        )
+        slab_slices = min(int(config.memory_target // slice_bytes), arr.shape[z_index])
         z_chunks = chunks[z_index]
         slice_planes = False
         if slab_slices < z_chunks:
@@ -1305,7 +1303,7 @@ def _compute_plane_regions(
     # Bytes of one y row of the z_chunks-thick slab: the split counts rows.
     plane_bytes = memory_usage(image) / shape[z_index] * z_chunks / shape[y_index]
     plane_slices = min(
-        int(np.ceil(config.memory_target / plane_bytes)),
+        int(config.memory_target // plane_bytes),
         arr.shape[y_index],
     )
     slice_strips = False
@@ -1321,7 +1319,7 @@ def _compute_plane_regions(
         # Bytes of one x column of a plane_slices-tall plane of that slab.
         strip_bytes = plane_bytes * plane_slices / shape[x_index]
         strip_slices = min(
-            int(np.ceil(config.memory_target / strip_bytes)),
+            int(config.memory_target // strip_bytes),
             arr.shape[x_index],
         )
         strip_slices = max(strip_slices, x_chunks)

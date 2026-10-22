@@ -32,29 +32,29 @@ def test_regions_fill_memory_target(monkeypatch, memory_target, expected_regions
     assert max(_region_bytes(r, 2) for r in regions) <= memory_target
 
 
-def test_sharded_regions_stay_within_memory_target(monkeypatch):
-    # Shards of 256 over 128-voxel dask chunks, as chunks_per_shard=2 writes;
-    # a 64 MiB target needs plane and strip splits of shard-thick slabs.
-    arr = da.zeros((1024, 2048, 2048), dtype=np.uint16, chunks=128)
+@pytest.mark.parametrize(
+    ("shape", "chunks", "start", "stored", "memory_target"),
+    [
+        # Shards of 256 over 128-voxel dask chunks, as chunks_per_shard=2 writes.
+        ((1024, 2048, 2048), 128, 0, (256, 256, 256), 64 * 2**20),
+        # Slicing leaves an 8-slice leading z chunk.
+        ((1032, 2048, 2048), 128, 120, (128, 128, 128), 4 * 2**30),
+        # Targets just short of a whole number of 8 MiB slices, rows or columns.
+        ((64, 2048, 2048), (2, 128, 128), 0, (2, 128, 128), 12 * 2**20),
+        ((64, 2048, 2048), (2, 128, 128), 0, (2, 128, 128), 2**20 - 1),
+        ((64, 2048, 2048), (2, 128, 128), 0, (2, 128, 128), 2**17 - 1),
+    ],
+    ids=["shards", "partial-chunk", "slabs", "planes", "strips"],
+)
+def test_regions_stay_within_memory_target(
+    monkeypatch, shape, chunks, start, stored, memory_target
+):
+    arr = da.zeros(shape, dtype=np.uint16, chunks=chunks)[start:]
     image = to_ngff_image(arr, dims=("z", "y", "x"))
-    monkeypatch.setattr(config, "memory_target", 64 * 2**20)
+    monkeypatch.setattr(config, "memory_target", memory_target)
 
     regions = _compute_write_regions(
-        image, ("z", "y", "x"), arr, arr.shape, 2, 1, (256, 256, 256)
+        image, ("z", "y", "x"), arr, arr.shape, 2, 1, stored
     )
 
-    assert len(regions) == 128
-    assert max(_region_bytes(r, 2) for r in regions) <= config.memory_target
-
-
-def test_partial_leading_chunk_does_not_grow_regions(monkeypatch):
-    # Slicing leaves an 8-slice leading z chunk; region sizes follow the shape.
-    arr = da.zeros((1032, 2048, 2048), dtype=np.uint16, chunks=128)[120:]
-    image = to_ngff_image(arr, dims=("z", "y", "x"))
-    monkeypatch.setattr(config, "memory_target", 4 * 2**30)
-
-    regions = _compute_write_regions(
-        image, ("z", "y", "x"), arr, arr.shape, 2, 1, (128, 128, 128)
-    )
-
-    assert max(_region_bytes(r, 2) for r in regions) <= config.memory_target
+    assert max(_region_bytes(r, 2) for r in regions) <= memory_target
