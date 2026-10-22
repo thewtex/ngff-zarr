@@ -25,6 +25,8 @@ engine:
   model: gpt-5-mini
 
 tools:
+  cli-proxy: false
+  bash: false
   github:
     # If in a public repo, setting `lockdown: false` allows
     # reading issues, pull requests and comments from 3rd-parties
