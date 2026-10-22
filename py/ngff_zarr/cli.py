@@ -939,11 +939,17 @@ def _convert_main(argv: list[str] | None = None) -> None:
             if isinstance(rich_dask_progress, NgffProgressCallback):
                 rich_dask_progress.add_callback_task("[green]Converting to NIfTI")
 
-            # NIfTI voxel axes run x, y, z (, t, c): the reverse of OME-Zarr.
-            nifti_dims = [d for d in ("x", "y", "z", "t", "c") if d in ngff_image.dims]
+            # NIfTI voxel axes run x, y, z, t, c: the reverse of OME-Zarr, with
+            # a fixed meaning per position, so an absent axis before the last
+            # present one is kept with size 1.
+            nifti_order = ("x", "y", "z", "t", "c")
+            nifti_dims = [d for d in nifti_order if d in ngff_image.dims]
             data = np.asarray(ngff_image.data).transpose(
                 [ngff_image.dims.index(d) for d in nifti_dims]
             )
+            for i, d in enumerate(nifti_order[: nifti_order.index(nifti_dims[-1])]):
+                if d not in nifti_dims:
+                    data = np.expand_dims(data, i)
 
             # Build affine matrix from scale and translation
             affine = np.eye(4)
