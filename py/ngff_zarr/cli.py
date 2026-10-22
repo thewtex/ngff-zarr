@@ -1075,8 +1075,7 @@ def _convert_main(argv: list[str] | None = None) -> None:
                         )
 
             except ImportError:
-                sys.stdout.write("[red]Please install the [i]tifffile[/i] package.\n")
-                sys.exit(1)
+                raise CliInputError("Please install the tifffile package.") from None
         elif input_backend is ConversionBackend.LIFFILE:
             try:
                 from liffile import LifFile
@@ -1210,8 +1209,7 @@ def _convert_main(argv: list[str] | None = None) -> None:
                             )
 
             except ImportError:
-                sys.stdout.write("[red]Please install the [i]liffile[/i] package.\n")
-                sys.exit(1)
+                raise CliInputError("Please install the liffile package.") from None
         else:
             # Generate NgffImage
             ngff_image = cli_input_to_ngff_image(input_backend, args.input)
@@ -1371,7 +1369,7 @@ def main(argv: list[str] | None = None) -> None:
         return _conformance_main(argv[1:])
     try:
         return _convert_main(argv)
-    except CliInputError as error:
+    except (CliInputError, OSError) as error:
         _build_console().print(f"[red]Error: {error}")
         sys.exit(1)
 

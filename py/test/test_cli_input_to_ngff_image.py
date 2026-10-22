@@ -112,3 +112,20 @@ def test_cli_reports_unreadable_input_and_exits(tmp_path, capsys):
         cli.main(["-i", missing, "-o", output])
     assert exit_info.value.code == 1
     assert "Could not read TIFF" in " ".join(capsys.readouterr().out.split())
+
+
+@pytest.mark.parametrize(
+    ("name", "content"),
+    [("missing.tif", None), ("broken.tif", b"not a tiff"), ("missing.lif", None)],
+)
+def test_cli_reports_unreadable_direct_input(tmp_path, capsys, name, content):
+    """TIFF and LIF inputs written to OME-Zarr are read by the CLI itself."""
+    from ngff_zarr import cli
+
+    path = tmp_path / name
+    if content is not None:
+        path.write_bytes(content)
+    with pytest.raises(SystemExit) as exit_info:
+        cli.main(["-i", str(path), "-o", str(tmp_path / "out.ome.zarr")])
+    assert exit_info.value.code == 1
+    assert name in "".join(capsys.readouterr().out.split())
