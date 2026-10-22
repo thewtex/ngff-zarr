@@ -86,8 +86,9 @@ def ngff_image_to_itk_image(
     if "t" in itk_dims:
         itk_dims.remove("t")
         itk_dims.append("t")
-    spacing = [ngff_image.scale[dim] for dim in itk_dims]
-    origin = [ngff_image.translation[dim] for dim in itk_dims]
+    # to_ngff_image gives scale and translation to x, y and z only.
+    spacing = [ngff_image.scale.get(dim, 1.0) for dim in itk_dims]
+    origin = [ngff_image.translation.get(dim, 0.0) for dim in itk_dims]
     size = [ngff_image.data.shape[dims.index(d)] for d in itk_dims]
     dimension = len(itk_dims)
 

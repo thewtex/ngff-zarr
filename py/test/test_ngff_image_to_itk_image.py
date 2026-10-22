@@ -3,7 +3,12 @@
 import itk
 import itkwasm
 import numpy as np
-from ngff_zarr import from_ngff_zarr, itk_image_to_ngff_image, ngff_image_to_itk_image
+from ngff_zarr import (
+    from_ngff_zarr,
+    itk_image_to_ngff_image,
+    ngff_image_to_itk_image,
+    to_ngff_image,
+)
 
 from ._data import test_data_dir
 
@@ -511,3 +516,14 @@ def test_2d_coronal_direction_is_not_singular():
     )
     direction = np.asarray(ngff_image_to_itk_image(image).direction)
     np.testing.assert_array_equal(direction, np.eye(2))
+
+
+def test_time_axis_without_spacing():
+    """to_ngff_image gives spacing to x, y and z only; t defaults to 1."""
+    data = np.zeros((2, 3, 4, 5), dtype=np.float32)
+    ngff_image = to_ngff_image(data, dims=("t", "z", "y", "x"))
+
+    itk_image = ngff_image_to_itk_image(ngff_image)
+
+    assert list(itk_image.spacing) == [1.0, 1.0, 1.0, 1.0]
+    assert list(itk_image.origin) == [0.0, 0.0, 0.0, 0.0]
