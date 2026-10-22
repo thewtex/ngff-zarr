@@ -2,8 +2,11 @@
 # SPDX-License-Identifier: MIT
 """MCP tools for ngff-zarr image conversion."""
 
+import contextlib
+import io
 import tempfile
 import warnings
+from dataclasses import replace
 from pathlib import Path
 
 from ngff_zarr import (  # type: ignore[import-untyped]
@@ -14,21 +17,7 @@ from ngff_zarr import (  # type: ignore[import-untyped]
     to_multiscales,
     to_ome_zarr,
 )
-
-# Import validation function if available
-try:
-    from ngff_zarr import validate as validate_ngff
-except ImportError:
-    # Fallback if ngff-zarr schema validation is unavailable (no-op stub whose
-    # signature mirrors ngff_zarr.validate).
-    def validate_ngff(
-        ngff_dict: dict,
-        version: str = "0.4",
-        model: str = "image",
-        strict: bool = False,
-    ) -> None:
-        pass
-
+from ngff_zarr import validate as validate_ngff
 
 from .models import (
     ConversionOptions,
@@ -39,6 +28,7 @@ from .models import (
 )
 from .utils import (
     analyze_zarr_store,
+    check_output_path,
     detect_ome_zarr_version,
     is_url,
     is_zarr_store,
@@ -47,6 +37,50 @@ from .utils import (
     setup_dask_config,
     validate_conversion_options,
 )
+
+# Options that set image metadata; an OME-Zarr store input keeps its own.
+_METADATA_OPTIONS = (
+    "dims",
+    "scale",
+    "translation",
+    "units",
+    "name",
+    "anatomical_orientation",
+)
+
+
+def _as_chunks(value):
+    """A tool's chunk list as ngff-zarr takes it: one value for all axes, or a tuple."""
+    if isinstance(value, list):
+        return value[0] if len(value) == 1 else tuple(value)
+    return value
+
+
+def _rechunked(multiscales, chunks):
+    """*multiscales* with the data of every scale in *chunks*."""
+    images = [
+        replace(image, data=image.data.rechunk(chunks)) for image in multiscales.images
+    ]
+    return replace(multiscales, images=images)
+
+
+def _read_input(inputs: list[str]):
+    """Read input files into an NgffImage, reporting a bad input as ValueError.
+
+    ngff-zarr reports a bad input on stdout and calls sys.exit. Under the stdio
+    transport stdout carries the JSON-RPC messages and SystemExit would end the
+    server, so capture the message and raise it instead.
+    """
+    printed = io.StringIO()
+    try:
+        with contextlib.redirect_stdout(printed):
+            return cli_input_to_ngff_image(detect_cli_io_backend(inputs), inputs)
+    except SystemExit as e:
+        # shortcut: rich wraps the message at 80 columns, so a long path can gain
+        # a space; ngff-zarr versions that raise CliInputError skip this path.
+        raise ValueError(
+            " ".join(printed.getvalue().split()) or f"Could not read {inputs}"
+        ) from e
 
 
 async def convert_to_ome_zarr(
@@ -65,13 +99,12 @@ async def convert_to_ome_zarr(
                 error=f"Validation errors: {'; '.join(validation_errors)}",
             )
 
-        # Setup Dask if needed
-        client = setup_dask_config(
+        check_output_path(options.output_path, options.overwrite)
+
+        with setup_dask_config(
             use_local_cluster=options.use_local_cluster,
             cache_dir=options.cache_dir,
-        )
-
-        try:
+        ):
             # Check if input is already a zarr store
             multiscales_obj = None
             ngff_image = None
@@ -86,7 +119,9 @@ async def convert_to_ome_zarr(
                 # Check if it's a zarr store URL by trying to load it
                 try:
                     # Try to read as zarr store first
-                    multiscales = from_ome_zarr(input_path)
+                    multiscales = from_ome_zarr(
+                        input_path, storage_options=options.storage_options
+                    )
 
                     # If successful, we have a zarr store input
                     # We'll work with the multiscales directly and apply transformations
@@ -100,22 +135,24 @@ async def convert_to_ome_zarr(
                     # Not a zarr store, proceed with normal file handling
                     is_zarr_input = False
 
+            if is_zarr_input:
+                overrides = [
+                    name for name in _METADATA_OPTIONS if getattr(options, name)
+                ]
+                if overrides:
+                    raise ValueError(
+                        f"{', '.join(overrides)} apply to image file inputs; the "
+                        f"OME-Zarr store {input_paths[0]} keeps its own metadata."
+                    )
+
             if not is_zarr_input:
                 # Prepare input files (download remote files if needed)
                 with tempfile.TemporaryDirectory() as temp_dir:
                     prepared_inputs = await prepare_input_files(input_paths, temp_dir)
+                    ngff_image = _read_input(prepared_inputs)
 
-                    # Detect input backend
-                    backend = detect_cli_io_backend(prepared_inputs)
-
-                    # Load input image
-                    ngff_image = cli_input_to_ngff_image(backend, prepared_inputs)
-
-            # Apply metadata options (dims, scale, translation, name,
-            # anatomical_orientation). These overrides apply only to file/array
-            # inputs: for existing zarr-store inputs the source multiscales --
-            # including any orientation already in its metadata -- is written
-            # through unchanged.
+            # Apply metadata options. A zarr-store input that sets any was
+            # refused above: its multiscales keeps the source metadata.
             if not is_zarr_input and ngff_image is not None:
                 if options.dims:
                     if len(options.dims) != len(ngff_image.dims):
@@ -133,9 +170,11 @@ async def convert_to_ome_zarr(
                         ngff_image.translation[dim] = value
 
                 if options.units:
-                    # Note: axes_units assignment may need proper unit types
-                    # For now, we'll skip this to avoid type errors
-                    pass
+                    # Units were validated case-insensitively; NGFF names are lower case.
+                    ngff_image.axes_units = {
+                        **(ngff_image.axes_units or {}),
+                        **{dim: unit.lower() for dim, unit in options.units.items()},
+                    }
 
                 if options.name:
                     ngff_image.name = options.name
@@ -150,13 +189,7 @@ async def convert_to_ome_zarr(
                         options.anatomical_orientation
                     )
 
-            # Setup chunking
-            chunks = options.chunks
-            if chunks is not None:
-                if isinstance(chunks, list) and len(chunks) == 1:
-                    chunks = chunks[0]
-                elif isinstance(chunks, list):
-                    chunks = tuple(chunks)
+            chunks = _as_chunks(options.chunks)
 
             # Determine if we need to generate multiscales
             scale_factors = options.scale_factors
@@ -164,8 +197,9 @@ async def convert_to_ome_zarr(
 
             # For zarr inputs, we might want to preserve existing scales or regenerate
             if is_zarr_input and not scale_factors:
-                # Use existing multiscales but may need to rechunk
-                multiscales_obj = multiscales
+                multiscales_obj = (
+                    multiscales if chunks is None else _rechunked(multiscales, chunks)
+                )
             else:
                 # Need to create multiscales
                 if ngff_image is None:
@@ -198,15 +232,9 @@ async def convert_to_ome_zarr(
             # to_ome_zarr writes through the zarrista backend to a local path
             output_store = str(output_path)
 
-            # Setup chunks per shard if specified
-            chunks_per_shard = options.chunks_per_shard
-            if chunks_per_shard is not None:
-                if options.ome_zarr_version == "0.4":
-                    raise ValueError("Sharding not supported in OME-Zarr v0.4")
-                if isinstance(chunks_per_shard, list) and len(chunks_per_shard) == 1:
-                    chunks_per_shard = chunks_per_shard[0]
-                elif isinstance(chunks_per_shard, list):
-                    chunks_per_shard = tuple(chunks_per_shard)
+            chunks_per_shard = _as_chunks(options.chunks_per_shard)
+            if chunks_per_shard is not None and options.ome_zarr_version == "0.4":
+                raise ValueError("Sharding not supported in OME-Zarr v0.4")
 
             # Convert to OME-Zarr
             kwargs = {}
@@ -248,11 +276,6 @@ async def convert_to_ome_zarr(
                 error=None,
             )
 
-        finally:
-            # Cleanup Dask client
-            if client:
-                client.close()
-
     except Exception as e:
         return ConversionResult(
             success=False, output_path="", store_info={}, error=str(e)
@@ -281,24 +304,11 @@ async def read_ngff_zarr(
         Result containing store information and any errors
     """
     try:
-        # Read the multiscales
-        multiscales = from_ome_zarr(store_path, validate=validate)
-
-        # Analyze the store
-        store_info = analyze_zarr_store(store_path)
-
-        # Add additional information from multiscales
-        store_info_dict = store_info.model_dump()
-        if hasattr(multiscales, "method") and multiscales.method:
-            store_info_dict["method_type"] = str(multiscales.method)
-
-        # Note: Method metadata and RFC 4 features may not be available in current version
-        # These will be added once the features are fully integrated
-
+        store_info = analyze_zarr_store(store_path, storage_options, validate)
         return ConversionResult(
             success=True,
             output_path=store_path,
-            store_info=store_info_dict,
+            store_info=store_info.model_dump(),
             error=None,
         )
 
@@ -416,53 +426,14 @@ async def optimize_zarr_store(options: OptimizationOptions) -> ConversionResult:
                 error=f"Input store does not exist: {options.input_path}",
             )
 
-        # Load multiscales
-        multiscales = from_ome_zarr(str(input_path))
+        check_output_path(options.output_path, options.overwrite)
 
-        # Setup output store
+        multiscales = from_ome_zarr(str(input_path))
+        if options.chunks is not None:
+            multiscales = _rechunked(multiscales, _as_chunks(options.chunks))
+
         output_path = Path(options.output_path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_store = str(output_path)
-
-        # Apply optimizations by re-chunking/compressing the data
-        optimized_images = []
-        for image in multiscales.images:
-            optimized_data = image.data
-
-            # Apply new chunking if specified
-            if options.chunks is not None:
-                chunks = options.chunks
-                if isinstance(chunks, list) and len(chunks) == 1:
-                    chunks = chunks[0]
-                elif isinstance(chunks, list):
-                    chunks = tuple(chunks)
-                optimized_data = optimized_data.rechunk(chunks)  # type: ignore[arg-type]
-
-            # Create optimized image
-            from ngff_zarr.ngff_image import NgffImage  # type: ignore[import-untyped]
-
-            optimized_image = NgffImage(
-                optimized_data,  # type: ignore[arg-type]
-                image.dims,
-                image.scale,
-                image.translation,
-                image.name,
-                image.axes_units,
-            )
-            optimized_images.append(optimized_image)
-
-        # Create new multiscales object with optimized images
-        # For now, use the original multiscales and rely on to_ome_zarr to handle optimization
-        # This preserves metadata and compatibility
-        optimized_multiscales = multiscales  # type: ignore[assignment]
-
-        # Setup chunks per shard if specified
-        chunks_per_shard = options.chunks_per_shard
-        if chunks_per_shard is not None:
-            if isinstance(chunks_per_shard, list) and len(chunks_per_shard) == 1:
-                chunks_per_shard = chunks_per_shard[0]
-            elif isinstance(chunks_per_shard, list):
-                chunks_per_shard = tuple(chunks_per_shard)
 
         # Save optimized store. Compression reaches to_ome_zarr as a codec
         # under `compressor`, the way convert_to_ome_zarr passes it;
@@ -479,9 +450,11 @@ async def optimize_zarr_store(options: OptimizationOptions) -> ConversionResult:
             )
 
         to_ome_zarr(
-            output_store,
-            optimized_multiscales,
-            chunks_per_shard=chunks_per_shard,
+            str(output_path),
+            multiscales,
+            # from_ome_zarr upgrades the metadata in memory; keep the store's version.
+            version=detect_ome_zarr_version(read_root_attrs(str(input_path))),
+            chunks_per_shard=_as_chunks(options.chunks_per_shard),
             consolidate_metadata=options.consolidate_metadata,
             **compression_kwargs,
         )

@@ -2,9 +2,12 @@
 # SPDX-License-Identifier: MIT
 """Utility functions for ngff-zarr MCP server."""
 
+import asyncio
+import contextlib
+import ipaddress
 import json
-import tempfile
-from collections.abc import Mapping, MutableMapping
+import zipfile
+from collections.abc import Iterator, Mapping
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -15,32 +18,33 @@ from ngff_zarr import (  # type: ignore[import-untyped]
     config,
     from_ome_zarr,
 )
-
-# Import unit validation function
-try:
-    from ngff_zarr.v04.zarr_metadata import (
-        is_unit_supported,  # type: ignore[import-untyped]
-    )
-except ImportError:
-    # Fallback if not available
-    def is_unit_supported(unit: str) -> bool:
-        common_units = [
-            "meter",
-            "millimeter",
-            "micrometer",
-            "nanometer",
-            "second",
-            "millisecond",
-        ]
-        return unit.lower() in common_units
-
+from ngff_zarr.v04.zarr_metadata import (  # type: ignore[import-untyped]
+    is_unit_supported,
+)
 
 from .models import StoreInfo, SupportedFormats
 
 
+async def _refuse_local_host(request: httpx.Request) -> None:
+    """Refuse loopback and link-local hosts, such as cloud metadata endpoints.
+
+    shortcut: the address is resolved again on connect, so DNS rebinding can
+    slip past; bind the connection to the checked address if that matters.
+    """
+    host = request.url.host
+    for *_, sockaddr in await asyncio.get_running_loop().getaddrinfo(host, None):
+        address = ipaddress.ip_address(sockaddr[0])
+        # Some patch releases do not treat ::ffff:127.0.0.1 as loopback.
+        address = getattr(address, "ipv4_mapped", None) or address
+        if address.is_loopback or address.is_link_local or address.is_unspecified:
+            raise ValueError(f"Refusing to download from {host}: a local address.")
+
+
 async def download_file(url: str, destination: Path) -> None:
     """Download a file from URL to destination."""
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(
+        follow_redirects=True, event_hooks={"request": [_refuse_local_host]}
+    ) as client:
         async with client.stream("GET", url) as response:
             response.raise_for_status()
             async with aiofiles.open(destination, "wb") as f:
@@ -69,6 +73,13 @@ def is_zarr_store(path: str) -> bool:
         return path.endswith(".zarr") or path.endswith(".ome.zarr")
 
     path_obj = Path(path)
+    if path_obj.suffix == ".ozx":
+        # An RFC-9 archive holds the root zarr.json.
+        try:
+            with zipfile.ZipFile(path_obj) as archive:
+                return "zarr.json" in archive.namelist()
+        except (OSError, zipfile.BadZipFile):
+            return False
     return (
         (path_obj / "zarr.json").exists()
         or (path_obj / ".zgroup").exists()
@@ -76,28 +87,35 @@ def is_zarr_store(path: str) -> bool:
     )
 
 
-def url_store_mapping(store_path: str) -> MutableMapping:
-    """Key-to-bytes mapping over a remote store URL."""
-    if is_s3_url(store_path):
-        try:
-            import s3fs  # type: ignore[import-not-found,import-untyped]
-        except ImportError:
-            raise ImportError("s3fs required for S3 URLs")
-        fs = s3fs.S3FileSystem()
-        return s3fs.S3Map(store_path, s3=fs)
+def check_output_path(output_path: str, overwrite: bool) -> None:
+    """Refuse an output path whose contents the write would delete.
 
-    # HTTP/HTTPS URLs
-    import fsspec  # type: ignore[import-untyped]
-
-    return fsspec.get_mapper(store_path)
+    ``to_ome_zarr`` removes what is at the path before writing, and the path
+    comes from an agent, so only a Zarr store, and only with ``overwrite``, may go.
+    """
+    path = Path(output_path)
+    if not path.exists():
+        return
+    if not overwrite:
+        raise FileExistsError(
+            f"Output path already exists: {output_path}. "
+            "Pass overwrite=True to replace the store there."
+        )
+    if not is_zarr_store(output_path) and (path.is_file() or any(path.iterdir())):
+        raise FileExistsError(
+            f"Refusing to overwrite {output_path}: it is not a Zarr store."
+        )
 
 
 def _store_doc(store: str | Path | Mapping, name: str) -> str | None:
     """Raw metadata document *name* at the store root, or None if unreadable."""
     if isinstance(store, (str, Path)):
         try:
+            if Path(store).is_file():  # an .ozx archive (RFC-9)
+                with zipfile.ZipFile(store) as archive:
+                    return archive.read(name).decode()
             return (Path(store) / name).read_text()
-        except OSError:
+        except (OSError, KeyError, zipfile.BadZipFile):
             return None
     try:
         data = store[name]
@@ -106,16 +124,21 @@ def _store_doc(store: str | Path | Mapping, name: str) -> str | None:
     return data.decode() if isinstance(data, (bytes, bytearray)) else str(data)
 
 
-def read_root_attrs(store: str | Path | Mapping) -> dict:
+def read_root_attrs(
+    store: str | Path | Mapping, storage_options: dict | None = None
+) -> dict:
     """Root group attributes read directly from the store's metadata documents.
 
-    Accepts a local directory path, a remote store URL, or a key-to-bytes
+    Accepts a local directory or .ozx path, a remote store URL, or a key-to-bytes
     mapping. Prefers the zarr v3 ``zarr.json`` document, falling back to the
     zarr v2 ``.zattrs``; returns ``{}`` when neither is readable. No
     zarr-python involved.
     """
     if isinstance(store, str) and is_url(store):
-        store = url_store_mapping(store)
+        # A key-to-bytes mapping over the remote store (S3 needs s3fs).
+        import fsspec  # type: ignore[import-untyped]
+
+        store = fsspec.get_mapper(store, **(storage_options or {}))
     text = _store_doc(store, "zarr.json")
     if text is not None:
         try:
@@ -169,6 +192,8 @@ def get_store_size_and_files(store_path: str) -> tuple[int, int]:
     path = Path(store_path)
     if not path.exists():
         return 0, 0
+    if path.is_file():  # an .ozx archive
+        return path.stat().st_size, 1
 
     total_size = 0
     file_count = 0
@@ -181,21 +206,15 @@ def get_store_size_and_files(store_path: str) -> tuple[int, int]:
     return total_size, file_count
 
 
-def analyze_zarr_store(store_path: str) -> StoreInfo:
+def analyze_zarr_store(
+    store_path: str, storage_options: dict | None = None, validate: bool = False
+) -> StoreInfo:
     """Analyze a Zarr store and return information."""
     try:
-        store: str | MutableMapping
-        if is_url(store_path):
-            # Remote stores read through a key-to-bytes mapping, which the
-            # ngff-zarr store reader consumes directly (no zarr-python).
-            store = url_store_mapping(store_path)
-        else:
-            # For local files, just use the path directly
-            store = store_path
-
-        # Load multiscales
         try:
-            multiscales = from_ome_zarr(store)
+            multiscales = from_ome_zarr(
+                store_path, validate=validate, storage_options=storage_options
+            )
         except KeyError as e:
             if str(e) == "'start'" and store_path.startswith(("http://", "https://")):
                 # Handle OMERO metadata compatibility issue for remote stores
@@ -210,21 +229,12 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
         # Get store size and file count
         size_bytes, num_files = get_store_size_and_files(store_path)
 
-        # Extract compression info if available
-        compression = None
-        if hasattr(first_image.data, "chunks"):
-            # Get compression from first chunk
-            try:
-                chunk_info = first_image.data._meta
-                if hasattr(chunk_info, "compressor") and chunk_info.compressor:
-                    compression = str(chunk_info.compressor)
-            except Exception:
-                pass
-
         # Determine OME-Zarr version from the root metadata documents
         version = "0.4"  # Default
         try:
-            detected = detect_ome_zarr_version(read_root_attrs(store))
+            detected = detect_ome_zarr_version(
+                read_root_attrs(store_path, storage_options)
+            )
             if detected is not None:
                 version = detected
         except Exception:
@@ -239,12 +249,7 @@ def analyze_zarr_store(store_path: str) -> StoreInfo:
             dimensions=list(first_image.dims),
             shape=list(first_image.data.shape),
             dtype=str(first_image.data.dtype),
-            chunks=(
-                list(first_image.data.chunks[0])
-                if hasattr(first_image.data, "chunks")
-                else []
-            ),
-            compression=compression,
+            chunks=[int(size) for size in first_image.data.chunksize],
             scale_info=dict(first_image.scale) if first_image.scale else {},
             translation_info=(
                 dict(first_image.translation) if first_image.translation else {}
@@ -429,12 +434,16 @@ def get_available_compression_codecs() -> list[str]:
     return get_available_codecs()
 
 
+@contextlib.contextmanager
 def setup_dask_config(
     use_local_cluster: bool = False,
     cache_dir: str | None = None,
-) -> Any | None:
-    """Setup Dask configuration and return client if using LocalCluster."""
+) -> Iterator[Any | None]:
+    """Set the cache directory and start a LocalCluster for one conversion.
 
+    Yields the Client, or None without a LocalCluster. Both are undone on exit.
+    """
+    previous_cache_store = config.cache_store
     if cache_dir:
         cache_path = Path(cache_dir).resolve()
         cache_path.mkdir(parents=True, exist_ok=True)
@@ -443,30 +452,26 @@ def setup_dask_config(
         config.cache_store = cache_path
 
     client = None
-    if use_local_cluster:
-        try:
-            import psutil
-            from dask.distributed import Client, LocalCluster
-
-            n_workers = 4
-
+    try:
+        if use_local_cluster:
             try:
-                cpu_count = psutil.cpu_count(False)
-                if cpu_count is not None:
-                    n_workers = cpu_count // 2
-            except Exception:
-                pass
+                import psutil
+                from dask.distributed import Client
+            except ImportError:
+                raise ImportError("dask[distributed] required for LocalCluster")
 
-            cluster = LocalCluster(
-                n_workers=n_workers,
+            # Given worker options, the Client starts its own LocalCluster and
+            # closes it with itself.
+            client = Client(
+                n_workers=max(1, (psutil.cpu_count(False) or 8) // 2),
                 processes=True,
                 threads_per_worker=2,
             )
-            client = Client(cluster)
-        except ImportError:
-            raise ImportError("dask[distributed] required for LocalCluster")
-
-    return client
+        yield client
+    finally:
+        if client is not None:
+            client.close()
+        config.cache_store = previous_cache_store
 
 
 def validate_conversion_options(options: dict[str, Any]) -> list[str]:
@@ -504,13 +509,8 @@ def validate_conversion_options(options: dict[str, Any]) -> list[str]:
     return errors
 
 
-async def prepare_input_files(
-    input_paths: list[str], temp_dir: str | None = None
-) -> list[str]:
+async def prepare_input_files(input_paths: list[str], temp_dir: str) -> list[str]:
     """Prepare input files, downloading remote files if necessary."""
-    if temp_dir is None:
-        temp_dir = tempfile.mkdtemp()
-
     temp_path = Path(temp_dir)
     temp_path.mkdir(parents=True, exist_ok=True)
 
@@ -523,7 +523,10 @@ async def prepare_input_files(
             if not filename:
                 filename = f"downloaded_file_{len(prepared_paths)}"
 
+            # Keep the name: a header such as .mhd names its data file.
             local_path = temp_path / filename
+            if local_path.exists():
+                raise ValueError(f"Two inputs download to the same name {filename!r}.")
             await download_file(input_path, local_path)
             prepared_paths.append(str(local_path))
         else:

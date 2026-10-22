@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: MIT
 """MCP server for ngff-zarr image conversion."""
 
+import asyncio
+import threading
 from typing import Literal
 
 from mcp.server.fastmcp import FastMCP
@@ -29,6 +31,20 @@ from .utils import (
 # Create the MCP server
 mcp = FastMCP("ngff-zarr")
 
+# The tools change process-wide state (sys.stdout, warning filters, ngff-zarr's
+# config), so they run one at a time, each in a worker thread with its own event
+# loop: their blocking reads and writes leave the server's loop free.
+_tool_lock = threading.Lock()
+
+
+def _run_tool(tool, args):
+    with _tool_lock:
+        return asyncio.run(tool(*args))
+
+
+async def _off_loop(tool, *args):
+    return await asyncio.to_thread(_run_tool, tool, args)
+
 
 @mcp.tool()
 async def convert_images_to_ome_zarr(
@@ -53,9 +69,14 @@ async def convert_images_to_ome_zarr(
     anatomical_orientation: str | None = None,
     storage_options: dict[str, str] | None = None,
     consolidate_metadata: bool = True,
+    overwrite: bool = False,
 ) -> ConversionResult:
     """
     Convert images to OME-Zarr format.
+
+    dims, scale, translation, units, name and anatomical_orientation set the
+    metadata of image file inputs. An OME-Zarr store input keeps its own
+    metadata, so setting any of them for one is an error.
 
     Args:
         input_paths: List of input image paths (local files, URLs, or S3 URLs)
@@ -77,13 +98,13 @@ async def convert_images_to_ome_zarr(
             zarrista)
         use_local_cluster: Use Dask LocalCluster for large datasets
         cache_dir: Directory for caching
-        anatomical_orientation: Anatomical orientation preset (LPS, RAS).
-            Applies to file/array inputs only; for existing zarr-store inputs
-            the orientation already in the source metadata is preserved.
+        anatomical_orientation: Anatomical orientation preset (LPS, RAS)
         storage_options: Storage options for remote stores (S3, GCS, etc.)
         consolidate_metadata: Write consolidated metadata (default True). Set
             False for stores destined for a backend that rejects it, such as
             Icechunk.
+        overwrite: Replace an existing Zarr store at output_path (default
+            False: an existing output path is an error)
 
     Returns:
         ConversionResult with success status and store information
@@ -124,9 +145,10 @@ async def convert_images_to_ome_zarr(
         anatomical_orientation=anatomical_orientation,
         storage_options=storage_options,  # type: ignore[arg-type]
         consolidate_metadata=consolidate_metadata,
+        overwrite=overwrite,
     )
 
-    return await convert_to_ome_zarr(input_paths, options)
+    return await _off_loop(convert_to_ome_zarr, input_paths, options)
 
 
 @mcp.tool()
@@ -140,7 +162,7 @@ async def get_ome_zarr_info(store_path: str) -> StoreInfo:
     Returns:
         StoreInfo with detailed store information
     """
-    return await inspect_ome_zarr(store_path)
+    return await _off_loop(inspect_ome_zarr, store_path)
 
 
 @mcp.tool()
@@ -160,7 +182,7 @@ async def read_ome_zarr_store(
     Returns:
         ConversionResult with store information and any detected features
     """
-    return await read_ngff_zarr(store_path, storage_options, validate)
+    return await _off_loop(read_ngff_zarr, store_path, storage_options, validate)
 
 
 @mcp.tool()
@@ -174,7 +196,7 @@ async def validate_ome_zarr_store(store_path: str) -> ValidationResult:
     Returns:
         ValidationResult with validation status and any errors/warnings
     """
-    return await validate_ome_zarr(store_path)
+    return await _off_loop(validate_ome_zarr, store_path)
 
 
 @mcp.tool()
@@ -186,6 +208,7 @@ async def optimize_ome_zarr_store(
     chunks: list[int] | None = None,
     chunks_per_shard: list[int] | None = None,
     consolidate_metadata: bool = True,
+    overwrite: bool = False,
 ) -> ConversionResult:
     """
     Optimize an existing OME-Zarr store with new compression/chunking.
@@ -200,6 +223,8 @@ async def optimize_ome_zarr_store(
         consolidate_metadata: Write consolidated metadata (default True). Set
             False for stores destined for a backend that rejects it, such as
             Icechunk.
+        overwrite: Replace an existing Zarr store at output_path (default
+            False: an existing output path is an error)
 
     Returns:
         ConversionResult with optimization results
@@ -212,11 +237,11 @@ async def optimize_ome_zarr_store(
         compression_level=compression_level,
         chunks=chunks,
         chunks_per_shard=chunks_per_shard,
-        storage_options=None,  # Add the required parameter
         consolidate_metadata=consolidate_metadata,
+        overwrite=overwrite,
     )
 
-    return await optimize_zarr_store(options)
+    return await _off_loop(optimize_zarr_store, options)
 
 
 @mcp.resource("ngff-zarr://supported-formats")
@@ -274,7 +299,6 @@ def get_compression_codecs() -> str:
 
     codec_descriptions = {
         "gzip": "General purpose, good compression ratio, slower",
-        "lz4": "Fast compression/decompression, moderate compression",
         "zstd": "Good balance of speed and compression ratio",
         "blosc": "Meta-compressor with various algorithms",
     }
@@ -344,6 +368,10 @@ def main():
 
     mcp.settings.host = args.host
     mcp.settings.port = args.port
+    if args.host not in ("127.0.0.1", "localhost", "::1"):
+        # FastMCP allowed only localhost Host headers for its default host; a
+        # public bind is reached by other names, as FastMCP(host=...) allows.
+        mcp.settings.transport_security = None
 
     if args.transport == "streamable-http":
         mcp.settings.stateless_http = args.stateless_http

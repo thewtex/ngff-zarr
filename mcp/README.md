@@ -54,7 +54,7 @@ library.
 
 ### Output Optimization
 
-- Multiple compression codecs (gzip, lz4, zstd, blosc variants)
+- Multiple compression codecs (gzip, zstd, blosc variants such as blosc:lz4)
 - Configurable compression levels
 - Flexible chunk sizing
 - Sharding support (Zarr v3/OME-Zarr v0.5)
@@ -710,6 +710,9 @@ print(f"Dimensions: {info.dimensions}")
 ### Output Formats
 
 - OME-Zarr (.ome.zarr, .zarr)
+- An existing `output_path` is an error unless the tool is called with
+  `overwrite=True`, and even then only a Zarr store is replaced, never another
+  directory
 
 ## Performance Options
 
@@ -731,7 +734,7 @@ goes through zarrista either way.
 
 ### Compression
 
-- Choose from multiple codecs: gzip, lz4, zstd, blosc variants
+- Choose from multiple codecs: gzip, zstd, blosc variants such as blosc:lz4
 - Adjust compression levels for speed vs. size tradeoffs
 - Use sharding to reduce file count (Zarr v3)
 

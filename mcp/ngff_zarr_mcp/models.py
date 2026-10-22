@@ -51,9 +51,8 @@ class ConversionOptions(BaseModel):
     anatomical_orientation: str | None = Field(
         None,
         description=(
-            "Anatomical orientation preset (LPS, RAS). Applies to file/array "
-            "inputs only; existing zarr-store inputs keep their source "
-            "orientation metadata."
+            "Anatomical orientation preset (LPS, RAS). Applies to image file "
+            "inputs; an OME-Zarr store input keeps its own metadata."
         ),
     )
 
@@ -76,7 +75,7 @@ class ConversionOptions(BaseModel):
 
     # Storage options
     compression_codec: str | None = Field(
-        None, description="Compression codec (gzip, lz4, zstd, blosc)"
+        None, description="Compression codec (gzip, zstd, blosc:zstd, blosc:lz4)"
     )
     compression_level: int | None = Field(None, description="Compression level")
     use_tensorstore: bool = Field(
@@ -87,6 +86,14 @@ class ConversionOptions(BaseModel):
         description=(
             "Write consolidated metadata. Set False for stores destined for a "
             "backend that rejects it, such as Icechunk"
+        ),
+    )
+
+    overwrite: bool = Field(
+        False,
+        description=(
+            "Replace an existing Zarr store at output_path. Without it an "
+            "existing output path is an error"
         ),
     )
 
@@ -131,7 +138,6 @@ class StoreInfo(BaseModel):
     shape: list[int] = Field(..., description="Image shape")
     dtype: str = Field(..., description="Data type")
     chunks: list[int] | tuple[int, ...] = Field(..., description="Chunk sizes")
-    compression: str | None = Field(None, description="Compression codec")
     scale_info: dict = Field(..., description="Scale/spacing information")
     translation_info: dict = Field(..., description="Translation/origin information")
     method_type: str | None = Field(None, description="Multiscale method type")
@@ -167,14 +173,18 @@ class OptimizationOptions(BaseModel):
     chunks_per_shard: int | list[int] | tuple[int, ...] | None = Field(
         None, description="New sharding configuration"
     )
-    storage_options: dict[str, str | int | bool] | None = Field(
-        None, description="Storage options for remote stores"
-    )
     consolidate_metadata: bool = Field(
         True,
         description=(
             "Write consolidated metadata. Set False for stores destined for a "
             "backend that rejects it, such as Icechunk"
+        ),
+    )
+    overwrite: bool = Field(
+        False,
+        description=(
+            "Replace an existing Zarr store at output_path. Without it an "
+            "existing output path is an error"
         ),
     )
 
