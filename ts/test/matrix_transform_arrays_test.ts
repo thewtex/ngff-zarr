@@ -518,7 +518,7 @@ Deno.test("a matrix array that is not 2D is refused on read", async () => {
         location,
       ),
     Error,
-    "non-empty 2D matrix",
+    "2D matrix of at most 64x64",
   );
 });
 

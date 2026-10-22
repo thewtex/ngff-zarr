@@ -438,9 +438,9 @@ export async function resolveMatrixTransforms(
       // Check the size before reading: the path may name a whole image.
       // shortcut: refuses matrices over 64x64 (63 axes); raise if RFC-3
       // stores need more axes.
-      if (array.shape.some((extent) => extent > 64)) {
+      if (array.shape.length !== 2 || array.shape.some((n) => n > 64)) {
         throw new Error(
-          `expected a matrix of at most 64x64; got shape ${
+          `expected a 2D matrix of at most 64x64; got shape ${
             array.shape.join("x")
           }`,
         );
