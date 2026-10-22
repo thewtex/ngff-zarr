@@ -46,7 +46,8 @@ def test_written_scale0_keeps_requested_chunks(tmp_path):
     multiscales = nz.to_multiscales(image, scale_factors=[2], chunks=16)
 
     store = tmp_path / "chunks.ome.zarr"
-    nz.to_ngff_zarr(store, multiscales)
+    # 0.4 is Zarr v2, which zarr-python 2 and 3 can both open.
+    nz.to_ome_zarr(store, multiscales, version="0.4")
 
     level0 = zarr.open_array(store / "scale0" / "image", mode="r")
     assert level0.chunks == (11, 16, 16)
