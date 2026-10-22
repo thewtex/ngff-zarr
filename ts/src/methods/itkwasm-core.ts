@@ -443,11 +443,7 @@ async function downsampleLabelImageImpl(
   }
 
   // downsampleLabelImage takes no vector images, so channels go one by one.
-  const hasChannels = image.dims.includes("c");
-  const isVector = false;
-
-  // Handle channel dimension by processing each channel independently when not using vector mode
-  if (hasChannels && !isVector) {
+  if (image.dims.includes("c")) {
     return await downsamplePerSlice(
       "c",
       (...args) => downsampleLabelImageImpl(fns, ...args),
@@ -460,7 +456,7 @@ async function downsampleLabelImageImpl(
   }
 
   // Convert to ITK-Wasm format
-  const itkImage = await zarrToItkImage(image.data, image.dims, isVector);
+  const itkImage = await zarrToItkImage(image.data, image.dims, false);
 
   // Prepare shrink factors - need to be for ALL dimensions in ITK order (reversed)
   const shrinkFactors: number[] = [];

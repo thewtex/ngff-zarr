@@ -280,12 +280,7 @@ export async function toOmeZarrOzx(
 
 async function pathExists(path: string): Promise<boolean> {
   const { access } = await import("node:fs/promises");
-  try {
-    await access(path);
-    return true;
-  } catch {
-    return false;
-  }
+  return access(path).then(() => true, () => false);
 }
 
 /** @deprecated Use {@link toOmeZarrOzx} instead. */
