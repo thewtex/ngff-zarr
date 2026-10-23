@@ -310,9 +310,10 @@ Deno.test("rotation and affine payloads survive the round-trip", async () => {
 
 // Mirrors test_convert_ome_zarr_version.py::test_conversion, adapted to a
 // self-contained in-memory multiscale image.
-Deno.test("convert across v0.4, v0.5, and v0.6", async () => {
+Deno.test("convert across v0.5 and v0.6", async () => {
   const multiscales = await buildMultiscales();
-  for (const version of ["0.4", "0.5", "0.6"] as const) {
+  // This package writes Zarr v3 only, so 0.5 and later.
+  for (const version of ["0.5", "0.6"] as const) {
     const store: MemoryStore = new Map();
     await toOmeZarr(store, multiscales, { version });
     const back = await fromOmeZarr(store, { validate: true, version });
@@ -322,7 +323,7 @@ Deno.test("convert across v0.4, v0.5, and v0.6", async () => {
   }
 });
 
-Deno.test("convert v0.6 -> v0.5 -> v0.4 chain preserves scale", async () => {
+Deno.test("convert v0.6 -> v0.5 chain preserves scale", async () => {
   const multiscales = await buildMultiscales();
 
   const s6: MemoryStore = new Map();
@@ -334,14 +335,9 @@ Deno.test("convert v0.6 -> v0.5 -> v0.4 chain preserves scale", async () => {
   const m5 = await fromOmeZarr(s5, { version: "0.5" });
   assertEquals(m5.metadata.version, "0.5");
 
-  const s4: MemoryStore = new Map();
-  await toOmeZarr(s4, m5, { version: "0.4" });
-  const m4 = await fromOmeZarr(s4, { version: "0.4" });
-  assertEquals(m4.metadata.version, "0.4");
-
-  assertEquals(m4.images.length, multiscales.images.length);
-  assertEquals(m4.images[0].scale, multiscales.images[0].scale);
-  assertEquals(m4.images[1].scale, multiscales.images[1].scale);
+  assertEquals(m5.images.length, multiscales.images.length);
+  assertEquals(m5.images[0].scale, multiscales.images[0].scale);
+  assertEquals(m5.images[1].scale, multiscales.images[1].scale);
 });
 
 Deno.test("v0.6 round-trip via browser modules", async () => {
@@ -1349,4 +1345,40 @@ Deno.test("shared RFC-5 cases match the expected verdict", async () => {
       assertThrows(parse, Error, undefined, testCase.name);
     }
   }
+});
+
+Deno.test("nested transforms are checked at the document's version", async () => {
+  const { validateV06Transform } = await import("../src/utils/v06_metadata.ts");
+  // 0.9.dev1 (RFC-3) lifts the five-axis cap; a wrapper must pass that on.
+  const six = createMapAxis([5, 4, 3, 2, 1, 0]);
+  validateV06Transform(createTransformSequence([six]), [], "0.9.dev1");
+  validateV06Transform(createBijection(six, six), [], "0.9.dev1");
+  assertThrows(
+    () => validateV06Transform(createTransformSequence([six]), [], "0.6"),
+    Error,
+    "between 2 and 5",
+  );
+});
+
+Deno.test("global transforms may map between systems of other sizes", async () => {
+  const { validateScaleLength } = await import(
+    "../src/utils/structural_validation.ts"
+  );
+  // At 0.6 a multiscale-level scale acts in the coordinate system it maps
+  // into, which need not have as many axes as the image.
+  const axes = ["t", "z", "y", "x"].map((name) =>
+    createAxis(name as "t" | "z" | "y" | "x", name === "t" ? "time" : "space")
+  );
+  const world = createCoordinateSystem("world", axes.slice(1));
+  validateScaleLength({
+    axes,
+    datasets: [{
+      path: "s0",
+      coordinateTransformations: [createScale([1, 1, 1, 1])],
+    }],
+    coordinateTransformations: [createScale([2, 2, 2])],
+    coordinateSystems: [createCoordinateSystem("intrinsic", axes), world],
+    name: "image",
+    version: "0.6",
+  } as never, "0.6");
 });

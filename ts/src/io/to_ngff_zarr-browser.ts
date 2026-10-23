@@ -119,6 +119,11 @@ export interface ToOmeZarrOzxOptions {
    * single chunks out of a shard.
    */
   chunksPerShard?: ChunksPerShard | undefined;
+  /**
+   * Codecs for every array (default: the blosc(zstd) pipeline from
+   * `defaultCodecs`); the sharding codec wraps them.
+   */
+  codecs?: ZarrCodec[] | undefined;
 }
 
 /** @deprecated Use {@link ToOmeZarrOzxOptions} instead. */
@@ -241,7 +246,7 @@ export async function toOmeZarrOzx(
   await writeNgffMultiscalesToMemoryStore(
     memoryStore,
     multiscales,
-    arrayWriter({ chunksPerShard }),
+    arrayWriter({ codecs: options.codecs, chunksPerShard }),
     options.onProgress ?? null,
     options.consolidateMetadata ?? true,
     version,

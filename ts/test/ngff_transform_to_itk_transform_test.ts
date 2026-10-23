@@ -274,6 +274,19 @@ Deno.test("a byDimension axis index beyond the coordinate system is refused", ()
   );
 });
 
+Deno.test("a negative byDimension axis index is refused", () => {
+  // A negative index would leave its axis unset and the matrix singular.
+  assertThrows(
+    () =>
+      ngffTransformToItkMatrix(
+        createByDimension([item(createScale([2, 2]), [-1, 1], [0, 1])]),
+        ["y", "x"],
+      ),
+    Error,
+    "non-negative",
+  );
+});
+
 Deno.test("a byDimension matches the affine it is equivalent to", () => {
   const dims = ["z", "y", "x"];
   const byDimension = ngffTransformToItkMatrix(

@@ -34,6 +34,7 @@ import {
   toOmeZarrOzx as toOmeZarrOzxBrowser,
 } from "../src/io/to_ngff_zarr-browser.ts";
 import { sceneFromOmeValue } from "../src/io/scene_common.ts";
+import { bytesOnlyCodecs } from "../src/utils/codecs.ts";
 
 const FIXTURES = new URL("../../py/test/fixtures/scene/", import.meta.url);
 
@@ -891,4 +892,47 @@ Deno.test("upstream registration example", async () => {
   assertEquals(field.type, "displacements");
   assertEquals(field.path, "coordinateTransformations/dfield");
   assertEquals(field.interpolation, "linear");
+});
+
+Deno.test("overwrite false surfaces a malformed root instead of replacing it", async () => {
+  const { scene } = await tilesScene();
+  const store: MemoryStore = new Map([
+    ["/zarr.json", new TextEncoder().encode("{not json")],
+  ]);
+  await assertRejects(
+    () => toOmeZarr(store, scene, { overwrite: false }),
+  );
+  assertEquals(
+    new TextDecoder().decode(store.get("/zarr.json")),
+    "{not json",
+  );
+});
+
+Deno.test("scene .ozx archives use the codecs they are given", async () => {
+  const { scene } = await tilesScene();
+  const datasetPath = scene.images.tile_0.metadata.datasets[0].path;
+  for (const zipScene of [toOmeZarrOzxBrowser, toOmeZarrOzxData]) {
+    const zip = await zipScene(scene, { codecs: bytesOnlyCodecs() });
+    const archive = ZipFileStore.fromBlob(new Blob([zip as BlobPart]));
+    const array = await archiveDocument(
+      archive,
+      `/tile_0/${datasetPath}/zarr.json`,
+    );
+    assertEquals(JSON.stringify(array.codecs).includes("blosc"), false);
+  }
+});
+
+Deno.test("a scene .ozx path reads back by path", async () => {
+  await withTempDir(async (dir) => {
+    const { pixels, scene } = await tilesScene();
+    const archive = `${dir}/tiles.ozx`;
+    await toOmeZarr(archive, scene);
+
+    await assertScenePixels(
+      await fromOmeZarr(archive, { kind: "scene" }),
+      pixels,
+    );
+    const tile = await fromOmeZarr(archive, { path: "tile_1" });
+    assertEquals(await pixelsOf(tile), pixels.tile_1);
+  });
 });

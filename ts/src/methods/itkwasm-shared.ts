@@ -245,8 +245,14 @@ function copyTypedArray(
   | Uint16Array
   | Int16Array
   | Uint32Array
-  | Int32Array {
-  if (data instanceof Float32Array) {
+  | Int32Array
+  | BigInt64Array
+  | BigUint64Array {
+  if (data instanceof BigInt64Array) {
+    return new BigInt64Array(data);
+  } else if (data instanceof BigUint64Array) {
+    return new BigUint64Array(data);
+  } else if (data instanceof Float32Array) {
     return new Float32Array(data);
   } else if (data instanceof Float64Array) {
     return new Float64Array(data);
@@ -400,7 +406,9 @@ export async function zarrToItkImage(
     | Uint16Array
     | Int16Array
     | Uint32Array
-    | Int32Array;
+    | Int32Array
+    | BigInt64Array
+    | BigUint64Array;
   let shape = result.shape;
   let _finalDims = dims;
 
@@ -517,6 +525,10 @@ export async function itkImageToZarr(
     dataType = "float32";
   } else if (itkImage.data instanceof Float64Array) {
     dataType = "float64";
+  } else if (itkImage.data instanceof BigInt64Array) {
+    dataType = "int64";
+  } else if (itkImage.data instanceof BigUint64Array) {
+    dataType = "uint64";
   } else {
     throw new Error(`Unsupported data type: ${itkImage.data.constructor.name}`);
   }
@@ -529,7 +541,9 @@ export async function itkImageToZarr(
   // For vector images, the components are stored in the data but not in the size
   // The actual data length includes components
   const components = itkImage.imageType.components || 1;
-  const isVector = components > 1;
+  // A single-component image still has its channel axis when the target
+  // dims name one; dropping it would leave the dims and the array out of step.
+  const isVector = components > 1 || (targetDims?.includes("c") ?? false);
 
   // Validate data length matches expected shape (including components for vector images)
   const spatialElements = shape.reduce((a, b) => a * b, 1);

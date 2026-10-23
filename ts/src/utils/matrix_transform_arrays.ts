@@ -133,6 +133,19 @@ function generatedPath(transform: JsonObject, claimed: Set<string>): string {
   const base = isNodeName(transform.name)
     ? transform.name
     : String(transform.type);
+  for (const other of claimed) {
+    // Every path below the group would count as taken, and the search below
+    // would never end.
+    if (
+      other === MATRIX_ARRAY_GROUP ||
+      MATRIX_ARRAY_GROUP.startsWith(`${other}/`)
+    ) {
+      throw new Error(
+        `Matrix arrays are stored below '${MATRIX_ARRAY_GROUP}', but ` +
+          `'${other}' already holds that path.`,
+      );
+    }
+  }
   let path = `${MATRIX_ARRAY_GROUP}/${base}`;
   let suffix = 0;
   while (isClaimed(path, claimed)) {
@@ -422,6 +435,16 @@ export async function resolveMatrixTransforms(
     let chunk;
     try {
       const array = await zarr.open(root.resolve(path), { kind: "array" });
+      // Check the size before reading: the path may name a whole image.
+      // shortcut: refuses matrices over 64x64 (63 axes); raise if RFC-3
+      // stores need more axes.
+      if (array.shape.length !== 2 || array.shape.some((n) => n > 64)) {
+        throw new Error(
+          `expected a 2D matrix of at most 64x64; got shape ${
+            array.shape.join("x")
+          }`,
+        );
+      }
       chunk = await zarr.get(array);
     } catch (error) {
       throw new Error(

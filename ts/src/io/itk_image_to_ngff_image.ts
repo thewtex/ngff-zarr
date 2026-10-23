@@ -137,22 +137,15 @@ export async function itkImageToNgffImage(
   const allSpatialDims = new Set(["x", "y", "z"]);
   const spatialDims = dims.filter((dim) => allSpatialDims.has(dim));
 
-  // Create scale mapping from spacing
-  // ITK stores spacing/origin in physical space order (x, y, z),
-  // but we need to map them to array order (z, y, x).
-  // Reverse the arrays to convert from physical to array order, matching Python implementation.
+  // ITK stores spacing and origin per ITK axis (x, y, z, then t); pick each
+  // axis's entry by name, so a time axis's spacing is not shifted into z.
+  const itkAxes = ["x", "y", "z", "t"].slice(0, imageType.dimension);
   const scale: Record<string, number> = {};
-  const reversedSpacing = spacing.slice().reverse();
-  spatialDims.forEach((dim, idx) => {
-    scale[dim] = reversedSpacing[idx];
-  });
-
-  // Create translation mapping from origin
   const translation: Record<string, number> = {};
-  const reversedOrigin = origin.slice().reverse();
-  spatialDims.forEach((dim, idx) => {
-    translation[dim] = reversedOrigin[idx];
-  });
+  for (const dim of dims.filter((d) => itkAxes.includes(d))) {
+    scale[dim] = spacing[itkAxes.indexOf(dim)];
+    translation[dim] = origin[itkAxes.indexOf(dim)];
+  }
 
   // Create Zarr array from ITK-Wasm data
   const store = new Map<string, Uint8Array>();
@@ -195,8 +188,22 @@ export async function itkImageToNgffImage(
   let axesOrientations: Record<string, AnatomicalOrientation> | undefined;
   if (addAnatomicalOrientation) {
     axesOrientations = {};
-    const direction = itkImage.direction;
     const nSpatial = spatialDims.length;
+    // The direction matrix is dimension x dimension, row-major; orientation
+    // reads its spatial block.
+    const dimension = imageType.dimension;
+    const fullDirection = itkImage.direction;
+    const direction = fullDirection && fullDirection.length > 0
+      ? Array.from(
+        { length: nSpatial * nSpatial },
+        (_, k) =>
+          Number(
+            fullDirection[
+              Math.floor(k / nSpatial) * dimension + (k % nSpatial)
+            ],
+          ),
+      )
+      : fullDirection;
 
     // Check whether the direction matrix is available and has a
     // non-identity rotation (permutation or oblique).

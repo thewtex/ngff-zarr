@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: Copyright (c) Fideus Labs LLC
 // SPDX-License-Identifier: MIT
 /**
- * The browser reader returns what the Node reader returns for 0.4 and 0.5
- * stores, including omero channels and RFC-4 orientations.
+ * The browser reader returns what the Node reader returns, including omero
+ * channels and RFC-4 orientations. (This package writes 0.5 and later; both
+ * readers parse 0.4 with the same fromZarrAttrsV04.)
  */
 import { assertEquals, assertExists } from "@std/assert";
 import * as zarr from "zarrita";
@@ -18,7 +19,7 @@ import {
   createMultiscales,
 } from "../src/utils/factory.ts";
 
-async function writeStore(version: "0.4" | "0.5") {
+async function writeStore(version: "0.5") {
   const source = new Map<string, Uint8Array>();
   const data = await zarr.create(zarr.root(source).resolve("d"), {
     shape: [4, 4],
@@ -62,7 +63,7 @@ async function writeStore(version: "0.4" | "0.5") {
   return store;
 }
 
-for (const version of ["0.4", "0.5"] as const) {
+for (const version of ["0.5"] as const) {
   Deno.test(`browser reader matches the Node reader at ${version}`, async () => {
     const store = await writeStore(version);
     const node = await fromNode(store);

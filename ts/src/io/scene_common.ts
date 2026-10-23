@@ -562,8 +562,10 @@ export async function writeSceneToStore(
     try {
       const existing = await zarr.open(root, { kind: "group" });
       attributes = { ...(existing.attrs as Record<string, unknown>) };
-    } catch {
-      // No root group yet: nothing to keep.
+    } catch (error) {
+      // No root group yet: nothing to keep. A malformed root must surface,
+      // not be replaced.
+      if (!zarr.isZarritaError(error, "NotFoundError")) throw error;
     }
   }
   const ondisk = version === "0.6" ? V06_ONDISK_VERSION : version;
@@ -659,6 +661,8 @@ export interface SceneOzxOptions {
    * unless given, the `.ozx` default.
    */
   chunksPerShard?: ChunksPerShard | undefined;
+  /** Codecs for every image's arrays (default: the writer's pipeline). */
+  codecs?: ZarrCodec[] | undefined;
   /** Consolidate the whole archive's metadata at its root (default `true`). */
   consolidateMetadata?: boolean | undefined;
   /** Reports the writes of all the images together. */
@@ -705,6 +709,7 @@ export async function sceneToOzx(
   await writeSceneToStore(store, scene, arrayWriter, {
     version,
     chunksPerShard: options.chunksPerShard ?? DEFAULT_OZX_CHUNKS_PER_SHARD,
+    ...(options.codecs !== undefined && { codecs: options.codecs }),
     ...(options.consolidateMetadata !== undefined &&
       { consolidateMetadata: options.consolidateMetadata }),
     ...(options.onProgress !== undefined &&

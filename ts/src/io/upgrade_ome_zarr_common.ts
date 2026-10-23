@@ -205,8 +205,8 @@ export async function upgradeOmeZarrImpl(
   if (!isSameStore(input, options.output)) {
     // Write-to-new-store: read the source lazily and re-write it to `output`
     // through the standard, tested pipeline. `toOmeZarr` re-derives the
-    // target-version metadata, so every supported transition (0.4<->0.5<->0.6)
-    // works and the source store is never mutated.
+    // target-version metadata, so every transition to a version it writes
+    // (0.5 or 0.6) works and the source store is never mutated.
     const multiscales = await deps.fromOmeZarr(input, { validate });
     await deps.toOmeZarr(options.output!, multiscales, { version, overwrite });
     return;

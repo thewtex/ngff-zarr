@@ -15,7 +15,8 @@ import type {
 import * as zarr from "zarrita";
 import { defaultCodecs } from "../utils/codecs.ts";
 import { NgffImage } from "../types/ngff_image.ts";
-import { anatomicalOrientationToItkDirection } from "../types/rfc4.ts";
+import { identityDirection, itkDirection } from "../utils/itk_direction.ts";
+import { componentTypeOf, transposeArray } from "../utils/transpose.ts";
 import { zarrGet, zarrSet } from "../utils/worker_pool.ts";
 
 export interface NgffImageToItkImageOptions {
@@ -64,40 +65,6 @@ export function dataTypeToComponentType(
     default:
       throw new Error(`Unsupported data type: ${dataType}`);
   }
-}
-
-/**
- * Move the channel dimension to the end (last position) if it exists
- * This follows the ITK convention where vector/RGB components are the last dimension
- */
-function moveChannelDimToLast(ngffImage: NgffImage): NgffImage {
-  const dims = ngffImage.dims;
-  const cIndex = dims.indexOf("c");
-
-  if (cIndex === -1 || cIndex === dims.length - 1) {
-    // No channel dimension or already at the end
-    return ngffImage;
-  }
-
-  // Reorder dimensions to move 'c' to the end
-  const newDims = [...dims];
-  const cDim = newDims.splice(cIndex, 1)[0];
-  newDims.push(cDim);
-
-  // Note: We would need to transpose the zarr array data here
-  // For now, we'll assume the data is already in the correct order
-  // In a full implementation, you'd transpose the zarr array
-
-  return new NgffImage({
-    data: ngffImage.data, // TODO: transpose if needed
-    dims: newDims,
-    scale: ngffImage.scale,
-    translation: ngffImage.translation,
-    name: ngffImage.name,
-    axesUnits: ngffImage.axesUnits,
-    axesOrientations: ngffImage.axesOrientations,
-    computedCallbacks: ngffImage.computedCallbacks,
-  });
 }
 
 /**
@@ -237,9 +204,6 @@ export async function ngffImageToItkImage(
     });
   }
 
-  // Move channel dimension to last position (ITK convention)
-  workingImage = moveChannelDimToLast(workingImage);
-
   const dims = workingImage.dims;
   const data = workingImage.data;
 
@@ -291,44 +255,29 @@ export async function ngffImageToItkImage(
   // Read all data from zarr array
   const selection = new Array(data.shape.length).fill(null);
   const dataChunk = await zarrGet(data, selection);
+  // ITK-Wasm lays pixels out in reverse ITK axis order with components last,
+  // whatever order the image's own axes are in.
+  const itkLayout = [...sortedItkDims].reverse();
+  if (dims.includes("c")) itkLayout.push("c");
+  const permutation = itkLayout.map((dim) => dims.indexOf(dim));
+  const pixels = permutation.every((axis, i) => axis === i)
+    ? dataChunk.data
+    : transposeArray(
+      dataChunk.data,
+      [...data.shape],
+      permutation,
+      componentTypeOf(dataChunk.data),
+    );
 
-  // Build direction matrix from anatomical orientations when available.
-  // sortedItkDims is in ITK physical-space order [x, y, z (, t)].
-  // Column j of the direction matrix corresponds to sortedItkDims[j].
-  const direction = new Float64Array(dimension * dimension);
-  for (let i = 0; i < dimension; i++) {
-    direction[i * dimension + i] = 1.0; // Start with identity
-  }
-
-  const orientations = workingImage.axesOrientations;
-  if (orientations) {
-    // Only spatial dims (not "t") contribute to the direction matrix.
-    const spatialItkDims = sortedItkDims.filter((d) => d !== "t");
-    const nSpatial = spatialItkDims.length;
-    const columns: number[][] = [];
-    let useOrientations = true;
-
-    for (const dim of spatialItkDims) {
-      const ori = orientations[dim];
-      if (ori === undefined) {
-        useOrientations = false;
-        break;
-      }
-      const col = anatomicalOrientationToItkDirection(ori.value);
-      if (col === undefined) {
-        // Non-LPS orientation: fall back to identity
-        useOrientations = false;
-        break;
-      }
-      columns.push(col);
-    }
-
-    if (useOrientations && columns.length > 0) {
-      for (let colIdx = 0; colIdx < nSpatial; colIdx++) {
-        for (let row = 0; row < nSpatial; row++) {
-          direction[row * dimension + colIdx] = columns[colIdx][row];
-        }
-      }
+  // The direction comes from the RFC-4 orientations of the spatial axes, as
+  // resample and resampleBoundingBox build it; time keeps an identity row.
+  const spatialItkDims = sortedItkDims.filter((d) => d !== "t");
+  const nSpatial = spatialItkDims.length;
+  const spatialDirection = itkDirection(workingImage, spatialItkDims);
+  const direction = identityDirection(dimension);
+  for (let row = 0; row < nSpatial; row++) {
+    for (let col = 0; col < nSpatial; col++) {
+      direction[row * dimension + col] = spatialDirection[row * nSpatial + col];
     }
   }
 
@@ -341,7 +290,7 @@ export async function ngffImageToItkImage(
     direction,
     size,
     metadata: new Map(),
-    data: dataChunk.data as TypedArray, // Cast to handle zarrita's data type
+    data: pixels as TypedArray, // Cast to handle zarrita's data type
   };
 
   return itkImage;

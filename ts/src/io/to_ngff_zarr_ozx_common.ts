@@ -308,7 +308,7 @@ export function buildRootDocument(
 
   if (version === "0.9.dev1") {
     // "0.9.dev1" is already the on-disk string.
-    const v09Entry = buildV06MultiscalesEntry(metadata, processedAxes);
+    const v09Entry = buildV06MultiscalesEntry(metadata, processedAxes, version);
     const matrixArrays = externalizeMatrixTransforms(
       v09Entry.coordinateTransformations,
       metadata.datasets.map((dataset) => dataset.path),
@@ -326,7 +326,7 @@ export function buildRootDocument(
   }
 
   if (version === "0.6") {
-    const v06Entry = buildV06MultiscalesEntry(metadata, processedAxes);
+    const v06Entry = buildV06MultiscalesEntry(metadata, processedAxes, version);
     const matrixArrays = externalizeMatrixTransforms(
       v06Entry.coordinateTransformations,
       metadata.datasets.map((dataset) => dataset.path),

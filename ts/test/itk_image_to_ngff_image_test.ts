@@ -11,6 +11,7 @@ import type { Image } from "itk-wasm";
 import * as zarr from "zarrita";
 
 import { itkImageToNgffImage } from "../src/io/itk_image_to_ngff_image.ts";
+import { ngffImageToItkImage } from "../src/io/ngff_image_to_itk_image.ts";
 
 /**
  * Create identity direction matrix for ITK-Wasm Image
@@ -173,4 +174,28 @@ Deno.test("2D RGB image: data round-trips correctly", async () => {
   const actual = Array.from(result.data as Uint8Array);
   const expected = Array.from(image.data as Uint8Array);
   assertEquals(actual, expected);
+});
+
+Deno.test("4D scalar image: spacing, origin and orientation", async () => {
+  // ITK size, spacing and origin run x, y, z, t.
+  const image = mockItkImage([5, 4, 3, 2], "float32");
+  image.spacing = [0.5, 0.6, 0.7, 9];
+  image.origin = [1, 2, 3, 40];
+  const ngff = await itkImageToNgffImage(image);
+
+  assertEquals(ngff.dims, ["t", "z", "y", "x"]);
+  assertEquals(ngff.scale, { t: 9, z: 0.7, y: 0.6, x: 0.5 });
+  assertEquals(ngff.translation, { t: 40, z: 3, y: 2, x: 1 });
+
+  // The time spacing and origin survive the way back to ITK.
+  const back = await ngffImageToItkImage(ngff);
+  assertEquals(Array.from(back.spacing), [0.5, 0.6, 0.7, 9]);
+  assertEquals(Array.from(back.origin), [1, 2, 3, 40]);
+
+  // An identity direction gives the same orientations as a 3D image.
+  const image3d = mockItkImage([5, 4, 3], "float32");
+  assertEquals(
+    ngff.axesOrientations,
+    (await itkImageToNgffImage(image3d)).axesOrientations,
+  );
 });

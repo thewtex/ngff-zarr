@@ -8,13 +8,14 @@ import { CoordinateTransformationSchema } from "./coordinate_systems.ts";
 // Enhanced Axis schema that supports RFC4 orientation
 export const AxisSchema: z.ZodObject<{
   name: typeof SupportedDimsSchema;
-  type: typeof AxesTypeSchema;
+  type: z.ZodOptional<typeof AxesTypeSchema>;
   unit: z.ZodOptional<typeof UnitsSchema>;
   orientation: z.ZodOptional<typeof AnatomicalOrientationSchema>;
 }> = z.compile(
   z.object({
     name: SupportedDimsSchema,
-    type: AxesTypeSchema,
+    // `type` is optional in the spec (an axis may declare none).
+    type: AxesTypeSchema.optional(),
     unit: UnitsSchema.optional(),
     // RFC4: Optional orientation for space axes
     orientation: AnatomicalOrientationSchema.optional(),

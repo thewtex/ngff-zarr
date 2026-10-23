@@ -120,6 +120,11 @@ export interface ToOmeZarrOzxOptions {
    * single chunks out of a shard.
    */
   chunksPerShard?: ChunksPerShard | undefined;
+  /**
+   * Codecs for every array (default: the blosc(zstd) pipeline from
+   * `defaultCodecs`); the sharding codec wraps them.
+   */
+  codecs?: ZarrCodec[] | undefined;
 }
 
 /** @deprecated Use {@link ToOmeZarrOzxOptions} instead. */
@@ -195,7 +200,13 @@ export async function toOmeZarr(
     // RFC-9 is defined on Zarr v3, so any version stored in Zarr v3 can be
     // zipped; 0.4 (Zarr v2) is refused. Omitted, the version defaults to 0.5,
     // or to 0.6 for a scene or a transformation.
+    if (options.overwrite === false && await pathExists(store)) {
+      throw new Error(
+        `'${store}' already exists; pass overwrite: true to replace it.`,
+      );
+    }
     await toOmeZarrOzx(store, multiscales, {
+      codecs: options.codecs,
       consolidateMetadata: options.consolidateMetadata,
       version: options.version === undefined
         ? undefined
@@ -267,6 +278,11 @@ export async function toOmeZarrOzx(
   }
 }
 
+async function pathExists(path: string): Promise<boolean> {
+  const { access } = await import("node:fs/promises");
+  return access(path).then(() => true, () => false);
+}
+
 /** @deprecated Use {@link toOmeZarrOzx} instead. */
 export const toNgffZarrOzx = toOmeZarrOzx;
 
@@ -319,6 +335,7 @@ export async function toOmeZarrOzxData(
     options.consolidateMetadata ?? true,
     version,
     options.chunksPerShard ?? DEFAULT_OZX_CHUNKS_PER_SHARD,
+    options.codecs,
   );
 
   // Convert the memory store to ZIP data; the ZIP comment records the
@@ -434,11 +451,12 @@ async function _writeToMemoryStore(
   consolidate: boolean = true,
   version: OzxVersion = "0.5",
   chunksPerShard?: ChunksPerShard,
+  codecs?: ZarrCodec[],
 ): Promise<void> {
   await writeNgffMultiscalesToMemoryStore(
     store,
     multiscales,
-    arrayWriter({ chunksPerShard }),
+    arrayWriter({ codecs, chunksPerShard }),
     onProgress,
     consolidate,
     version,

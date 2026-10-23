@@ -14,7 +14,7 @@ compatible with Deno, Node.js, and the browser.
 - 🦕 **Deno-first**: Built for Deno with first-class TypeScript support
 - 📦 **npm compatible**: Automatically builds npm packages using @deno/dnt
 - 🔍 **Type-safe**: Full TypeScript support with Zod schema validation
-- 🗂️ **OME-Zarr support**: Read and write OME-Zarr v0.4, v0.5, and v0.6 using fizarrita
+- 🗂️ **OME-Zarr support**: Read OME-Zarr v0.4, v0.5, and v0.6, and write v0.5 and v0.6 (Zarr v3), using fizarrita
 - 🧪 **Well-tested**: Comprehensive test suite using @std/assert
 - 🏗️ **Mirrors Python API**: TypeScript classes and types mirror the Python
   dataclasses

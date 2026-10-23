@@ -312,8 +312,15 @@ function byDimensionItemBlock(item: ByDimensionItem, ndim: number): Matrix {
         `output axes; only a square mapping converts to an ITK transform`,
     );
   }
-  const beyond = [...item.inputAxes, ...item.outputAxes]
-    .filter((axis) => axis >= ndim);
+  const axes = [...item.inputAxes, ...item.outputAxes];
+  if (!axes.every((axis) => Number.isInteger(axis) && axis >= 0)) {
+    throw new Error(
+      `byDimension axis indices must be non-negative integers; got [${
+        axes.join(", ")
+      }]`,
+    );
+  }
+  const beyond = axes.filter((axis) => axis >= ndim);
   if (beyond.length > 0) {
     throw new Error(
       `byDimension axis indices [${beyond.join(", ")}] exceed the ${ndim} ` +

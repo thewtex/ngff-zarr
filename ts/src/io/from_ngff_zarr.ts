@@ -23,6 +23,7 @@ import {
 } from "../utils/parse_metadata.ts";
 import { zarrGet } from "../utils/worker_pool.ts";
 import { ensureRangeReads } from "../utils/sharding.ts";
+import { isOzxPath } from "./rfc9_zip.ts";
 
 export type { ChunkCache } from "../utils/worker_pool.ts";
 
@@ -79,6 +80,15 @@ export async function fromOmeZarr(
   store: string | MemoryStore | zarr.FetchStore | zarr.Readable,
   options: FromOmeZarrOptions = {},
 ): Promise<NgffMultiscales | NgffScene | V06Transform> {
+  if (
+    typeof store === "string" && isOzxPath(store) && !/^https?:\/\//.test(store)
+  ) {
+    // A file-backed Blob: the archive is range-read, not loaded whole. Opened
+    // first, so paths below it name entries of the archive.
+    const { openAsBlob } = await import("node:fs");
+    const { ZipFileStore } = await import("@zarrita/storage");
+    store = ZipFileStore.fromBlob(await openAsBlob(store)) as zarr.Readable;
+  }
   if (options.path !== undefined) {
     const { path, ...rest } = options;
     checkPathBelowRoot(path);

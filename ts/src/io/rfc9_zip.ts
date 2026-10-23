@@ -272,10 +272,10 @@ export function getZipFileCompressionMethod(
       }
 
       // Get compressed size to skip to next header
-      const compressedSize = zipData[offset + 18] |
+      const compressedSize = (zipData[offset + 18] |
         (zipData[offset + 19] << 8) |
         (zipData[offset + 20] << 16) |
-        (zipData[offset + 21] << 24);
+        (zipData[offset + 21] << 24)) >>> 0;
 
       offset = nameEnd + extraLength + compressedSize;
     } else {
@@ -314,10 +314,10 @@ export function getZipFileList(zipData: Uint8Array): string[] {
   }
 
   // Get central directory offset (little-endian uint32 at EOCD + 16)
-  let cdOffset = zipData[eocdOffset + 16] |
+  let cdOffset = (zipData[eocdOffset + 16] |
     (zipData[eocdOffset + 17] << 8) |
     (zipData[eocdOffset + 18] << 16) |
-    (zipData[eocdOffset + 19] << 24);
+    (zipData[eocdOffset + 19] << 24)) >>> 0;
 
   // Get number of entries (little-endian uint16 at EOCD + 10)
   const numEntries = zipData[eocdOffset + 10] | (zipData[eocdOffset + 11] << 8);
@@ -409,6 +409,24 @@ export function memoryStoreToZip(
     if (data) {
       files[key] = data;
     }
+  }
+
+  // shortcut: fflate writes no ZIP64 records, so past 65,535 entries or
+  // 4 GiB the entry count and offsets would wrap and readers would miss data;
+  // refuse instead. Stream through a ZIP64 writer if stores outgrow this.
+  const encoder = new TextEncoder();
+  const entries = Object.keys(files).length;
+  let archiveBytes = 0;
+  for (const [name, data] of Object.entries(files)) {
+    // Local header (30) and central record (46), each with the name.
+    archiveBytes += 76 + 2 * encoder.encode(name).length + data.byteLength;
+  }
+  if (entries > 0xffff || archiveBytes >= 2 ** 32) {
+    throw new Error(
+      `An .ozx archive without ZIP64 holds at most 65,535 files and 4 GiB; ` +
+        `this store has ${entries} files and ${archiveBytes} bytes. Write ` +
+        `it to a directory store instead.`,
+    );
   }
 
   // Create ZIP with no compression (level: 0 = ZIP_STORED equivalent)

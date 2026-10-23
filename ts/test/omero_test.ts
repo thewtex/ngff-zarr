@@ -160,7 +160,7 @@ Deno.test("write omero metadata", async () => {
   );
 
   const memoryStore = new Map<string, Uint8Array>();
-  await toNgffZarr(memoryStore, multiscales, { version: "0.4" });
+  await toNgffZarr(memoryStore, multiscales, { version: "0.5" });
 
   // Test the Omero metadata creation and validation directly
   const readOmero = multiscales.metadata.omero;
@@ -257,7 +257,7 @@ Deno.test(
 
     // Verify that we can write and read the data correctly
     const memoryStore = new Map<string, Uint8Array>();
-    await toNgffZarr(memoryStore, multiscales, { version: "0.4" });
+    await toNgffZarr(memoryStore, multiscales, { version: "0.5" });
 
     const readMultiscales = await fromNgffZarr(memoryStore, { validate: true });
     const readOmero = readMultiscales.metadata.omero;

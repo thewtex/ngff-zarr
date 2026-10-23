@@ -259,8 +259,9 @@ Deno.test("bin shrink isotropic scale factors", async () => {
   assertEquals(multiscales.images.length, 3); // Original + 2 downsampled
   assertEquals(multiscales.images[1].data.shape[0], 128); // y: 256/2
   assertEquals(multiscales.images[1].data.shape[1], 128); // x: 256/2
-  assertEquals(multiscales.images[2].data.shape[0], 32); // y: 128/4
-  assertEquals(multiscales.images[2].data.shape[1], 32); // x: 128/4
+  // Scale factors are absolute, as in the Python package and the metadata.
+  assertEquals(multiscales.images[2].data.shape[0], 64); // y: 256/4
+  assertEquals(multiscales.images[2].data.shape[1], 64); // x: 256/4
 });
 
 Deno.test("gaussian isotropic scale factors", async () => {
