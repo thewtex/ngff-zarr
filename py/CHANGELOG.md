@@ -1,3 +1,42 @@
+## py-v0.50.0 (2026-10-23)
+
+### BREAKING CHANGE
+
+- toOmeZarr(store, multiscales, { version: "0.4" })
+throws instead of writing a Zarr v3 store tagged 0.4. Write "0.5" or
+later, or use the Python package to write 0.4. ([ed254ee](https://github.com/fideus-labs/ngff-zarr/commit/ed254ee61a011cf365a40b1babf95f5a01cab4c9))
+
+### ♻️ Refactoring
+
+- **py**: drop commented-out split counts in the write region planner ([2ac9a66](https://github.com/fideus-labs/ngff-zarr/commit/2ac9a66f58d810a815ddee6c7e62dbe64bef161e))
+- **py**: drop write-region padding that only added empty regions ([8aa6269](https://github.com/fideus-labs/ngff-zarr/commit/8aa62691282e877fbe65c9aa766c75a78d6e3bb6))
+- **py**: leave the .zip output refusal to to_ome_zarr ([dc0b203](https://github.com/fideus-labs/ngff-zarr/commit/dc0b2031e4e159ff64f3856e32e027b57f3c50c4))
+
+### ⚡ Performance
+
+- **py**: stage .ozx output beside the archive, not in the system temp dir ([3c9ab78](https://github.com/fideus-labs/ngff-zarr/commit/3c9ab78fb2132e740736eedf96ce5f9cd1b9011a))
+- **py**: drop the write retry that reloaded failed regions into memory ([21e6013](https://github.com/fideus-labs/ngff-zarr/commit/21e601394305d3378b073397a19a1450b052314e))
+- **py**: size large-write regions by slice, not by chunk-thick slab ([103670d](https://github.com/fideus-labs/ngff-zarr/commit/103670d863ffbca26f1ffb157191c27a48e646ca))
+
+### ✨ Features
+
+- **py**: add --no-orientation CLI flag ([13089b5](https://github.com/fideus-labs/ngff-zarr/commit/13089b56605682503b3c16f0aaa4e8cb75f89d2f))
+
+### 🐛 Bug Fixes
+
+- **py**: keep the requested chunks on levels already in the pyramid ([14b1d67](https://github.com/fideus-labs/ngff-zarr/commit/14b1d67778f54ca8e6b0fdb0896592f2ec48d897))
+- **py**: round write region sizes down to fit memory_target ([de99fb5](https://github.com/fideus-labs/ngff-zarr/commit/de99fb5ae8b7887e8ac303d0f989d28594b996bb))
+- **py**: size write regions from the array shape and region thickness ([6ed4dd9](https://github.com/fideus-labs/ngff-zarr/commit/6ed4dd9c4af063d08867b8997ac188d9a9251399))
+- **py**: report unreadable inputs from the CLI without a traceback ([3289335](https://github.com/fideus-labs/ngff-zarr/commit/3289335f94278f13d39aba6fe99ab16c80e1e68d))
+- **py**: refuse a .zip output in the CLI with a pointer to .ozx ([08b9001](https://github.com/fideus-labs/ngff-zarr/commit/08b900100d60a7bac08dc86986428c5b875d3025))
+- **py**: refuse drive-qualified scene and well image paths ([78fbee8](https://github.com/fideus-labs/ngff-zarr/commit/78fbee8f07741e68dbabff5e95e414336781444d))
+- **py**: keep HCS well image paths inside the plate ([244d10f](https://github.com/fideus-labs/ngff-zarr/commit/244d10fb4a0920340be8304bce28642ef83a3496))
+- **py**: start at least one worker for --local-cluster ([4aa2c47](https://github.com/fideus-labs/ngff-zarr/commit/4aa2c473c89a5c445d1a37c5dcccf8936a33c809))
+- **py**: accept multi-file OME-TIFF data files and dotted Leica names ([0f845f9](https://github.com/fideus-labs/ngff-zarr/commit/0f845f99248a593cf4a2ce9780374b317f15da55))
+- **py**: read .zip archives of OME-Zarr stores, as documented ([3ed8112](https://github.com/fideus-labs/ngff-zarr/commit/3ed81128d5ffc4201530098304035d549ab2c06c))
+- **py**: split HCS sub-paths only at real Zarr stores ([071ac1d](https://github.com/fideus-labs/ngff-zarr/commit/071ac1de968b003f0e61612fd7c72fa09fb53aaf))
+- **py**: raise from cli_input_to_ngff_image instead of exiting ([38506bf](https://github.com/fideus-labs/ngff-zarr/commit/38506bfb6d254479ed3e3852b5adfa40e32652f6))
+
 ## py-v0.49.0 (2026-10-07)
 
 ### ♻️ Refactoring
