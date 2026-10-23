@@ -1,3 +1,45 @@
+## ts-v0.39.0 (2026-10-23)
+
+### BREAKING CHANGE
+
+- toOmeZarr(store, multiscales, { version: "0.4" })
+  throws instead of writing a Zarr v3 store tagged 0.4. Write "0.5" or
+  later, or use the Python package to write 0.4. ([ed254ee](https://github.com/fideus-labs/ngff-zarr/commit/ed254ee61a011cf365a40b1babf95f5a01cab4c9))
+
+### ♻️ Refactoring
+
+- **ts**: drop the constant isVector flag and shorten pathExists ([6241444](https://github.com/fideus-labs/ngff-zarr/commit/62414444f3e54602115f3b325c5090e30bcc1329))
+- **ts**: delete unused validation and OMERO worker types ([5b39347](https://github.com/fideus-labs/ngff-zarr/commit/5b39347fc0bab365183bf742602b29f3bfc16360))
+- **ts**: share the array writer between the Node and browser writers ([920adb5](https://github.com/fideus-labs/ngff-zarr/commit/920adb56893878e83a42693914e52df8ed585a17))
+- **ts**: one per-slice loop for time and channel downsampling ([c758316](https://github.com/fideus-labs/ngff-zarr/commit/c758316152fb12626bc3ac796936f28ff8908662))
+- **ts**: share one ITK-Wasm downsampling core between Node and browser ([3c53738](https://github.com/fideus-labs/ngff-zarr/commit/3c53738a13982bef008cb3e9ade15f8c4b230fc6))
+
+### 🐛 Bug Fixes
+
+- **ts**: open an .ozx path before reading a scene or a path below it ([068f86a](https://github.com/fideus-labs/ngff-zarr/commit/068f86a68079514466f5ade094fd53d5b9a5003d))
+- **ts**: refuse a matrix array that is not 2D before reading it ([30765ea](https://github.com/fideus-labs/ngff-zarr/commit/30765ea913e3c9e5e4d3df778d2836a90b7c93f7))
+- **ts**: use the given codecs for scene .ozx archives ([1b5aeb4](https://github.com/fideus-labs/ngff-zarr/commit/1b5aeb49d59dd88ddb9997e7fac17192d0bd00dc))
+- **ts**: keep the time spacing and origin of a 4D ITK image ([4d114eb](https://github.com/fideus-labs/ngff-zarr/commit/4d114eb0e9f0e26f643197a39db5e92a3334e370))
+- **ts**: check the pixel count passed to createNgffImage ([49730e0](https://github.com/fideus-labs/ngff-zarr/commit/49730e09de6f3e8feccc75d6c87dbead960c1917))
+- **ts**: refuse to write OME-Zarr 0.4 ([ed254ee](https://github.com/fideus-labs/ngff-zarr/commit/ed254ee61a011cf365a40b1babf95f5a01cab4c9))
+- **ts**: refuse axis-less metadata and look up only real orientations ([64a13a6](https://github.com/fideus-labs/ngff-zarr/commit/64a13a6006547f3e6abbff914a0aee81a297026c))
+- **ts**: refuse negative byDimension axes when converting to ITK ([4c1fa52](https://github.com/fideus-labs/ngff-zarr/commit/4c1fa527c8af344841826d83b41d8aae18aa01ca))
+- **ts**: bound matrix-array path handling ([b98d60f](https://github.com/fideus-labs/ngff-zarr/commit/b98d60f182fbc4161f7628726621d86ee4fcd7b0))
+- **ts**: surface a malformed root when writing with overwrite: false ([f665227](https://github.com/fideus-labs/ngff-zarr/commit/f66522724e6b1892134ad00287ff93c6f783c0b9))
+- **ts**: read .ozx archives by path in Node and Deno ([a0c2f80](https://github.com/fideus-labs/ngff-zarr/commit/a0c2f80768d11068d094f3efb319d84cd265ed9a))
+- **ts**: let validateMetadata accept the axes the spec allows ([63d5c7a](https://github.com/fideus-labs/ngff-zarr/commit/63d5c7a84768b82a92694ff7cbdfe356318aa56d))
+- **ts**: accept valid 0.6 and 0.9.dev1 transforms under validate: true ([0818526](https://github.com/fideus-labs/ngff-zarr/commit/08185261eab315a97235fd63b724f36143e7281e))
+- **ts**: downsample label images with 2 to 8 channels ([5f59782](https://github.com/fideus-labs/ngff-zarr/commit/5f59782d60d82bcbe88181788d7d72e6d3cdd6a4))
+- **ts**: downsample and compute omero for int64 and uint64 images ([5964350](https://github.com/fideus-labs/ngff-zarr/commit/59643505ddcec07658fb009e2cd1581dd7dc566b))
+- **ts**: write boolean images ([89e4ef9](https://github.com/fideus-labs/ngff-zarr/commit/89e4ef9ae5095e23ff5d7149268a3505df8509e2))
+- **ts**: put values on the right axes when converting to and from ITK ([c083642](https://github.com/fideus-labs/ngff-zarr/commit/c083642d10fce6ceb111c9600a9299c99c882eec))
+- **ts**: downsample like the Python package with bin shrink and channels ([ef27f6b](https://github.com/fideus-labs/ngff-zarr/commit/ef27f6bc9b0652fe58f90f37b89c577a6d2bef6c))
+- **ts**: honor overwrite: false and codecs when writing OME-Zarr ([09f1643](https://github.com/fideus-labs/ngff-zarr/commit/09f1643026295508b8eca85cb89a17ce02345c8a))
+- **ts**: refuse .ozx archives too large for a ZIP without ZIP64 ([3c45575](https://github.com/fideus-labs/ngff-zarr/commit/3c455755c6c03c310eece2ee52a303b54e5e301a))
+- **ts**: make fromHcsZarr and toHcsZarr refuse instead of faking ([a68fc83](https://github.com/fideus-labs/ngff-zarr/commit/a68fc83158744f8977e0acd8171a867cd0a1625b))
+- **ts**: keep the pixel data passed to createNgffImage ([e8dc71e](https://github.com/fideus-labs/ngff-zarr/commit/e8dc71e20035e947396ef133acf04e651783bf6c))
+- **ts**: read 0.4/0.5 in the browser with the Node reader's parsers ([6a53dcc](https://github.com/fideus-labs/ngff-zarr/commit/6a53dcc902cb5cab81d78ecaec2a2541c409588a))
+
 ## ts-v0.38.0 (2026-10-08)
 
 ### ✨ Features
