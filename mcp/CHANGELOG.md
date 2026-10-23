@@ -1,3 +1,37 @@
+## mcp-v0.17.0 (2026-10-23)
+
+### BREAKING CHANGE
+
+- toOmeZarr(store, multiscales, { version: "0.4" })
+throws instead of writing a Zarr v3 store tagged 0.4. Write "0.5" or
+later, or use the Python package to write 0.4. ([ed254ee](https://github.com/fideus-labs/ngff-zarr/commit/ed254ee61a011cf365a40b1babf95f5a01cab4c9))
+
+### ♻️ Refactoring
+
+- **mcp**: inline the single-use url_store_mapping ([de8d461](https://github.com/fideus-labs/ngff-zarr/commit/de8d461a81507167cd43774bacf5c0a4bf56b54a))
+- **mcp**: remove dead import fallbacks and event_loop fixture ([0abb2c9](https://github.com/fideus-labs/ngff-zarr/commit/0abb2c94b9f4790deb6d2e42f3680d5d3d607f8b))
+- **py,ts**: read and write scenes through to_ome_zarr and from_ome_zarr ([2753c80](https://github.com/fideus-labs/ngff-zarr/commit/2753c809e3065bf574e04c33f37f77653b005e50))
+
+### ✨ Features
+
+- **py,ts**: write and read a transformation on its own with kind="transformation" ([0bf9b17](https://github.com/fideus-labs/ngff-zarr/commit/0bf9b1703378200698761eec595633b1907a0d7d))
+- **py,ts**: check a scene against the spec before writing it ([822b8ea](https://github.com/fideus-labs/ngff-zarr/commit/822b8ea9b735f4f170035d82d07f0285a567c6a3))
+
+### 🐛 Bug Fixes
+
+- **mcp**: replace an existing .ozx output only when it is an archive ([3fb5cd0](https://github.com/fideus-labs/ngff-zarr/commit/3fb5cd0095e7bed58642826eb69e1e6e98efa2d2))
+- **mcp**: refuse unspecified and IPv4-mapped local hosts when downloading ([41f447f](https://github.com/fideus-labs/ngff-zarr/commit/41f447f7c8c578eb55f447eb94bb2f37e819ede3))
+- **mcp**: accept requests for the server's own name with --host 0.0.0.0 ([b878649](https://github.com/fideus-labs/ngff-zarr/commit/b87864950ba9e0d3ed06073ae4e34f4660a2bf69))
+- **mcp**: run tools off the server's event loop ([b261fa8](https://github.com/fideus-labs/ngff-zarr/commit/b261fa8f80140ef5cd66b88f229ce4d7f3b7c4af))
+- **mcp**: scope the Dask cluster and cache directory to one conversion ([a66215a](https://github.com/fideus-labs/ngff-zarr/commit/a66215a8787d561d0236a72c422e8f54933d9dc2))
+- **mcp**: follow redirects and refuse local hosts when downloading inputs ([9a5a97c](https://github.com/fideus-labs/ngff-zarr/commit/9a5a97ca8f10ba4ad0414ebf9a153e53bc515d04))
+- **mcp**: report store information that matches the store ([223a2f0](https://github.com/fideus-labs/ngff-zarr/commit/223a2f006fc33adfd7cc752699ec924dd560548e))
+- **mcp**: apply the options the tools accept, or refuse them ([9f95b44](https://github.com/fideus-labs/ngff-zarr/commit/9f95b44c9cf3afd6c25fbfb72b27d7b085e05be5))
+- **mcp**: return an error for an unreadable input instead of exiting ([6c7e81c](https://github.com/fideus-labs/ngff-zarr/commit/6c7e81cf024615368bb2207cd968180551e29ba1))
+- **mcp**: refuse to delete an existing output path ([7b8b5cf](https://github.com/fideus-labs/ngff-zarr/commit/7b8b5cf0865a378896c561c0e417964f57a9771a))
+- **py,ts**: type the scene read with kind overloads and keep the browser module Node-free ([0d0d32b](https://github.com/fideus-labs/ngff-zarr/commit/0d0d32bc9031a217dc62ef5b481de4770c8b1eea))
+- **py,ts**: check image paths read from scene metadata ([a3042d8](https://github.com/fideus-labs/ngff-zarr/commit/a3042d8d3bc6e343a46c0d68d0550a42d30ed99a))
+
 ## mcp-v0.16.0 (2026-09-18)
 
 ### ✨ Features
