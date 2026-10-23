@@ -18,7 +18,7 @@ from ngff_zarr import itk_image_to_ngff_image, to_ngff_zarr
 from packaging import version
 
 test_data_ipfs_cid = "bafybeifqibhcomn4u42aqrgvttyfteysbspvzez5sbezcqj5yylzzafpma"
-test_data_sha256 = "525dfae8fe52df4a18dc19de97f018e667e161bc83dc0584144c16d872349705"
+test_data_sha256 = "45d776c03a1b4154edd78db306b1d88e3ae356964d7319c6cd819c82c2620122"
 
 test_dir = Path(__file__).resolve().parent
 extract_dir = "data"
@@ -96,7 +96,7 @@ def input_images():
     pooch.retrieve(
         fname="data.tar.gz",
         path=test_dir,
-        url="https://github.com/fideus-labs/ngff-zarr/releases/download/testing-data/ngff-zarr-testing-data-v0.21.0.tar.gz",
+        url="https://github.com/fideus-labs/ngff-zarr/releases/download/testing-data/ngff-zarr-testing-data-v0.22.0.tar.gz",
         # url=f"https://itk.mypinata.cloud/ipfs/{test_data_ipfs_cid}",
         # url=f"https://{test_data_ipfs_cid}.ipfs.w3s.link/ipfs/{test_data_ipfs_cid}/data.tar.gz",
         known_hash=f"sha256:{test_data_sha256}",

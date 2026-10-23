@@ -246,7 +246,11 @@ def _align_chunks(previous_image, default_chunks, dim_factors):
             previous_image.dims.index(dim): aligned_chunks[dim]
             for dim in aligned_chunks
         }
-        previous_image.data = previous_image.data.rechunk(dask_aligned_chunks)
+        # Rechunk a copy: the image passed in is usually a level that is
+        # already in the output pyramid, and its chunks are what gets written.
+        aligned_image = copy.copy(previous_image)
+        aligned_image.data = previous_image.data.rechunk(dask_aligned_chunks)
+        return aligned_image
 
     return previous_image
 
